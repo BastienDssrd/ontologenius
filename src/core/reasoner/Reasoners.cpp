@@ -269,7 +269,10 @@ void Reasoners::runPeriodicReasoners()
   }
 
   if(has_run)
-    computeIndividualsUpdatesPeriodic();
+  {
+    computeUpdates();
+    runPostReasoners();
+  }
 }
 
 void Reasoners::applyConfig()
