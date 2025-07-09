@@ -36,6 +36,23 @@ namespace ontologenius {
     bool checkout_;
 
     Feed_t() : action_(action_nop), checkout_(false) {}
+
+    bool sameData(const Feed_t& other) const
+    {
+      return (from_ == other.from_) &&
+             (prop_ == other.prop_) &&
+             (on_ == other.on_);
+    }
+
+    bool isInvertAction(const Feed_t& other) const
+    {
+      if(action_ == action_add)
+        return other.action_ == action_del;
+      else if(action_ == action_del)
+        return other.action_ == action_add;
+      else
+        return false;
+    }
   };
 
   class FeedStorage

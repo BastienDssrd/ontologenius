@@ -13,6 +13,7 @@
 #include "ontologenius/core/subscription/SubscriptionManager.h"
 #include "ontologenius/core/utility/error_code.h"
 #include "ontologenius/graphical/Display.h"
+#include "ontologenius/interface/InterfaceParams.h"
 
 #define PUB_QUEU_SIZE 1000
 #define SUB_QUEU_SIZE 10000
@@ -129,6 +130,7 @@ namespace ontologenius {
     std::vector<compat::onto_ros::Service<compat::OntologeniusService>> str_services;
     str_services.emplace_back(getTopicName("actions"), &RosInterface::actionsHandle, this);
     str_services.emplace_back(getTopicName("reasoner"), &RosInterface::reasonerHandle, this);
+    str_services.emplace_back(getTopicName("feeder"), &RosInterface::feederHandle, this);
 
     str_services.emplace_back(getTopicName("class"), &RosInterface::classHandle, this);
     str_services.emplace_back(getTopicName("object_property"), &RosInterface::objectPropertyHandle, this);
@@ -307,6 +309,34 @@ namespace ontologenius {
       else
         res->code = UNKNOW_ACTION;
       reasoner_mutex_.unlock();
+
+      return true;
+    }(compat::onto_ros::getServicePointer(req), compat::onto_ros::getServicePointer(res));
+  }
+
+  bool RosInterface::feederHandle(compat::onto_ros::ServiceWrapper<compat::OntologeniusService::Request>& req,
+                                  compat::onto_ros::ServiceWrapper<compat::OntologeniusService::Response>& res)
+  {
+    return [this](auto&& req, auto&& res) {
+      res->code = 0;
+
+      removeUselessSpace(req->action);
+      InterfaceParams params;
+      params.extractStringParams(req->param);
+
+      if(req->action == "export")
+        feeder_.exportToXml(params());
+      else if(req->action == "compare")
+      {
+        if(feeder_.areSameStates(params(), params.selector))
+          res->values.push_back("true");
+        else
+          res->values.push_back("false");
+      }
+      else if(req->action == "versioning")
+        res->values.push_back(feeder_.versioning() ? "true" : "false");
+      else
+        res->code = UNKNOW_ACTION;
 
       return true;
     }(compat::onto_ros::getServicePointer(req), compat::onto_ros::getServicePointer(res));

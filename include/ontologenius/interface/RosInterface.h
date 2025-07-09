@@ -160,6 +160,10 @@ namespace ontologenius {
     bool reasonerHandle(compat::onto_ros::ServiceWrapper<compat::OntologeniusService::Request>& req,
                         compat::onto_ros::ServiceWrapper<compat::OntologeniusService::Response>& res);
 
+    /// @brief The ROS service callback in charge of feeder-related operations on the ontology
+    bool feederHandle(compat::onto_ros::ServiceWrapper<compat::OntologeniusService::Request>& req,
+                      compat::onto_ros::ServiceWrapper<compat::OntologeniusService::Response>& res);
+
     /// @brief The ROS service callback in charge of the conversion from index to identifier and inverse
     bool conversionHandle(compat::onto_ros::ServiceWrapper<compat::OntologeniusConversion::Request>& req,
                           compat::onto_ros::ServiceWrapper<compat::OntologeniusConversion::Response>& res);

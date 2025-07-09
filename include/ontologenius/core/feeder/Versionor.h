@@ -22,6 +22,7 @@ namespace ontologenius {
     void insert(Feed_t data);
     bool commit(const std::string& id);
     bool checkout(const std::string& id);
+    bool areSameStates(const std::string& from_node, const std::string& to_node);
 
     void print() { nodes_["0"]->print(); }
     void exportToXml(const std::string& path);
@@ -34,7 +35,9 @@ namespace ontologenius {
     std::unordered_map<std::string, VersionNode*> nodes_;
     VersionNode* current_node_;
 
+    std::vector<Feed_t> getDataBetween(VersionNode* from_node, VersionNode* to_node);
     std::vector<VersionNode*> getPrevs(VersionNode* from_node);
+    std::unordered_map<std::string, VersionNode*>::iterator getNode(const std::string& id);
   };
 
 } // namespace ontologenius

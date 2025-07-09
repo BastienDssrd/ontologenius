@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <unistd.h>
 
+#include "ontologenius/API/ontologenius/clients/ClientBase.h"
 #include "ontologenius/compat/ros.h"
 
 namespace onto {
@@ -17,13 +18,14 @@ namespace onto {
   /// The feeding process is asynchronous and therefore does not guarantee any response time.
   /// It still provides functions to synchronize if you have applications where you have to query the ontology right after having modified it.
   /// All modifications can be time-stamped for advanced uses using the republication mechanism.
-  class FeederPublisher
+  class FeederPublisher : public ClientBase
   {
   public:
     /// @brief Constructs a FeederPublisher.
     /// Can be used in a multi-ontology mode by specifying the name of the ontology name.
     /// @param name is the instance to be connected to. For classic use, name should be defined as "".
-    explicit FeederPublisher(const std::string& name) : name_(name),
+    explicit FeederPublisher(const std::string& name) : ClientBase((name.empty()) ? "feeder" : "feeder/" + name),
+                                                        name_(name),
                                                         feeder_notification_callback_([](auto& msg) { (void)msg; }),
                                                         reasoners_notification_callback_([](auto& msg) { (void)msg; }),
                                                         commit_nb_((time(nullptr), rand() % 100000 + 1)),
@@ -182,6 +184,15 @@ namespace onto {
     /// @brief Register a callback function to get notifications from the reasoners.
     /// @param callback is the callback function taking a string.
     void registerReasonersNotificationCallback(const std::function<void(const std::string&)>& callback) { reasoners_notification_callback_ = callback; }
+
+
+    /// @brief Exports the current modification tree in an absolute path.
+    /// This function has no effect on non copied ontologies.
+    /// @param path is the path where the modification tree will be saved. It must be of the form: my/path/to/file.xml
+    /// @return Returns false if the service call fails.
+    bool exportToXml(const std::string& path);
+    bool doVersioning();
+    bool compareCommits(const std::string& commit_from, const std::string& commit_to = "");
 
   private:
     std::string name_;
