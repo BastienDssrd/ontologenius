@@ -623,6 +623,10 @@ if($ENV{ROS_VERSION} STREQUAL "1")
     target_include_directories(onto_api_relations_test PRIVATE ${catkin_INCLUDE_DIRS})
     target_link_libraries(onto_api_relations_test ontologenius_lib ${catkin_LIBRARIES})
 
+    add_rostest_gtest(onto_feature_branching_test test/feature_branching.test src/tests/CI/feature_branching_test.cpp)
+    target_include_directories(onto_feature_branching_test PRIVATE ${catkin_INCLUDE_DIRS})
+    target_link_libraries(onto_feature_branching_test ontologenius_lib ${catkin_LIBRARIES})
+
     add_rostest_gtest(onto_feature_deep_copy_test test/feature_deep_copy.test src/tests/CI/feature_deep_copy_test.cpp)
     set_target_properties(onto_feature_deep_copy_test PROPERTIES CXX_STANDARD 14 CXX_STANDARD_REQUIRED ON)
     target_include_directories(onto_feature_deep_copy_test PRIVATE ${catkin_INCLUDE_DIRS})
