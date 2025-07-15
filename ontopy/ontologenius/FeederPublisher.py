@@ -1,4 +1,5 @@
 from .compat.ros import Ontoros
+from .clients.ClientBase import ClientBase
 
 import os
 
@@ -10,7 +11,7 @@ import time
 import random
 from datetime import datetime
 
-class FeederPublisher:
+class FeederPublisher(ClientBase):
     """The FeederPublisher class provides an abstraction ontologenius feeder(insert) ROS topic.
        Working in a closed world can be interesting, but with ontologenius, you can also choose to 
        work in an open world by adding and modifying the agent's knowledge base during its operation.
@@ -25,6 +26,11 @@ class FeederPublisher:
            Can be used in a multi-ontology mode by specifying the name of the ontology name(str).
            For classic use, name(str) should be defined as ''.
         """
+        if name == '':
+            ClientBase.__init__(self, "feeder")
+        else:
+            ClientBase.__init__(self, "feeder/" + name)
+
         self._name = name
         pub_topic_name = 'ontologenius/insert'
         if self._name != '':
@@ -49,6 +55,24 @@ class FeederPublisher:
 
     def __del__(self):
         self._commit_sub.unregister()
+
+    def export(self, path):
+        """Exports the current modification tree in the absolute path(str) path.
+           The path(str) parameter must be of the form: my/path/to/file.xml
+           This function has no effect on non copied ontologies.
+           Returns False if the service call fails.
+        """
+        return self.callNR("export", path)
+
+    def doVersioning(self):
+        return self.callStr("versioning", "") == "true"
+
+    def compareCommits(self, commit_from, commit_to = ""):
+        param = commit_from
+        if commit_to != "false":
+            param += " -s " + commit_to
+
+        return self.callStr("compare", param) == "true"
 
     def addObjectProperty(self, concept_from, property, concept_on, stamp = None):
         """[deprecated] Consider using addObjectRelation.
