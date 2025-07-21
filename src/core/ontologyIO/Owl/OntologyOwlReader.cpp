@@ -292,9 +292,9 @@ namespace ontologenius {
         const std::string sub_elem_name = sub_elem->Value();
         const float probability = getProbability(sub_elem);
 
-        if(sub_elem_name == "rdf:type")
+        if(sub_elem_name == "rdf:type") // we could add here that an individual can inherit directly from an ano class
           push(individual_vector.is_a_, sub_elem, probability, "+");
-        else if(sub_elem_name == "owl:sameAs")
+        else if(sub_elem_name == "owl:sameAs") // we could also add the differentFrom
           push(individual_vector.same_as_, sub_elem, probability, "=");
         else if(sub_elem_name == "rdfs:label")
           pushLang(individual_vector.dictionary_, sub_elem);

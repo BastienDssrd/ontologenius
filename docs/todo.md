@@ -23,3 +23,4 @@
 [ ] reorganize the atoms in the antecedents for better performances (swrl)
 [ ] cardinality restriction -> add unqualified restriction (anonymous)
 [ ] adding variable property atom and indiv creation for dispositional match (swrl)
+[ ] adding anonymous class assertion directly for individuals (indiv_1 type (property some Class)) (anonymous)
