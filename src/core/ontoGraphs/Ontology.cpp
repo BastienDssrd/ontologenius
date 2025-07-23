@@ -47,6 +47,9 @@ namespace ontologenius {
     object_property_graph_.deepCopy(other.object_property_graph_);
     data_property_graph_.deepCopy(other.data_property_graph_);
     individual_graph_.deepCopy(other.individual_graph_);
+    // rajout
+    anonymous_graph_.deepCopy(other.anonymous_graph_);
+    rule_graph_.deepCopy(other.rule_graph_);
 
     writer_.setFileName("none");
   }

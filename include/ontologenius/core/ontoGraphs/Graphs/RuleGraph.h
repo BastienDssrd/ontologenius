@@ -108,6 +108,8 @@ namespace ontologenius {
 
     RuleBranch* add(const std::size_t& rule_id, Rule_t& rule);
 
+    void deepCopy(const RuleGraph& other);
+
     RuleTriplet_t createRuleAtomTriplet(RuleBranch* rule_branch, const std::pair<ontologenius::ExpressionMember_t*, std::vector<ontologenius::Variable_t>>& rule_element, const size_t& rule_id, const size_t& elem_id, const bool& is_head);
     RuleTriplet_t createClassTriplet(RuleBranch* rule_branch, ExpressionMember_t* class_member, const Variable_t& variable, const size_t& rule_id, const size_t& elem_id);
     RuleTriplet_t createObjectPropertyTriplet(RuleBranch* rule_branch, ExpressionMember_t* property_member, const std::vector<Variable_t>& variable);
@@ -125,6 +127,10 @@ namespace ontologenius {
     AnonymousClassGraph* anonymous_graph_;
 
     std::set<std::string> variable_names_; // only used to rewrite the variable fields
+
+    // functions for deepcopy
+    void cpyBranch(RuleBranch* old_branch, RuleBranch* new_branch);
+    RuleTriplet_t createCopyRuleTriplet(RuleTriplet_t old_triplet, RuleBranch* new_branch, const size_t& rule_id, const size_t& elem_id);
   };
 
 } // namespace ontologenius
