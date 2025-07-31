@@ -313,7 +313,7 @@ namespace ontologenius {
       return RuleTriplet_t(var_from, old_triplet.builtin, var_on);
     }
 
-    case default_atom:
+    default:
       return RuleTriplet_t();
     }
   }
