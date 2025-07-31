@@ -119,24 +119,25 @@ namespace ontologenius {
     // writing the ClassPredicate
     if(class_atom.class_element != nullptr)
     {
-      if(class_atom.class_element->logical_type_ != logical_none)
+      auto* root_node = class_atom.class_element->root_node_;
+      if(root_node->logical_type_ != logical_none)
       // if(class_atom->class_expression->logical_type_ != logical_none) // Collection
       {
         tmp += ">\n";
         writeString(tmp, level);
 
-        writeClassExpression(class_atom.class_element, level + 1);
+        writeClassExpression(root_node, level + 1);
 
         writeString("</" + field_name + ">\n", level);
       }
-      else if(class_atom.class_element->is_complex || class_atom.class_element->oneof ||
-              (class_atom.class_element->data_property_involved_ != nullptr) ||
-              (class_atom.class_element->object_property_involved_ != nullptr)) // complex class
+      else if(root_node->is_complex || root_node->oneof ||
+              (root_node->data_property_involved_ != nullptr) ||
+              (root_node->object_property_involved_ != nullptr)) // complex class
       {
         tmp += ">\n";
         writeString(tmp, level);
 
-        writeRestriction(class_atom.class_element, level + 1);
+        writeRestriction(root_node, level + 1);
 
         writeString("</" + field_name + ">\n", level);
       }
@@ -285,32 +286,34 @@ namespace ontologenius {
 
   void RuleOwlWriter::writeEquivalentClass(ClassBranch* branch)
   {
-    AnonymousClassBranch* equiv = branch->equiv_relations_;
+    AnonymousClassBranch* equiv = branch->equiv_anonymous_class_;
 
     if(equiv != nullptr)
     {
-      for(auto* elem : equiv->ano_elems_)
+      for(auto* tree : equiv->ano_trees_)
       {
         std::string field;
         field = "owl:equivalentClass";
         const size_t level = 2;
 
+        auto* tree_root_node = tree->root_node_;
+
         // single expression
-        if(elem->sub_elements_.empty() &&
-           elem->class_involved_ != nullptr &&
-           elem->object_property_involved_ == nullptr)
+        if(tree_root_node->sub_elements_.empty() &&
+           tree_root_node->class_involved_ != nullptr &&
+           tree_root_node->object_property_involved_ == nullptr)
         {
-          writeString("<" + field + " " + getResource(elem) + "/>\n", level);
+          writeString("<" + field + " " + getResource(tree_root_node) + "/>\n", level);
         }
         // Collection of expressions
         else
         {
           writeString("<" + field + ">\n", level);
 
-          if(elem->logical_type_ != logical_none || elem->oneof == true)
-            writeClassExpression(elem, level + 1);
+          if(tree_root_node->logical_type_ != logical_none || tree_root_node->oneof == true)
+            writeClassExpression(tree_root_node, level + 1);
           else
-            writeRestriction(elem, level + 1);
+            writeRestriction(tree_root_node, level + 1);
 
           writeString("</" + field + ">\n", level);
         }

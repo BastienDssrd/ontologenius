@@ -113,10 +113,10 @@ namespace ontologenius {
     {
       RuleResource_t resource = getRuleResource(rule_branch, variable);                                            // create the variable
       AnonymousClassBranch* rule_ano_branch = anonymous_graph_->addHiddenRuleElem(rule_id, elem_id, class_member); // returns the newly created ano branch
-      AnonymousClassElement* ano_elem = rule_ano_branch->ano_elems_.front();                                       // complex expression
+      AnonymousClassTree* anonymous_tree = rule_ano_branch->ano_trees_.front();                                    // complex expression
       ClassBranch* hidden = rule_ano_branch->class_equiv_;
 
-      return RuleTriplet_t(hidden, ano_elem, resource);
+      return RuleTriplet_t(hidden, anonymous_tree, resource);
     }
     else
     {
@@ -261,10 +261,10 @@ namespace ontologenius {
         setVariableIndex(new_branch, resource);
 
         AnonymousClassBranch* rule_ano_branch = anonymous_graph_->addCopyHiddenRuleElem(rule_id, elem_id, old_triplet.class_element); // returns the newly created ano branch
-        AnonymousClassElement* ano_elem = rule_ano_branch->ano_elems_.front();                                                        // complex expression
+        AnonymousClassTree* anonymous_tree = rule_ano_branch->ano_trees_.front();                                                     // complex expression
         ClassBranch* hidden = rule_ano_branch->class_equiv_;
 
-        return RuleTriplet_t(hidden, ano_elem, resource);
+        return RuleTriplet_t(hidden, anonymous_tree, resource);
       }
     }
     case object_atom:

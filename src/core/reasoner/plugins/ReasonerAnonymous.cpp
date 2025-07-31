@@ -58,16 +58,16 @@ namespace ontologenius {
           if(is_already_a || checkClassesDisjointess(indiv, anonymous_branch->class_equiv_) == false)
           {
             // Loop over every equivalence relations corresponding to one class
-            for(auto* anonymous_elem : anonymous_branch->ano_elems_)
+            for(auto* anonymous_tree : anonymous_branch->ano_trees_)
             {
 #ifdef DEBUG
-              computeDebugUpdate(indiv, anonymous_elem);
+              computeDebugUpdate(indiv, anonymous_tree);
 #endif
 
               if(is_already_a)
               {
-                const bool inferred_by_me = std::any_of(indiv->is_a_.cbegin(), indiv->is_a_.cend(), [anonymous_branch, anonymous_elem](const auto& is_a) {
-                  return ((is_a.elem == anonymous_branch->class_equiv_) && (is_a.used_rule == anonymous_elem));
+                const bool inferred_by_me = std::any_of(indiv->is_a_.cbegin(), indiv->is_a_.cend(), [anonymous_branch, anonymous_tree](const auto& is_a) {
+                  return ((is_a.elem == anonymous_branch->class_equiv_) && (is_a.used_rule == anonymous_tree));
                 });
                 if(inferred_by_me == false)
                 {
@@ -76,28 +76,28 @@ namespace ontologenius {
                 }
               }
 
-              std::string equiv_flag = "equiv_" + anonymous_elem->ano_name;
+              std::string equiv_flag = "equiv_" + anonymous_tree->ano_name;
 
               if((indiv->flags_.find(equiv_flag) != indiv->flags_.end()) || // already validated at least one member of an ano expression
                  ((indiv->isUpdated() == true) &&                           // indiv has been updated -> new individual
-                  ((anonymous_elem->involves_class && indiv->is_a_.isUpdated()) ||
-                   (anonymous_elem->involves_object_property && indiv->object_relations_.isUpdated()) ||
-                   (anonymous_elem->involves_data_property && indiv->data_relations_.isUpdated()) ||
-                   (anonymous_elem->involves_individual && indiv->same_as_.isUpdated()))))
+                  ((anonymous_tree->involves_class && indiv->is_a_.isUpdated()) ||
+                   (anonymous_tree->involves_object_property && indiv->object_relations_.isUpdated()) ||
+                   (anonymous_tree->involves_data_property && indiv->data_relations_.isUpdated()) ||
+                   (anonymous_tree->involves_individual && indiv->same_as_.isUpdated()))))
               {
                 bool tree_first_layer_result = true;
                 bool current_tree_result = false;
 
                 if(is_already_a == false)
-                  tree_first_layer_result = resolveFirstLayer(indiv, anonymous_elem);
+                  tree_first_layer_result = resolveFirstLayer(indiv, anonymous_tree->root_node_);
                 has_active_equiv = has_active_equiv || tree_first_layer_result;
 
                 if(tree_first_layer_result == true)
                 {
                   indiv->flags_[equiv_flag] = {};
                   used.clear();
-                  used.reserve(anonymous_branch->depth_);
-                  current_tree_result = resolveTree(indiv, anonymous_elem, used);
+                  used.reserve(anonymous_tree->depth_);
+                  current_tree_result = resolveTree(indiv, anonymous_tree->root_node_, used);
                   trees_evaluation_result = trees_evaluation_result || current_tree_result;
                 }
                 else
@@ -107,7 +107,7 @@ namespace ontologenius {
                 {
                   if(is_already_a == false) // the indiv is checked to still be of the same class so we can break out of the loop
                   {
-                    addInferredInheritance(indiv, anonymous_branch, anonymous_elem, used);
+                    addInferredInheritance(indiv, anonymous_branch, anonymous_tree, used);
                     nb_update++;
                     if(anonymous_branch->class_equiv_->isHidden() == false)
                     {
@@ -122,7 +122,7 @@ namespace ontologenius {
             }
           }
           // used to remove inheritance in case an individual previously inferred does not check any of the expressions after updates
-          if(trees_evaluation_result == false && anonymous_branch->ano_elems_.empty() == false && is_already_a)
+          if(trees_evaluation_result == false && anonymous_branch->ano_trees_.empty() == false && is_already_a)
           {
             indiv->nb_updates_++;
             anonymous_branch->class_equiv_->nb_updates_++;
@@ -141,7 +141,7 @@ namespace ontologenius {
 
   void ReasonerAnonymous::addInferredInheritance(IndividualBranch* indiv,
                                                  AnonymousClassBranch* anonymous_branch,
-                                                 AnonymousClassElement* element,
+                                                 AnonymousClassTree* anonymous_tree,
                                                  const std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
   {
     indiv->is_a_.emplaceBack(anonymous_branch->class_equiv_, 1.0, true); // adding the emplaceBack so that the is_a get in updated mode
@@ -153,7 +153,7 @@ namespace ontologenius {
     for(const auto& induced_vector : used)
     {
       indiv->is_a_.back().explanation.push_back(induced_vector.first);
-      indiv->is_a_.back().used_rule = element;
+      indiv->is_a_.back().used_rule = anonymous_tree;
       // check for nullptr because OneOf returns a (string, nullptr)
       if(induced_vector.second != nullptr)
       {

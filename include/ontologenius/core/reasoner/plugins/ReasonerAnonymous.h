@@ -30,7 +30,7 @@ namespace ontologenius {
 
     void addInferredInheritance(IndividualBranch* indiv,
                                 AnonymousClassBranch* anonymous_branch,
-                                AnonymousClassElement* element,
+                                AnonymousClassTree* anonymous_tree,
                                 const std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used);
 
     bool resolveFirstLayer(IndividualBranch* indiv, AnonymousClassElement* ano_elem);
@@ -57,11 +57,11 @@ namespace ontologenius {
     bool checkSomeCard(IndividualBranch* indiv, AnonymousClassElement* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used);
     bool checkValueCard(IndividualBranch* indiv, AnonymousClassElement* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used);
 
-    std::string computeDebugUpdate(IndividualBranch* indiv, AnonymousClassElement* ano_elem)
+    std::string computeDebugUpdate(IndividualBranch* indiv, AnonymousClassTree* anonymous_tree)
     {
       std::string res;
       res = "indiv " + indiv->value() + ": " + indiv->updatesToString();
-      res += "with " + ano_elem->ano_name + ": " + ano_elem->involvesToString();
+      res += "with " + anonymous_tree->ano_name + ": " + anonymous_tree->involvesToString();
       if(indiv->flags_.find("equiv") != indiv->flags_.end())
         res += "|equiv: 1";
       else

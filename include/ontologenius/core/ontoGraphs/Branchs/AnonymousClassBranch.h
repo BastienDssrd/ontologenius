@@ -111,25 +111,18 @@ namespace ontologenius {
     }
   };
 
-  class AnonymousClassElement : public InferenceRuleNode
+  class AnonymousClassTree;
+
+  class AnonymousClassElement
   {
   public:
-    AnonymousClassElement(const std::string& rule) : InferenceRuleNode(rule),
-                                                     logical_type_(logical_none), oneof(false), is_complex(false), root_node_(nullptr),
-                                                     involves_class(false), involves_object_property(false), involves_data_property(false), involves_individual(false),
-                                                     class_involved_(nullptr), object_property_involved_(nullptr), data_property_involved_(nullptr), individual_involved_(nullptr)
+    AnonymousClassElement() : logical_type_(logical_none), oneof(false), is_complex(false),
+                              class_involved_(nullptr), object_property_involved_(nullptr), data_property_involved_(nullptr), individual_involved_(nullptr)
     {}
 
     LogicalNodeType_e logical_type_;
     bool oneof; // true = OneOf element
     bool is_complex;
-
-    AnonymousClassElement* root_node_;
-
-    bool involves_class;
-    bool involves_object_property;
-    bool involves_data_property;
-    bool involves_individual;
 
     // pointers to the concepts used in the equivalence relation
     ClassBranch* class_involved_;
@@ -140,13 +133,31 @@ namespace ontologenius {
     CardinalityElement_t card_;
 
     std::vector<AnonymousClassElement*> sub_elements_;
+  };
+
+  class AnonymousClassTree : public InferenceRuleNode
+  {
+  public:
+    AnonymousClassTree(const std::string& rule) : InferenceRuleNode(rule),
+                                                  involves_class(false), involves_object_property(false), involves_data_property(false), involves_individual(false),
+                                                  root_node_(nullptr)
+    {}
+
+    bool involves_class;
+    bool involves_object_property;
+    bool involves_data_property;
+    bool involves_individual;
+
+    AnonymousClassElement* root_node_;
+    size_t depth_;
+
     std::string ano_name;
 
     std::string involvesToString() const
     {
       std::string involves_res;
-      involves_res = " c : " + std::to_string(int(root_node_->involves_class)) + " o : " + std::to_string(int(root_node_->involves_object_property)) +
-                     " d : " + std::to_string(int(root_node_->involves_data_property)) + " i : " + std::to_string(int(root_node_->involves_individual));
+      involves_res = " c : " + std::to_string(int(involves_class)) + " o : " + std::to_string(int(involves_object_property)) +
+                     " d : " + std::to_string(int(involves_data_property)) + " i : " + std::to_string(int(involves_individual));
       return involves_res;
     }
   };
@@ -154,11 +165,10 @@ namespace ontologenius {
   class AnonymousClassBranch : public ValuedNode
   {
   public:
-    explicit AnonymousClassBranch(const std::string& value, bool hidden = false) : ValuedNode(value, hidden), class_equiv_(nullptr), depth_(0) {}
+    explicit AnonymousClassBranch(const std::string& value, bool hidden = false) : ValuedNode(value, hidden), class_equiv_(nullptr) {}
 
     ClassBranch* class_equiv_;
-    std::vector<AnonymousClassElement*> ano_elems_;
-    size_t depth_;
+    std::vector<AnonymousClassTree*> ano_trees_;
   };
 
 } // namespace ontologenius

@@ -34,9 +34,9 @@ namespace ontologenius {
     for(AnonymousClassBranch* branch_vect : graph_vect_)
     {
       current_ano_ = branch_vect->class_equiv_->value();
-      for(auto* branch : branch_vect->ano_elems_)
+      for(auto* tree : branch_vect->ano_trees_)
       {
-        auto errs = resolveTree(branch, {ClassElement(branch_vect->class_equiv_)});
+        auto errs = resolveTree(tree->root_node_, {ClassElement(branch_vect->class_equiv_)});
         for(auto& err : errs)
           printError("In equivalence of class " + current_ano_ + ": error between class " + current_ano_ + " " + err);
       }

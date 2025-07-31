@@ -1473,6 +1473,8 @@ namespace ontologenius {
       auto* data = relation.second;
       new_branch->data_relations_.emplace_back(relation, prop, data);
     }
+
+    // equiv_anonymous_class_ has to be recreated by the AnonymousClassGraph
   }
 
 } // namespace ontologenius

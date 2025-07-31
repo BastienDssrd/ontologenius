@@ -165,18 +165,11 @@ namespace ontologenius {
                         DataPropertyGraph* data_property_graph, IndividualGraph* individual_graph);
     ~AnonymousClassGraph() override = default;
 
+    AnonymousClassBranch* add(const std::string& value, AnonymousClassVectors_t& ano_class);
     void deepCopy(const AnonymousClassGraph& other);
 
-    AnonymousClassElement* createElement(ExpressionMember_t* exp_leaf, AnonymousClassElement* root_node = nullptr);
-    AnonymousClassElement* createTree(ExpressionMember_t* member_node, size_t& depth, AnonymousClassElement* root_node = nullptr);
-    AnonymousClassBranch* add(const std::string& value, AnonymousClassVectors_t& ano_class);
-    AnonymousClassBranch* addHiddenRuleElem(const size_t& rule_id, const size_t& elem_id, ExpressionMember_t* ano_expression);        // for rule usage
-    AnonymousClassBranch* addCopyHiddenRuleElem(const size_t& rule_id, const size_t& elem_id, AnonymousClassElement* ano_expression); // for rule copy usage
-    AnonymousClassElement* resolveTree(AnonymousClassElement* elem, bool prev_and);
-
-    void printTree(AnonymousClassElement* ano_elem, size_t level, bool root) const;
-    std::string toString(CardType_e value) const;
-    std::string toString(AnonymousClassElement* ano_elem) const;
+    AnonymousClassBranch* addHiddenRuleElem(const size_t& rule_id, const size_t& elem_id, ExpressionMember_t* ano_expression);     // for rule usage
+    AnonymousClassBranch* addCopyHiddenRuleElem(const size_t& rule_id, const size_t& elem_id, AnonymousClassTree* anonymous_tree); // for rule copy usage
 
   private:
     ClassGraph* class_graph_;
@@ -184,10 +177,17 @@ namespace ontologenius {
     DataPropertyGraph* data_property_graph_;
     IndividualGraph* individual_graph_;
 
-    // functions for deepcopy
+    AnonymousClassTree* createTree(ExpressionMember_t* member_node);
+    AnonymousClassElement* createTreeNodes(ExpressionMember_t* member_node, size_t& depth, AnonymousClassTree* related_tree);
+    AnonymousClassElement* createNodeContent(ExpressionMember_t* exp_leaf, AnonymousClassTree* related_tree);
+
     void cpyBranch(AnonymousClassBranch* old_branch, AnonymousClassBranch* new_branch);
-    AnonymousClassElement* createCopyElemTree(AnonymousClassElement* old_ano_elem, size_t& depth, AnonymousClassElement* root_node = nullptr);
-    AnonymousClassElement* createCopyElement(AnonymousClassElement* old_elem, AnonymousClassElement* root_node = nullptr);
+    AnonymousClassTree* copyTree(AnonymousClassTree* old_tree);
+    AnonymousClassElement* copyTreeNodes(AnonymousClassElement* old_node, AnonymousClassTree* related_tree);
+    AnonymousClassElement* copyNodeContent(AnonymousClassElement* old_node, AnonymousClassTree* related_tree);
+
+    void printTree(AnonymousClassElement* ano_elem, size_t level, bool root) const;
+    std::string cardinalityToString(CardType_e value) const; 
   };
 
 } // namespace ontologenius

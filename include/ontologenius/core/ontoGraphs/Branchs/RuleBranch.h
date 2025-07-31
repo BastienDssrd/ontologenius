@@ -78,11 +78,11 @@ namespace ontologenius {
 
     // complex class triplet
     RuleTriplet_t(ClassBranch* class_branch,
-                  AnonymousClassElement* ano_expression,
+                  AnonymousClassTree* anonymous_tree,
                   RuleResource_t& resource) : atom_type_(class_atom),
                                               subject(resource),
                                               class_predicate(class_branch),
-                                              class_element(ano_expression),
+                                              class_element(anonymous_tree),
                                               object_predicate(nullptr),
                                               data_predicate(nullptr)
     {}
@@ -128,7 +128,7 @@ namespace ontologenius {
 
     RuleResource_t subject;                 // can be variable or not (?c is, pr2 isn't)
     ClassBranch* class_predicate;           // set only if class atom
-    AnonymousClassElement* class_element;   // used to store the anonymous class if the class expression is complex
+    AnonymousClassTree* class_element;      // used to store the anonymous class if the class expression is complex // TODO: should we take the AnonymousClassBranch ?
     ObjectPropertyBranch* object_predicate; // set only if object atom
     DataPropertyBranch* data_predicate;     // set only if data atom
     Builtin_t builtin;                      // used only for builtin atoms

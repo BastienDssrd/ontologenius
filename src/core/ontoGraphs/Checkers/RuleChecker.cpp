@@ -113,16 +113,17 @@ namespace ontologenius {
       keys_variables.insert(class_atom.subject.name);
       if(class_atom.class_element != nullptr)
       {
-        if(class_atom.class_element->logical_type_ != logical_none || class_atom.class_element->oneof == true || class_atom.class_element->is_complex == true) // class expression
+        auto* root_node = class_atom.class_element->root_node_;
+        if(root_node->logical_type_ != logical_none || root_node->oneof == true || root_node->is_complex == true) // class expression
         {
           std::vector<ClassElement> expression_domains;
-          getUpperLevelDomains(class_atom.class_element, expression_domains);
+          getUpperLevelDomains(root_node, expression_domains);
           mapping_var_classes[class_atom.subject.name].push_back(expression_domains);
         }
-        else if(class_atom.class_element->object_property_involved_ != nullptr) // single object restriction
-          mapping_var_classes[class_atom.subject.name].push_back(class_atom.class_element->object_property_involved_->domains_);
-        else if(class_atom.class_element->data_property_involved_ != nullptr) // single data restriction
-          mapping_var_classes[class_atom.subject.name].push_back(class_atom.class_element->data_property_involved_->domains_);
+        else if(root_node->object_property_involved_ != nullptr) // single object restriction
+          mapping_var_classes[class_atom.subject.name].push_back(root_node->object_property_involved_->domains_);
+        else if(root_node->data_property_involved_ != nullptr) // single data restriction
+          mapping_var_classes[class_atom.subject.name].push_back(root_node->data_property_involved_->domains_);
       }
       else // class only restriction
       {
