@@ -34,20 +34,10 @@ namespace ontologenius {
   ClassGraph::ClassGraph(const ClassGraph& other,
                          IndividualGraph* individual_graph,
                          ObjectPropertyGraph* object_property_graph,
-                         DataPropertyGraph* data_property_graph) : OntoGraph(individual_graph),
+                         DataPropertyGraph* data_property_graph) : OntoGraph(other, individual_graph),
                                                                    object_property_graph_(object_property_graph),
                                                                    data_property_graph_(data_property_graph)
-  {
-    language_ = other.language_;
-
-    for(auto* branch : other.all_branchs_)
-    {
-      auto* class_branch = new ClassBranch(branch->value());
-      all_branchs_.push_back(class_branch);
-    }
-
-    this->container_.load(all_branchs_);
-  }
+  {}
 
   ClassBranch* ClassGraph::add(const std::string& value, ObjectVectors_t& object_vector)
   {

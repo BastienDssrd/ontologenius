@@ -42,6 +42,19 @@ namespace ontologenius {
 
   public:
     Graph() : language_("en") {}
+    explicit Graph(const Graph<B>& other) : language_(other.language_)
+    {
+      all_branchs_.reserve(all_branchs_.size());
+
+      for(auto* branch : other.all_branchs_)
+      {
+        if(branch->isHidden() == false)
+          all_branchs_.push_back(new B(branch->value()));
+      }
+
+      container_.load(all_branchs_);
+    }
+
     virtual ~Graph()
     {
       for(auto& branch : all_branchs_)

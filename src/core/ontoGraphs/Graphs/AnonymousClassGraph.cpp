@@ -35,18 +35,13 @@ namespace ontologenius {
                                            ClassGraph* class_graph,
                                            ObjectPropertyGraph* object_property_graph,
                                            DataPropertyGraph* data_property_graph,
-                                           IndividualGraph* individual_graph) : class_graph_(class_graph),
+                                           IndividualGraph* individual_graph) : Graph(other),
+                                                                                class_graph_(class_graph),
                                                                                 object_property_graph_(object_property_graph),
                                                                                 data_property_graph_(data_property_graph),
                                                                                 individual_graph_(individual_graph)
 
-  {
-    for(auto* branch : other.all_branchs_)
-    {
-      auto* class_branch = new AnonymousClassBranch(branch->value());
-      all_branchs_.push_back(class_branch);
-    }
-  }
+  {}
 
   AnonymousClassElement* AnonymousClassGraph::createElement(ExpressionMember_t* exp, AnonymousClassElement* root_node)
   {

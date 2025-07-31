@@ -27,19 +27,9 @@ namespace ontologenius {
 
   DataPropertyGraph::DataPropertyGraph(const DataPropertyGraph& other,
                                        IndividualGraph* individual_graph,
-                                       ClassGraph* class_graph) : OntoGraph(individual_graph),
+                                       ClassGraph* class_graph) : OntoGraph(other, individual_graph),
                                                                   class_graph_(class_graph)
-  {
-    language_ = other.language_;
-
-    for(const auto& branch : other.all_branchs_)
-    {
-      auto* prop_branch = new DataPropertyBranch(branch->value());
-      all_branchs_.push_back(prop_branch);
-    }
-
-    this->container_.load(all_branchs_);
-  }
+  {}
 
   DataPropertyBranch* DataPropertyGraph::add(const std::string& value, DataPropertyVectors_t& property_vectors)
   {

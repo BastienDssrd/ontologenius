@@ -38,21 +38,17 @@ namespace ontologenius {
 
   IndividualGraph::IndividualGraph(const IndividualGraph& other,
                                    ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph,
-                                   DataPropertyGraph* data_property_graph) : class_graph_(class_graph),
+                                   DataPropertyGraph* data_property_graph) : Graph(other),
+                                                                             class_graph_(class_graph),
                                                                              object_property_graph_(object_property_graph),
                                                                              data_property_graph_(data_property_graph)
   {
-    language_ = other.language_;
-
-    std::transform(other.all_branchs_.cbegin(), other.all_branchs_.cend(), std::back_inserter(all_branchs_), [](auto indiv) { return new IndividualBranch(indiv->value()); });
     for(auto* individual : all_branchs_)
     {
       if((size_t)individual->get() >= ordered_individuals_.size())
         ordered_individuals_.resize(individual->get() + 1, nullptr);
       ordered_individuals_[individual->get()] = individual;
     }
-
-    container_.load(all_branchs_);
   }
 
   IndividualBranch* IndividualGraph::add(const std::string& value, IndividualVectors_t& individual_vector)

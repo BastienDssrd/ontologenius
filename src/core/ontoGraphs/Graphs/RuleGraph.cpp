@@ -37,7 +37,8 @@ namespace ontologenius {
                        ObjectPropertyGraph* object_property_graph,
                        DataPropertyGraph* data_property_graph,
                        IndividualGraph* individual_graph,
-                       AnonymousClassGraph* anonymous_graph) : class_graph_(class_graph),
+                       AnonymousClassGraph* anonymous_graph) : // Graph ccopy constructor is not called as RuleBranch need more advanced copy
+                                                               class_graph_(class_graph),
                                                                object_property_graph_(object_property_graph),
                                                                data_property_graph_(data_property_graph),
                                                                individual_graph_(individual_graph),
