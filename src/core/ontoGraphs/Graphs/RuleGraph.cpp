@@ -19,6 +19,7 @@
 #include "ontologenius/core/ontoGraphs/Graphs/Graph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/IndividualGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
+#include "ontologenius/utils/String.h"
 
 // #define DEBUG
 
@@ -191,6 +192,130 @@ namespace ontologenius {
     }
     else
       resource.variable_id = var_it->second; // if it already does, we just link it with its
+  }
+
+  void RuleGraph::deepCopy(const RuleGraph& other)
+  {
+    for(size_t i = 0; i < other.all_branchs_.size(); i++)
+      cpyBranch(other.all_branchs_[i], all_branchs_[i]);
+  }
+
+  void RuleGraph::cpyBranch(RuleBranch* old_branch, RuleBranch* new_branch)
+  {
+    new_branch->nb_updates_ = old_branch->nb_updates_;
+    new_branch->setUpdated(old_branch->isUpdated());
+    new_branch->flags_ = old_branch->flags_;
+
+    new_branch->dictionary_ = old_branch->dictionary_;
+    new_branch->steady_dictionary_ = old_branch->steady_dictionary_;
+
+    // addon
+    new_branch->involves_class = old_branch->involves_class;
+    new_branch->involves_object_property = old_branch->involves_object_property;
+    new_branch->involves_data_property = old_branch->involves_data_property;
+
+    size_t elem_id = 0;
+    size_t rule_id = std::stoi(split(old_branch->value(), "_").back());
+
+    for(const auto& elem : old_branch->rule_body_)
+    {
+      new_branch->rule_body_.emplace_back(createCopyRuleTriplet(elem, new_branch, rule_id, elem_id));
+      elem_id++;
+    }
+
+    for(const auto& elem : old_branch->rule_head_)
+    {
+      new_branch->rule_head_.emplace_back(createCopyRuleTriplet(elem, new_branch, rule_id, elem_id));
+      elem_id++;
+    }
+
+    new_branch->atom_initial_order_ = old_branch->atom_initial_order_;
+  }
+
+  RuleTriplet_t RuleGraph::createCopyRuleTriplet(RuleTriplet_t old_triplet, RuleBranch* new_branch, const size_t& rule_id, const size_t& elem_id)
+  {
+    switch(old_triplet.atom_type_)
+    {
+    case class_atom:
+    {
+      if(old_triplet.class_element == nullptr)
+      {
+        ClassBranch* simple_class = class_graph_->container_.find(old_triplet.class_predicate->value());
+        RuleResource_t resource;
+        if(old_triplet.subject.indiv_value != nullptr)
+          resource = RuleResource_t(individual_graph_->container_.find(old_triplet.subject.indiv_value->value()));
+        else
+          resource = RuleResource_t(old_triplet.subject.name);
+        setVariableIndex(new_branch, resource);
+
+        return RuleTriplet_t(simple_class, resource);
+      }
+      else
+      {
+        RuleResource_t resource;
+        if(old_triplet.subject.indiv_value != nullptr)
+          resource = RuleResource_t(individual_graph_->container_.find(old_triplet.subject.indiv_value->value()));
+        else
+          resource = RuleResource_t(old_triplet.subject.name);
+        setVariableIndex(new_branch, resource);
+
+        AnonymousClassBranch* rule_ano_branch = anonymous_graph_->addCopyHiddenRuleElem(rule_id, elem_id, old_triplet.class_element); // returns the newly created ano branch
+        AnonymousClassElement* ano_elem = rule_ano_branch->ano_elems_.front();                                                        // complex expression
+        ClassBranch* hidden = rule_ano_branch->class_equiv_;
+
+        return RuleTriplet_t(hidden, ano_elem, resource);
+      }
+    }
+    case object_atom:
+    {
+      RuleResource_t resource_from;
+      if(old_triplet.subject.indiv_value != nullptr)
+        resource_from = RuleResource_t(individual_graph_->container_.find(old_triplet.subject.indiv_value->value()));
+      else
+        resource_from = RuleResource_t(old_triplet.subject.name);
+      setVariableIndex(new_branch, resource_from);
+
+      ObjectPropertyBranch* property = object_property_graph_->container_.find(old_triplet.object_predicate->value());
+
+      RuleResource_t resource_on;
+      if(old_triplet.object.indiv_value != nullptr)
+        resource_on = RuleResource_t(individual_graph_->container_.find(old_triplet.object.indiv_value->value()));
+      else
+        resource_on = RuleResource_t(old_triplet.object.name);
+      setVariableIndex(new_branch, resource_on);
+
+      return RuleTriplet_t(resource_from, property, resource_on);
+    }
+    case data_atom:
+    {
+      RuleResource_t resource_from;
+      if(old_triplet.subject.indiv_value != nullptr)
+        resource_from = RuleResource_t(individual_graph_->container_.find(old_triplet.subject.indiv_value->value()));
+      else
+        resource_from = RuleResource_t(old_triplet.subject.name);
+      setVariableIndex(new_branch, resource_from);
+      DataPropertyBranch* property = data_property_graph_->container_.find(old_triplet.data_predicate->value());
+
+      RuleResource_t resource_on;
+      if(old_triplet.object.datatype_value != nullptr)
+        resource_on = old_triplet.object.datatype_value->value(); // cannot access the literal nodes through the dataproperty graph
+      else
+        resource_on = RuleResource_t(old_triplet.object.name);
+      setVariableIndex(new_branch, resource_on);
+      return RuleTriplet_t(resource_from, property, resource_on);
+    }
+
+    case builtin_atom:
+    {
+      RuleResource_t var_from, var_on;
+      setVariableIndex(new_branch, var_from);
+      setVariableIndex(new_branch, var_on);
+      return RuleTriplet_t(var_from, old_triplet.builtin, var_on);
+    }
+
+    case default_atom:
+      return RuleTriplet_t();
+    }
   }
 
 } // namespace ontologenius

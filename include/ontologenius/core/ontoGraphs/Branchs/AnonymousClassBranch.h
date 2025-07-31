@@ -88,6 +88,27 @@ namespace ontologenius {
     CardType_e card_type_ = cardinality_none;
     size_t card_number_ = 0;
     LiteralNode* card_range_ = nullptr;
+
+    std::string toString() const
+    {
+      switch(card_type_)
+      {
+      case cardinality_some:
+        return "some";
+      case cardinality_only:
+        return "only";
+      case cardinality_value:
+        return "value";
+      case cardinality_min:
+        return "min " + std::to_string(card_number_);
+      case cardinality_max:
+        return "max " + std::to_string(card_number_);
+      case cardinality_exactly:
+        return "exactly " + std::to_string(card_number_);
+      default:
+        return "";
+      }
+    }
   };
 
   class AnonymousClassElement : public InferenceRuleNode
