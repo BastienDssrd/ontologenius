@@ -260,7 +260,7 @@ namespace ontologenius {
           resource = RuleResource_t(old_triplet.subject.name);
         setVariableIndex(new_branch, resource);
 
-        AnonymousClassBranch* rule_ano_branch = anonymous_graph_->addCopyHiddenRuleElem(rule_id, elem_id, old_triplet.class_element); // returns the newly created ano branch
+        AnonymousClassBranch* rule_ano_branch = anonymous_graph_->copyHiddenRuleElem(rule_id, elem_id, old_triplet.class_element); // returns the newly created ano branch
         AnonymousClassTree* anonymous_tree = rule_ano_branch->ano_trees_.front();                                                     // complex expression
         ClassBranch* hidden = rule_ano_branch->class_equiv_;
 

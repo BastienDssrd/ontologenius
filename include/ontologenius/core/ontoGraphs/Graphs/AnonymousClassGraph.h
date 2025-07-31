@@ -169,7 +169,7 @@ namespace ontologenius {
     void deepCopy(const AnonymousClassGraph& other);
 
     AnonymousClassBranch* addHiddenRuleElem(const size_t& rule_id, const size_t& elem_id, ExpressionMember_t* ano_expression);     // for rule usage
-    AnonymousClassBranch* addCopyHiddenRuleElem(const size_t& rule_id, const size_t& elem_id, AnonymousClassTree* anonymous_tree); // for rule copy usage
+    AnonymousClassBranch* copyHiddenRuleElem(const size_t& rule_id, const size_t& elem_id, AnonymousClassTree* anonymous_tree);    // for rule copy usage
 
   private:
     ClassGraph* class_graph_;

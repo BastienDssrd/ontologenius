@@ -95,13 +95,13 @@ namespace ontologenius {
     return anonymous_branch;
   }
 
-  AnonymousClassBranch* AnonymousClassGraph::addCopyHiddenRuleElem(const size_t& rule_id, const size_t& elem_id, AnonymousClassTree* anonymous_tree)
+  AnonymousClassBranch* AnonymousClassGraph::copyHiddenRuleElem(const size_t& rule_id, const size_t& elem_id, AnonymousClassTree* anonymous_tree)
   {
     const std::string current_elem = std::to_string(rule_id) + "_" + std::to_string(elem_id);
     const std::string ano_name = "anonymous_rule_" + current_elem;
     const std::string hidden_class_name = "__rule_" + current_elem;
 
-    AnonymousClassBranch* anonymous_branch = new AnonymousClassBranch(ano_name); // TODO check if it is not already created
+    AnonymousClassBranch* anonymous_branch = this->findOrCreateBranch(ano_name);
 
     ClassBranch* hidden_class_branch = class_graph_->findOrCreateBranch(hidden_class_name, true); // this ClassBranch has to be hidden
     hidden_class_branch->equiv_anonymous_class_ = anonymous_branch;
