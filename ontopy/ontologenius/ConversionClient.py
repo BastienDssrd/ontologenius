@@ -9,19 +9,20 @@ else:
 
 class ConversionClient:
 
+    _verbose = False
+
     def __init__(self, name):
         """Constructs a ROS client linked to the service name(str)."""
         self._name = 'ontologenius/conversion'
         if name != '':
           self._name = self._name + "/" + name
-        self._verbose = False
         self._client = Ontoros.createService(self._name, OntologeniusConversion)
 
-    def setVerbose(self, verbose):
+    def setVerbose(verbose):
         """If verbose(bool) is set to True, the clients will post messages about
            the failure to call the services and about their restoration.
         """
-        self._verbose = verbose
+        ConversionClient._verbose = verbose
 
     def individualsIndexes2Ids(self, indexes):
        return self._indexes2Ids(indexes, OntologeniusConversionRequest.INDIVIDUALS)
