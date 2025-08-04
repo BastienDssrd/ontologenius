@@ -166,6 +166,11 @@ namespace ontologenius {
   {
   public:
     explicit AnonymousClassBranch(const std::string& value, bool hidden = false) : ValuedNode(value, hidden), class_equiv_(nullptr) {}
+    ~AnonymousClassBranch()
+    {
+      for(auto* tree : ano_trees_)
+        delete tree;
+    }
 
     ClassBranch* class_equiv_;
     std::vector<AnonymousClassTree*> ano_trees_;
