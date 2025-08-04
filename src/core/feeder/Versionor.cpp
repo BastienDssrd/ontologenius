@@ -84,6 +84,19 @@ namespace ontologenius {
     return true;
   }
 
+  std::string Versionor::getCurrentCommit()
+  {
+    if(current_node_ == nullptr)
+      return "";
+    else
+      return (current_node_->getPrev() == nullptr) ? "" : current_node_->getPrev()->getId();
+  }
+
+  size_t Versionor::getNbData()
+  {
+    return (current_node_ == nullptr) ? 0 : current_node_->getNbData();
+  }
+
   bool Versionor::areSameStates(const std::string& from_node, const std::string& to_node)
   {
     auto from_node_it = getNode(from_node);

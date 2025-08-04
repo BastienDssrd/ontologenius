@@ -22,6 +22,8 @@ namespace ontologenius {
     void insert(Feed_t data);
     bool commit(const std::string& id);
     bool checkout(const std::string& id);
+    std::string getCurrentCommit();
+    size_t getNbData();
     bool areSameStates(const std::string& from_node, const std::string& to_node);
 
     void print() { nodes_["0"]->print(); }

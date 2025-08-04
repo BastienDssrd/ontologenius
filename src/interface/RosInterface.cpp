@@ -333,6 +333,10 @@ namespace ontologenius {
         else
           res->values.push_back("false");
       }
+      else if(req->action == "currentCommit")
+        res->values.push_back(feeder_.getCurrentCommit());
+      else if(req->action == "nbUncommitData")
+        res->values.push_back(std::to_string(feeder_.getNbUncommitedData()));
       else if(req->action == "versioning")
         res->values.push_back(feeder_.versioning() ? "true" : "false");
       else

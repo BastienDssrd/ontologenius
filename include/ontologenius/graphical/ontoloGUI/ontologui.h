@@ -84,6 +84,8 @@ public slots:
   void feederDelSlot();
   void feederCommitSlot();
   void feederCheckoutSlot();
+  void feederGetCommitSlot();
+  void feederGetNbUncommitSlot();
 
   bool updateOntoPtr();
 

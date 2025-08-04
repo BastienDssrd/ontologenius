@@ -66,6 +66,12 @@ class FeederPublisher(ClientBase):
 
     def doVersioning(self):
         return self.callStr("versioning", "") == "true"
+    
+    def getCurrentCommit(self):
+        return self.callStr("currentCommit", "")
+    
+    def getNbUncommitedData(self):
+        return int(self.callStr("nbUncommitData", "").c_str())
 
     def compareCommits(self, commit_from, commit_to = ""):
         param = commit_from

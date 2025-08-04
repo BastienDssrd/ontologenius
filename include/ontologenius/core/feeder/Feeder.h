@@ -46,6 +46,16 @@ namespace ontologenius {
     void activateVersionning(bool activated) { versionor_.activate(activated); }
     void exportToXml(const std::string& path) { versionor_.exportToXml(path); }
 
+    std::string getCurrentCommit()
+    {
+       return versionor_.getCurrentCommit();
+    }
+
+    size_t getNbUncommitedData()
+    {
+      return versionor_.getNbData();
+    }
+
     bool areSameStates(const std::string& commit_from, const std::string& commit_to)
     {
       return versionor_.areSameStates(commit_from, commit_to);

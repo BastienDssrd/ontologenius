@@ -1660,6 +1660,7 @@
         </item>
        </layout>
       </widget>
+
       <widget class="QWidget" name="FeederTab">
        <attribute name="title">
         <string>Feeder</string>
@@ -1674,13 +1675,13 @@
                 <widget class="QLabel" name="label_17">
                   <property name="minimumSize">
                    <size>
-                    <width>75</width>
+                    <width>100</width>
                     <height>30</height>
                    </size>
                   </property>
                   <property name="maximumSize">
                    <size>
-                    <width>75</width>
+                    <width>100</width>
                     <height>30</height>
                    </size>
                   </property>
@@ -1711,13 +1712,13 @@
                 <widget class="QLabel" name="label_18">
                   <property name="minimumSize">
                    <size>
-                    <width>75</width>
+                    <width>100</width>
                     <height>30</height>
                    </size>
                   </property>
                   <property name="maximumSize">
                    <size>
-                    <width>75</width>
+                    <width>100</width>
                     <height>30</height>
                    </size>
                   </property>
@@ -1748,13 +1749,13 @@
                 <widget class="QLabel" name="label_19">
                   <property name="minimumSize">
                    <size>
-                    <width>75</width>
+                    <width>100</width>
                     <height>30</height>
                    </size>
                   </property>
                   <property name="maximumSize">
                    <size>
-                    <width>75</width>
+                    <width>100</width>
                     <height>30</height>
                    </size>
                   </property>
@@ -1828,6 +1829,26 @@
              </property>
             </widget>
            </item>
+
+          <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_37">
+           <item>
+            <widget class="QPushButtonExtended" name="FeederGetCommitButton">
+             <property name="text">
+              <string>Current commit</string>
+             </property>
+            </widget>
+           </item>
+
+           <item>
+            <widget class="QPushButtonExtended" name="FeederGetNbUncommitButton">
+             <property name="text">
+              <string>Nb uncommit data</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+          </item>
 
          </layout>
         </item>
