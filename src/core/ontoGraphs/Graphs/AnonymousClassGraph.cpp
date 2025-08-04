@@ -106,7 +106,6 @@ namespace ontologenius {
     ClassBranch* hidden_class_branch = class_graph_->findOrCreateBranch(hidden_class_name, true); // this ClassBranch has to be hidden
     hidden_class_branch->equiv_anonymous_class_ = anonymous_branch;
     anonymous_branch->class_equiv_ = hidden_class_branch;
-    all_branchs_.push_back(anonymous_branch);
 
     AnonymousClassTree* tree = copyTree(anonymous_tree);
     anonymous_branch->ano_trees_.push_back(tree);
