@@ -123,18 +123,17 @@ namespace ontologenius {
       if(used[i])
         continue;
         
-      bool valid = false;
+      int count = 1;
       for(size_t j = i+1; j < datas.size(); j++)
       {
-        if((used[j] == false) && datas[i].sameData(datas[j]) && datas[i].isInvertAction(datas[j]))
+        if((used[j] == false) && datas[i].sameData(datas[j]))
         {
           used[j] = true;
-          valid = true;
-          break;
+          count += datas[i].isInvertAction(datas[j]) ? -1 : 1;
         }
       }
 
-      if(valid == false)
+      if(count != 0)
         return false;
     }
 
@@ -176,34 +175,20 @@ namespace ontologenius {
       current_prevs.push_back(pivot);
       pivot = pivot->getPrev();
       if(pivot == nullptr)
-        break;
+        return {};
     }
-
-    if(pivot == nullptr)
-      return {};
-
-    current_prevs.push_back(pivot);
 
     std::vector<Feed_t> datas;
     for(auto& current_prev : current_prevs)
-    {
-      if(current_prev == pivot)
-        break;
       current_prev->appendDatasInvert(datas);
-    }
 
     bool found_pivot = false;
-    for(auto& goal_prev : goal_prevs)
+    for(auto& node : goal_prevs)
     {
-      if(goal_prev == pivot)
-      {
+      if(node == pivot)
         found_pivot = true;
-        continue;
-      }
-      else if(found_pivot == false)
-        continue;
-      else
-        goal_prev->appendDatasDirect(datas);
+      else if(found_pivot)
+        node->appendDatasDirect(datas);
     }
 
     return datas;
