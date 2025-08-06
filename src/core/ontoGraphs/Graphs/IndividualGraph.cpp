@@ -2671,9 +2671,15 @@ namespace ontologenius {
 
     for(const auto& relation : old_branch->data_relations_)
     {
-      auto* prop = data_property_graph_->container_.find(relation.first->value());
-      auto* data = relation.second;
-      new_branch->data_relations_.emplaceBack(relation, prop, data);
+      // inferred relations using traces should not be copied but recomputed
+      if(relation.inferred && (relation.induced_traces.empty() == false))
+        new_branch->setUpdated(true);
+      else
+      {
+        auto* prop = data_property_graph_->container_.find(relation.first->value());
+        auto* data = data_property_graph_->literal_container_.find(relation.second->value());
+        new_branch->data_relations_.emplaceBack(relation, prop, data);
+      }
     }
   }
 

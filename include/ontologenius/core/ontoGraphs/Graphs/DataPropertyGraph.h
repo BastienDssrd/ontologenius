@@ -73,6 +73,7 @@ namespace ontologenius {
   private:
     ClassGraph* class_graph_;
     BranchContainerSet<LiteralNode> literal_container_;
+    std::vector<LiteralNode*> all_literals_;
 
     template<typename T>
     void getDomain(DataPropertyBranch* branch, size_t depth, std::unordered_set<T>& res, std::unordered_set<DataPropertyBranch*>& up_trace);

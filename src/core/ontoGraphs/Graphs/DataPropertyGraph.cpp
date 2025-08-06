@@ -29,7 +29,13 @@ namespace ontologenius {
                                        IndividualGraph* individual_graph,
                                        ClassGraph* class_graph) : OntoGraph(other, individual_graph),
                                                                   class_graph_(class_graph)
-  {}
+  {
+    all_literals_.reserve(other.all_literals_.size());
+
+    for(auto* literal : other.all_literals_)
+      all_literals_.push_back(new LiteralNode(literal->value()));
+    literal_container_.load(all_literals_);
+  }
 
   DataPropertyBranch* DataPropertyGraph::add(const std::string& value, DataPropertyVectors_t& property_vectors)
   {
@@ -179,6 +185,7 @@ namespace ontologenius {
       const std::lock_guard<std::shared_timed_mutex> lock(mutex_);
       literal = new LiteralNode(value);
       literal_container_.insert(literal);
+      all_literals_.push_back(literal);
     }
     return literal;
   }
@@ -192,6 +199,7 @@ namespace ontologenius {
     {
       literal = new LiteralNode(value);
       literal_container_.insert(literal);
+      all_literals_.push_back(literal);
     }
     return literal;
   }
@@ -311,6 +319,8 @@ namespace ontologenius {
 
   void DataPropertyGraph::deepCopy(const DataPropertyGraph& other)
   {
+    // Literals don't need additional copy than the one performed by the copy constructor
+
     for(size_t i = 0; i < other.all_branchs_.size(); i++)
       cpyBranch(other.all_branchs_[i], all_branchs_[i]);
   }
@@ -330,7 +340,8 @@ namespace ontologenius {
     for(const auto& mother : old_branch->mothers_)
       new_branch->mothers_.emplaceBack(mother, container_.find(mother.elem->value()));
 
-    new_branch->ranges_ = old_branch->ranges_;
+    for(auto* range : old_branch->ranges_)
+      new_branch->ranges_.emplace_back(literal_container_.find(range->value()));
 
     for(const auto& domain : old_branch->domains_)
       new_branch->domains_.emplace_back(domain, class_graph_->container_.find(domain.elem->value()));
