@@ -44,7 +44,7 @@ namespace ontologenius {
     Graph() : language_("en") {}
     explicit Graph(const Graph<B>& other) : language_(other.language_)
     {
-      all_branchs_.reserve(all_branchs_.size());
+      all_branchs_.reserve(other.all_branchs_.size());
 
       for(auto* branch : other.all_branchs_)
         all_branchs_.push_back(new B(branch->value()));
