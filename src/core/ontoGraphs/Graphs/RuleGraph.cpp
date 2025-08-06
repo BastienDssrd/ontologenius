@@ -112,7 +112,11 @@ namespace ontologenius {
     if(class_member->logical_type_ != logical_none || class_member->oneof == true || class_member->is_complex == true || !class_member->rest.property.empty())
     {
       RuleResource_t resource = getRuleResource(rule_branch, variable);                                            // create the variable
-      AnonymousClassBranch* rule_ano_branch = anonymous_graph_->addHiddenRuleElem(rule_id, elem_id, class_member); // returns the newly created ano branch
+      std::string equivalent_class = "rule_" + std::to_string(rule_id) + "_" + std::to_string(elem_id);
+      AnonymousClassVectors_t anonymous_vector;
+      anonymous_vector.class_equiv = equivalent_class;
+      anonymous_vector.equivalence_trees = {class_member};
+      AnonymousClassBranch* rule_ano_branch = anonymous_graph_->add(equivalent_class, anonymous_vector, true);     // returns the newly created ano branch
       AnonymousClassTree* anonymous_tree = rule_ano_branch->ano_trees_.front();                                    // complex expression
       ClassBranch* hidden = rule_ano_branch->class_equiv_;
 
@@ -260,8 +264,9 @@ namespace ontologenius {
           resource = RuleResource_t(old_triplet.subject.name);
         setVariableIndex(new_branch, resource);
 
-        AnonymousClassBranch* rule_ano_branch = anonymous_graph_->copyHiddenRuleElem(rule_id, elem_id, old_triplet.class_element); // returns the newly created ano branch
-        AnonymousClassTree* anonymous_tree = rule_ano_branch->ano_trees_.front();                                                     // complex expression
+        std::string anonymous_class = "anonymous_rule_" + std::to_string(rule_id) + "_" + std::to_string(elem_id); // todo: we should not have to recreate that
+        AnonymousClassBranch* rule_ano_branch = anonymous_graph_->findBranchSafe(anonymous_class);    // get the already copied anonymous class
+        AnonymousClassTree* anonymous_tree = rule_ano_branch->ano_trees_.front();                     // complex expression
         ClassBranch* hidden = rule_ano_branch->class_equiv_;
 
         return RuleTriplet_t(hidden, anonymous_tree, resource);

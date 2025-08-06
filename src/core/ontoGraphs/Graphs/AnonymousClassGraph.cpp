@@ -43,13 +43,13 @@ namespace ontologenius {
 
   {}
 
-  AnonymousClassBranch* AnonymousClassGraph::add(const std::string& value, AnonymousClassVectors_t& ano)
+  AnonymousClassBranch* AnonymousClassGraph::add(const std::string& value, AnonymousClassVectors_t& ano, bool hidden_anonymous)
   {
     const std::lock_guard<std::shared_timed_mutex> lock(Graph<AnonymousClassBranch>::mutex_);
 
     const std::string ano_name = "anonymous_" + value;
     AnonymousClassBranch* anonymous_branch = new AnonymousClassBranch(ano_name);
-    ClassBranch* class_branch = class_graph_->findOrCreateBranch(value);
+    ClassBranch* class_branch = class_graph_->findOrCreateBranch(value, hidden_anonymous);
 
     anonymous_branch->class_equiv_ = class_branch;
     all_branchs_.push_back(anonymous_branch);
@@ -73,44 +73,6 @@ namespace ontologenius {
   {
     for(size_t i = 0; i < other.all_branchs_.size(); i++)
       cpyBranch(other.all_branchs_[i], all_branchs_[i]);
-  }
-
-  AnonymousClassBranch* AnonymousClassGraph::addHiddenRuleElem(const size_t& rule_id, const size_t& elem_id, ExpressionMember_t* ano_expression)
-  {
-    const std::string current_elem = std::to_string(rule_id) + "_" + std::to_string(elem_id);
-    const std::string ano_name = "anonymous_rule_" + current_elem;
-    const std::string hidden_class_name = "__rule_" + current_elem;
-
-    AnonymousClassBranch* anonymous_branch = new AnonymousClassBranch(ano_name);
-
-    ClassBranch* hidden_class_branch = class_graph_->findOrCreateBranch(hidden_class_name, true); // this ClassBranch has to be hidden
-    hidden_class_branch->equiv_anonymous_class_ = anonymous_branch;
-    anonymous_branch->class_equiv_ = hidden_class_branch;
-    all_branchs_.push_back(anonymous_branch);
-
-    AnonymousClassTree* tree = createTree(ano_expression);
-    tree->ano_name = ano_name;
-    anonymous_branch->ano_trees_.push_back(tree);
-
-    return anonymous_branch;
-  }
-
-  AnonymousClassBranch* AnonymousClassGraph::copyHiddenRuleElem(const size_t& rule_id, const size_t& elem_id, AnonymousClassTree* anonymous_tree)
-  {
-    const std::string current_elem = std::to_string(rule_id) + "_" + std::to_string(elem_id);
-    const std::string ano_name = "anonymous_rule_" + current_elem;
-    const std::string hidden_class_name = "__rule_" + current_elem;
-
-    AnonymousClassBranch* anonymous_branch = this->findOrCreateBranch(ano_name);
-
-    ClassBranch* hidden_class_branch = class_graph_->findOrCreateBranch(hidden_class_name, true); // this ClassBranch has to be hidden
-    hidden_class_branch->equiv_anonymous_class_ = anonymous_branch;
-    anonymous_branch->class_equiv_ = hidden_class_branch;
-
-    AnonymousClassTree* tree = copyTree(anonymous_tree);
-    anonymous_branch->ano_trees_.push_back(tree);
-
-    return anonymous_branch;
   }
 
   AnonymousClassTree* AnonymousClassGraph::createTree(ExpressionMember_t* member_node)
@@ -264,7 +226,7 @@ namespace ontologenius {
     new_branch->dictionary_ = old_branch->dictionary_;
     new_branch->steady_dictionary_ = old_branch->steady_dictionary_;
 
-    // fisrt we find the equivalent ClassBranch that has been copied by the ClassGraph
+    // fisrt we find the equivalent ClassBranch that has been copied by the ClassGraph, even if hidden
     auto* equiv_class = class_graph_->container_.find(old_branch->class_equiv_->value());
     // we then link this equivalent class with our new anonymous class in both directions
     new_branch->class_equiv_ = equiv_class;

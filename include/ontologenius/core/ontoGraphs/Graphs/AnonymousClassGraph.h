@@ -165,11 +165,8 @@ namespace ontologenius {
                         DataPropertyGraph* data_property_graph, IndividualGraph* individual_graph);
     ~AnonymousClassGraph() override = default;
 
-    AnonymousClassBranch* add(const std::string& value, AnonymousClassVectors_t& ano_class);
+    AnonymousClassBranch* add(const std::string& value, AnonymousClassVectors_t& ano_class, bool hidden_anonymous = false);
     void deepCopy(const AnonymousClassGraph& other);
-
-    AnonymousClassBranch* addHiddenRuleElem(const size_t& rule_id, const size_t& elem_id, ExpressionMember_t* ano_expression);     // for rule usage
-    AnonymousClassBranch* copyHiddenRuleElem(const size_t& rule_id, const size_t& elem_id, AnonymousClassTree* anonymous_tree);    // for rule copy usage
 
   private:
     ClassGraph* class_graph_;
