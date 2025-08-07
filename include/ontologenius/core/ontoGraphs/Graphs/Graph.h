@@ -47,7 +47,7 @@ namespace ontologenius {
       all_branchs_.reserve(other.all_branchs_.size());
 
       for(auto* branch : other.all_branchs_)
-        all_branchs_.push_back(new B(branch->value()));
+        all_branchs_.push_back(new B(branch->value(), branch->isHidden()));
 
       container_.load(all_branchs_);
     }

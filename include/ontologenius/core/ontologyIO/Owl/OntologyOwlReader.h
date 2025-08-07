@@ -86,7 +86,7 @@ namespace ontologenius {
     /**********************
      *   SWRL Rule Reader  *
      **********************/
-    void readRuleDescription(Rule_t& rule, tinyxml2::XMLElement* elem);
+    Rule_t readRuleDescription(tinyxml2::XMLElement* elem);
 
     ExpressionMember_t* readRuleRestriction(tinyxml2::XMLElement* elem);
     ExpressionMember_t* readRuleClassExpression(tinyxml2::XMLElement* elem);
@@ -110,13 +110,14 @@ namespace ontologenius {
     std::pair<ExpressionMember_t*, std::vector<Variable_t>> readRuleObjectPropertyAtom(tinyxml2::XMLElement* elem);
     std::pair<ExpressionMember_t*, std::vector<Variable_t>> readRuleDataPropertyAtom(tinyxml2::XMLElement* elem);
     std::pair<ExpressionMember_t*, std::vector<Variable_t>> readRuleBuiltinAtom(tinyxml2::XMLElement* elem);
+    std::vector<Variable_t> readRuleVariables(tinyxml2::XMLElement* elem);
 
     void readRestAtom(tinyxml2::XMLElement* elem, std::vector<std::pair<ExpressionMember_t*, std::vector<Variable_t>>>& exp_vect);
     void readFirstAtom(tinyxml2::XMLElement* elem, std::vector<std::pair<ExpressionMember_t*, std::vector<Variable_t>>>& exp_vect);
     Variable_t getRuleArgument(tinyxml2::XMLElement* elem);
-    std::vector<Variable_t> readRuleBuiltinArguments(tinyxml2::XMLElement* elem);
-    void readSimpleBuiltinArguments(tinyxml2::XMLElement* elem, std::vector<Variable_t>& variables);
-    void readComplexBuiltinArguments(tinyxml2::XMLElement* elem, std::vector<Variable_t>& variables);
+    void readRuleBuiltinArguments(tinyxml2::XMLElement* elem, std::vector<Variable_t>& variables);
+    void readBuiltinArgumentsCollection(tinyxml2::XMLElement* elem, std::vector<Variable_t>& variables);
+    void readBuiltinArgumentsList(tinyxml2::XMLElement* elem, std::vector<Variable_t>& variables);
 
     /**********************
      *        inline       *

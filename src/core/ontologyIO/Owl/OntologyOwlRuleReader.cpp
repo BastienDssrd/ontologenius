@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <iostream>
 #include <string>
 #include <tinyxml2.h>
@@ -13,25 +14,25 @@
 
 namespace ontologenius {
 
-  void OntologyOwlReader::readRuleDescription(Rule_t& rule, tinyxml2::XMLElement* elem)
+  Rule_t OntologyOwlReader::readRuleDescription(tinyxml2::XMLElement* elem)
   {
-    std::vector<std::pair<ExpressionMember_t*, std::vector<Variable_t>>> exp_body, exp_head;
+    Rule_t rule;
     // read body
     auto* rule_body = elem->FirstChildElement("swrl:body");
     if(rule_body == nullptr)
-      return;
-    readRuleCollection(rule_body, exp_body);
-    rule.antecedents = exp_body;
+      return rule;
+    readRuleCollection(rule_body, rule.antecedents);
 
     // read head
     auto* rule_head = elem->FirstChildElement("swrl:head");
     if(rule_head == nullptr)
-      return;
-    readRuleCollection(rule_head, exp_head);
-    rule.consequents = exp_head;
+      return rule;
+    readRuleCollection(rule_head, rule.consequents);
 
     // compute the full str rule
     rule.rule_str = rule.toStringRule();
+
+    return rule;
   }
 
   void OntologyOwlReader::readRuleCollection(tinyxml2::XMLElement* elem, std::vector<std::pair<ExpressionMember_t*, std::vector<Variable_t>>>& exp_vect)
@@ -107,7 +108,7 @@ namespace ontologenius {
     {
       std::string rest_name = getName(std::string(type_rest));
       if(rest_name == "nil")
-        return;
+        return; // TODO; why ?? at the moment we enter the prebious if we will exist the same
     }
     else
       readRuleCollection(elem, exp_vect);
@@ -115,13 +116,10 @@ namespace ontologenius {
 
   std::pair<ExpressionMember_t*, std::vector<Variable_t>> OntologyOwlReader::readRuleClassAtom(tinyxml2::XMLElement* elem)
   {
-    std::vector<Variable_t> variables;
-    ExpressionMember_t* temp_exp = nullptr;
-
     auto* class_pred = elem->FirstChildElement("swrl:classPredicate");
-
     if(class_pred != nullptr)
     {
+      ExpressionMember_t* temp_exp = nullptr;
       //  check for the class expression
       const char* class_resource = nullptr;
       class_resource = class_pred->Attribute("rdf:resource");
@@ -140,20 +138,17 @@ namespace ontologenius {
           temp_exp = readRuleClassExpression(complex_restriction_elem);
       }
 
-      // get argument 1
-      auto* var_arg = elem->FirstChildElement("swrl:argument1");
-      if(var_arg != nullptr)
-        variables.push_back(getRuleArgument(var_arg));
+      auto variables = readRuleVariables(elem);
+      // todo: raise exception to stop local reading in case of wrong number of args
+
+      return {temp_exp, variables};
     }
-    return {std::make_pair(temp_exp, variables)};
+    else
+      return {nullptr, {}};
   }
 
   std::pair<ExpressionMember_t*, std::vector<Variable_t>> OntologyOwlReader::readRuleObjectPropertyAtom(tinyxml2::XMLElement* elem)
   {
-    std::vector<Variable_t> variables;
-    ExpressionMember_t* temp_exp = new ExpressionMember_t();
-
-    // std::cout << "ObjectPropertyAtom" << std::endl;
     auto* obj_pred = elem->FirstChildElement("swrl:propertyPredicate");
 
     // get Object Property
@@ -161,28 +156,22 @@ namespace ontologenius {
     {
       const auto* obj_prop = obj_pred->Attribute("rdf:resource");
       if(obj_prop != nullptr)
+      {
+        ExpressionMember_t* temp_exp = new ExpressionMember_t();
         temp_exp->rest.property = getName(std::string(obj_prop));
+
+        auto variables = readRuleVariables(elem);
+        // todo: raise exception to stop local reading in case of wrong number of args
+
+        return {temp_exp, variables};
+      }
     }
 
-    // get argument 1
-    auto* var_arg1 = elem->FirstChildElement("swrl:argument1");
-    if(var_arg1 != nullptr)
-      variables.push_back(getRuleArgument(var_arg1));
-
-    // get argument 2
-    auto* var_arg2 = elem->FirstChildElement("swrl:argument2");
-    if(var_arg2 != nullptr)
-      variables.push_back(getRuleArgument(var_arg2));
-
-    return {std::make_pair(temp_exp, variables)};
+    return {nullptr, {}};
   }
 
   std::pair<ExpressionMember_t*, std::vector<Variable_t>> OntologyOwlReader::readRuleDataPropertyAtom(tinyxml2::XMLElement* elem)
   {
-    std::vector<Variable_t> variables;
-    ExpressionMember_t* temp_exp = new ExpressionMember_t();
-
-    // std::cout << "DataPropertyAtom" << std::endl;auto* sub_elem = elem->FirstChildElement("rdf:Description");
     auto* data_pred = elem->FirstChildElement("swrl:propertyPredicate");
 
     // get Data Property
@@ -191,22 +180,35 @@ namespace ontologenius {
       const auto* data_prop = data_pred->Attribute("rdf:resource");
       if(data_prop != nullptr)
       {
+        ExpressionMember_t* temp_exp = new ExpressionMember_t();
         temp_exp->rest.property = getName(std::string(data_prop));
         temp_exp->is_data_property = true;
+
+        auto variables = readRuleVariables(elem);
+        // todo: raise exception to stop local reading in case of wrong number of args
+
+        return {temp_exp, variables};
       }
     }
 
-    // get argument 1
-    auto* var_arg1 = elem->FirstChildElement("swrl:argument1");
-    if(var_arg1 != nullptr)
-      variables.push_back(getRuleArgument(var_arg1));
+    return {nullptr, {}};
+  }
 
-    // get argument 2
-    auto* var_arg2 = elem->FirstChildElement("swrl:argument2");
-    if(var_arg2 != nullptr)
-      variables.push_back(getRuleArgument(var_arg2));
+  std::vector<Variable_t> OntologyOwlReader::readRuleVariables(tinyxml2::XMLElement* elem)
+  {
+    std::vector<Variable_t> res;
 
-    return {std::make_pair(temp_exp, variables)};
+    for(size_t index = 1;; index++)
+    {
+      std::string arg_name = "swrl:argument" + std::to_string(index);
+      auto* var_arg = elem->FirstChildElement(arg_name.c_str());
+      if(var_arg != nullptr)
+        res.push_back(getRuleArgument(var_arg));
+      else
+        break;
+    }
+
+    return res;
   }
 
   Variable_t OntologyOwlReader::getRuleArgument(tinyxml2::XMLElement* elem)
@@ -217,16 +219,8 @@ namespace ontologenius {
 
     if(var_name_resource != nullptr)
     {
-      if(isIn("swrl:var", var_name_resource))
-      {
-        new_var.var_name = getName(std::string(var_name_resource));
-        new_var.is_instantiated = false;
-      }
-      else
-      {
-        new_var.var_name = getName(std::string(var_name_resource));
-        new_var.is_instantiated = true;
-      }
+      new_var.var_name = getName(std::string(var_name_resource));
+      new_var.is_individual = !isIn("swrl:var", var_name_resource);
     }
     else if(var_name_dataype != nullptr)
     {
@@ -239,7 +233,6 @@ namespace ontologenius {
 
   std::pair<ExpressionMember_t*, std::vector<Variable_t>> OntologyOwlReader::readRuleBuiltinAtom(tinyxml2::XMLElement* elem)
   {
-    std::vector<Variable_t> variables;
     ExpressionMember_t* temp_exp = new ExpressionMember_t();
 
     // get builtin type
@@ -271,72 +264,88 @@ namespace ontologenius {
     // get builtins arguments in order
     auto* builtin_arguments = elem->FirstChildElement("swrl:arguments");
 
-    variables = readRuleBuiltinArguments(builtin_arguments);
-
-    return {std::make_pair(temp_exp, variables)};
-  }
-
-  std::vector<Variable_t> OntologyOwlReader::readRuleBuiltinArguments(tinyxml2::XMLElement* elem)
-  {
     std::vector<Variable_t> variables;
+    readRuleBuiltinArguments(builtin_arguments, variables);
 
-    if(elem->Attribute("rdf:parseType") != nullptr) // two variables
-      readSimpleBuiltinArguments(elem, variables);
-    else
-      readComplexBuiltinArguments(elem, variables);
-
-    return variables;
+    return {temp_exp, variables};
   }
 
-  void OntologyOwlReader::readSimpleBuiltinArguments(tinyxml2::XMLElement* elem, std::vector<Variable_t>& variables)
+  void OntologyOwlReader::readRuleBuiltinArguments(tinyxml2::XMLElement* elem, std::vector<Variable_t>& variables)
   {
-    for(tinyxml2::XMLElement* sub_elem = elem->FirstChildElement("rdf:Description");
-        sub_elem != nullptr; sub_elem = sub_elem->NextSiblingElement("rdf:Description"))
+
+    const auto* parsing_type_attribute = elem->Attribute("rdf:parseType");
+    if(parsing_type_attribute != nullptr)
     {
-      const auto* builtin_arg = elem->Attribute("rdf:about");
+      std::string parsing_type = std::string(parsing_type_attribute);
+      if(parsing_type == "Collection")
+        readBuiltinArgumentsCollection(elem, variables);
+      // else // todo: error unsuported parsing type
+    }
+    else
+      readBuiltinArgumentsList(elem, variables);
+  }
+
+  void OntologyOwlReader::readBuiltinArgumentsCollection(tinyxml2::XMLElement* elem, std::vector<Variable_t>& variables)
+  {
+    for(tinyxml2::XMLElement* description_elem = elem->FirstChildElement("rdf:Description");
+        description_elem != nullptr; description_elem = description_elem->NextSiblingElement("rdf:Description"))
+    {
+      const auto* builtin_arg = description_elem->Attribute("rdf:about");
       if(builtin_arg != nullptr)
       {
-        Variable_t new_var;
-        new_var.var_name = getName(std::string(builtin_arg));
-        variables.push_back(new_var);
+        variables.emplace_back(); // create an empty variable at the end
+        variables.back().is_builtin_value = true;
+        variables.back().var_name = std::string(builtin_arg);
       }
     }
   }
 
-  void OntologyOwlReader::readComplexBuiltinArguments(tinyxml2::XMLElement* elem, std::vector<Variable_t>& variables)
+  void OntologyOwlReader::readBuiltinArgumentsList(tinyxml2::XMLElement* elem, std::vector<Variable_t>& variables)
   {
-    auto* sub_elem = elem->FirstChildElement("rdf:Description");
+    auto* description = elem->FirstChildElement("rdf:Description");
+    if(description == nullptr)
+      return; // should never happend
 
-    if(sub_elem != nullptr)
-      readComplexBuiltinArguments(sub_elem, variables);
-    else
+    auto* type_element = description->FirstChildElement("rdf:type");
+    if(type_element == nullptr)
+      return; // should never happend
+
+    const auto* type = type_element->Attribute("rdf:resource");
+    if(type != nullptr)
     {
-      const auto* new_elem = elem->FirstChildElement("rdf:first");
-      if(new_elem != nullptr)
+      auto type_str = std::string(type);
+      if(type_str == "http://www.w3.org/1999/02/22-rdf-syntax-ns#List")
       {
-        const auto* var_elem = new_elem->Attribute("rdf:resource");
-        const auto* value_elem = new_elem->Attribute("rdf:datatype");
-
-        if(var_elem != nullptr)
+        auto* first_element = description->FirstChildElement("rdf:first");
+        if(first_element != nullptr)
         {
-          Variable_t new_var;
-          new_var.var_name = getName(std::string(var_elem));
-          variables.push_back(new_var);
-        }
-        else if(value_elem != nullptr)
-        {
-          Variable_t new_var;
-          new_var.var_name = getName(std::string(value_elem) + "#" + std::string(new_elem->GetText()));
-          new_var.is_datavalue = true;
-          variables.push_back(new_var);
+          const auto* attribute = first_element->Attribute("rdf:resource");
+          if(attribute != nullptr)
+          {
+            variables.emplace_back(); // create an empty variable at the end
+            variables.back().var_name = getName(std::string(attribute));
+          }
+          else
+          {
+            attribute = first_element->Attribute("rdf:datatype");
+            if(attribute != nullptr)
+            {
+              variables.emplace_back(); // create an empty variable at the end
+              variables.back().is_datavalue = true;
+              variables.back().var_name = getName(std::string(attribute) + "#" + std::string(first_element->GetText()));
+            }
+          }
         }
 
-        auto* rest_elem = elem->FirstChildElement("rdf:rest");
-        if(rest_elem->Attribute("rdf:resource") == nullptr)
-          readComplexBuiltinArguments(rest_elem, variables);
+        auto* rest_element = description->FirstChildElement("rdf:rest");
+        if(rest_element != nullptr)
+        {
+          const auto* resource = rest_element->Attribute("rdf:resource");
+          if(resource == nullptr) // if not nullptr should be nil
+            readRuleBuiltinArguments(rest_element, variables);
+        }
       }
-      else
-        readComplexBuiltinArguments(elem, variables);
+      // else // todo: error
     }
   }
 

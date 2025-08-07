@@ -35,6 +35,7 @@ namespace ontologenius {
   class DataPropertyDrawer;
   class IndividualGraph;
   class AnonymousClassGraph;
+  class RuleGraph;
 
   // for graphs usage
   class ClassGraph;
@@ -45,6 +46,7 @@ namespace ontologenius {
     friend IndividualGraph;
     friend ClassGraph;
     friend AnonymousClassGraph;
+    friend RuleGraph;
 
   public:
     explicit DataPropertyGraph(IndividualGraph* individual_graph, ClassGraph* class_graph);

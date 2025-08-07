@@ -42,7 +42,7 @@ namespace ontologenius {
     not_equal
   };
 
-  struct Builtin_t
+  struct Builtin_t // todo: to move
   {
     BuiltinType_e builtin_type_;
     std::string builtin_str_;

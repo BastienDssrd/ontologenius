@@ -63,7 +63,7 @@ namespace ontologenius {
             }
             else
             {
-              if(variable.is_instantiated) // individual name
+              if(variable.is_individual) // individual name
                 res += var_name;
               else // variable so we add the ?
                 res += "?" + var_name;
@@ -106,18 +106,9 @@ namespace ontologenius {
               DataPropertyGraph* data_property_graph, IndividualGraph* individual_graph, AnonymousClassGraph* anonymous_graph);
     ~RuleGraph() override = default;
 
-    RuleBranch* add(const std::size_t& rule_id, Rule_t& rule);
+    RuleBranch* add(Rule_t& rule);
 
     void deepCopy(const RuleGraph& other);
-
-    RuleTriplet_t createRuleAtomTriplet(RuleBranch* rule_branch, const std::pair<ontologenius::ExpressionMember_t*, std::vector<ontologenius::Variable_t>>& rule_element, const size_t& rule_id, const size_t& elem_id, const bool& is_head);
-    RuleTriplet_t createClassTriplet(RuleBranch* rule_branch, ExpressionMember_t* class_member, const Variable_t& variable, const size_t& rule_id, const size_t& elem_id);
-    RuleTriplet_t createObjectPropertyTriplet(RuleBranch* rule_branch, ExpressionMember_t* property_member, const std::vector<Variable_t>& variable);
-    RuleTriplet_t createDataPropertyTriplet(RuleBranch* rule_branch, ExpressionMember_t* property_member, const std::vector<Variable_t>& variable);
-    RuleTriplet_t createBuiltinTriplet(RuleBranch* rule_branch, ExpressionMember_t* property_member, const std::vector<Variable_t>& variable);
-
-    RuleResource_t getRuleResource(RuleBranch* rule_branch, const Variable_t& variable);
-    void setVariableIndex(RuleBranch* rule_branch, RuleResource_t& resource);
 
   private:
     ClassGraph* class_graph_;
@@ -128,9 +119,14 @@ namespace ontologenius {
 
     std::set<std::string> variable_names_; // only used to rewrite the variable fields
 
+    RuleTriplet_t createRuleAtomTriplet(RuleBranch* rule_branch, const std::pair<ExpressionMember_t*, std::vector<Variable_t>>& rule_element, const size_t& elem_id, const bool& is_head);
+
+    RuleArgument_t getRuleArgument(RuleBranch* rule_branch, const Variable_t& variable);
+    void setVariableIndex(RuleBranch* rule_branch, RuleArgument_t& resource);
+
     // functions for deepcopy
     void cpyBranch(RuleBranch* old_branch, RuleBranch* new_branch);
-    RuleTriplet_t createCopyRuleTriplet(RuleTriplet_t old_triplet, RuleBranch* new_branch, const size_t& rule_id, const size_t& elem_id);
+    RuleTriplet_t createCopyRuleTriplet(RuleTriplet_t old_triplet, RuleBranch* new_branch);
   };
 
 } // namespace ontologenius

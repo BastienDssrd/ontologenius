@@ -108,38 +108,40 @@ namespace ontologenius {
 
   void RuleOwlWriter::writeClassAtom(const RuleTriplet_t& class_atom, size_t level)
   {
-    std::string tmp, field_name;
-    field_name = "swrl:classPredicate";
+    std::string field_name = "swrl:classPredicate";
 
     // writing the Atom Type
     writeString("<rdf:type rdf:resource=\"http://www.w3.org/2003/11/swrl#ClassAtom\"/>\n", level);
 
-    tmp = "<" + field_name;
+    std::string tmp = "<" + field_name;
 
     // writing the ClassPredicate
-    if(class_atom.class_element != nullptr)
+    if(class_atom.anonymous_element != nullptr)
     {
-      auto* root_node = class_atom.class_element->root_node_;
-      if(root_node->logical_type_ != logical_none)
-      // if(class_atom->class_expression->logical_type_ != logical_none) // Collection
+      for(auto* tree : class_atom.anonymous_element->ano_trees_)
       {
-        tmp += ">\n";
-        writeString(tmp, level);
+        auto* root_node = tree->root_node_;
+        if(root_node->logical_type_ != logical_none)
+        // if(class_atom->class_expression->logical_type_ != logical_none) // Collection
+        {
+          tmp += ">\n";
+          writeString(tmp, level);
 
-        writeClassExpression(root_node, level + 1);
+          writeClassExpression(root_node, level + 1);
 
-        writeString("</" + field_name + ">\n", level);
-      }
-      else if(root_node->is_complex || root_node->oneof ||
-              (root_node->data_property_involved_ != nullptr) ||
-              (root_node->object_property_involved_ != nullptr)) // complex class
-      {
-        tmp += ">\n";
-        writeString(tmp, level);
+          writeString("</" + field_name + ">\n", level);
+        }
+        else if(root_node->is_complex || root_node->oneof ||
+                (root_node->data_property_involved_ != nullptr) ||
+                (root_node->object_property_involved_ != nullptr)) // complex class
+        {
+          tmp += ">\n";
+          writeString(tmp, level);
 
-        writeRestriction(root_node, level + 1);
+          writeRestriction(root_node, level + 1);
 
-        writeString("</" + field_name + ">\n", level);
+          writeString("</" + field_name + ">\n", level);
+        }
       }
     }
     else
@@ -148,24 +150,13 @@ namespace ontologenius {
       writeString(tmp, level);
     }
 
-    // writing the Variable
-    // <swrl:argument1 rdf:resource="urn:swrl:var#x"/>
-    tmp = "<swrl:argument1 rdf:resource=";
-    if(class_atom.subject.indiv_value == nullptr)
-      tmp += "\"urn:swrl:var#" + class_atom.subject.name;
-    else
-      tmp += "\"" + ns_ + "#" + class_atom.subject.indiv_value->value();
-
-    tmp += "\"/>\n";
-    writeString(tmp, level);
+    writeRuleArguments(class_atom.arguments, level);
   }
 
   void RuleOwlWriter::writeObjectAtom(const RuleTriplet_t& object_atom, size_t level)
   {
-    std::string field, tmp, subfield_prop, subfield_var;
-    field = "rdf:Description";
-    subfield_prop = "swrl:propertyPredicate";
-    subfield_var = "swrl:argument";
+    std::string field = "rdf:Description";
+    std::string subfield_prop = "swrl:propertyPredicate";
 
     // writing the Atom type
     writeString("<rdf:type rdf:resource=\"http://www.w3.org/2003/11/swrl#IndividualPropertyAtom\"/>\n", level);
@@ -174,33 +165,13 @@ namespace ontologenius {
     //<swrl:propertyPredicate rdf:resource="http:/#hasInternationalNumber"/>
     writeString("<" + subfield_prop + " rdf:resource=\"" + ns_ + "#" + object_atom.object_predicate->value() + "\"/>\n", level);
 
-    // writing the Variable 1
-    tmp = "<" + subfield_var + "1 rdf:resource=";
-    if(object_atom.subject.indiv_value == nullptr)
-      tmp += "\"urn:swrl:var#" + object_atom.subject.name;
-    else
-      tmp += "\"" + ns_ + "#" + object_atom.subject.indiv_value->value();
-
-    tmp += "\"/>\n";
-    writeString(tmp, level);
-
-    // writing the Variable 2
-    tmp = "<" + subfield_var + "2 rdf:resource=";
-    if(object_atom.object.indiv_value == nullptr)
-      tmp += "\"urn:swrl:var#" + object_atom.object.name;
-    else
-      tmp += "\"" + ns_ + "#" + object_atom.object.indiv_value->value();
-
-    tmp += "\"/>\n";
-    writeString(tmp, level);
+    writeRuleArguments(object_atom.arguments, level);
   }
 
   void RuleOwlWriter::writeDataAtom(const RuleTriplet_t& data_atom, size_t level)
   {
-    std::string field, tmp, subfield_prop, subfield_var;
-    field = "rdf:Description";
-    subfield_prop = "swrl:propertyPredicate";
-    subfield_var = "swrl:argument";
+    std::string field = "rdf:Description";
+    std::string subfield_prop = "swrl:propertyPredicate";
 
     // writing the Atom type
     writeString("<rdf:type rdf:resource=\"http://www.w3.org/2003/11/swrl#DatavaluedPropertyAtom\"/>\n", level);
@@ -209,75 +180,91 @@ namespace ontologenius {
     //<swrl:propertyPredicate rdf:resource="http:/#hasInternationalNumber"/>
     writeString("<" + subfield_prop + " rdf:resource=\"" + ns_ + "#" + data_atom.data_predicate->value() + "\"/>\n", level);
 
-    // writing the Variable 1
-    tmp = "<" + subfield_var + "1 rdf:resource=";
-    if(data_atom.subject.indiv_value == nullptr)
-      tmp += "\"urn:swrl:var#" + data_atom.subject.name;
-    else
-      tmp += "\"" + ns_ + "#" + data_atom.subject.indiv_value->value();
-
-    tmp += "\"/>\n";
-    writeString(tmp, level);
-
-    // writing the Variable 2
-    tmp = "<" + subfield_var + "2";
-    if(data_atom.object.datatype_value == nullptr)
-      tmp += " rdf:resource=\"urn:swrl:var#" + data_atom.object.name + "\"/>\n";
-    else
-      tmp += " rdf:datatype=\"" + data_atom.object.datatype_value->getNs() + "#" + data_atom.object.datatype_value->type_ + "\">" +
-             data_atom.object.datatype_value->value_ + "</" + subfield_var + "2>\n";
-    // <swrl:argument2 rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</swrl:argument2>
-    writeString(tmp, level);
+    writeRuleArguments(data_atom.arguments, level);
   }
 
   void RuleOwlWriter::writeBuiltinAtom(const RuleTriplet_t& builtin_atom, size_t level)
   {
-    std::string field, tmp_var, subfield_builtin, subfield_var, builtin_name;
-    field = "rdf:Description";
-    subfield_builtin = "swrl:builtin";
-    subfield_var = "swrl:arguments";
-    tmp_var = "<rdf:Description rdf:resource=\"urn:swrl:var#";
+    std::string field = "rdf:Description";
+    std::string subfield_builtin = "swrl:builtin";
 
     // write the Atom type
     writeString("<rdf:type rdf:resource=\"http://www.w3.org/2003/11/swrl#BuiltinAtom\"/>\n", level);
 
     // write Builtin type
-    builtin_name = builtin_atom.builtin.builtin_str_;
-
+    std::string builtin_name = builtin_atom.builtin.builtin_str_;
     writeString("<" + subfield_builtin + " rdf:resource=\"http://www.w3.org/2003/11/swrlb#" + builtin_name + "\"/>\n", level);
 
-    // write Builtin variables
-    if(builtin_atom.object.datatype_value == nullptr) // if both variables
+    writeRuleBuiltinArguments(builtin_atom.arguments, 0, level);
+  }
+
+  void RuleOwlWriter::writeRuleBuiltinArguments(const std::vector<RuleArgument_t>& arguments, size_t index, size_t level)
+  {
+    if(index >= arguments.size())
     {
-      writeString("<" + subfield_var + "rdf:parseType=\"Collection\">\n", level);
-      writeString(tmp_var + builtin_atom.subject.name + "\"/>\n", level + 1);
-      writeString(tmp_var + builtin_atom.object.name + "\"/>\n", level + 1);
+      writeString("<rdf:rest rdf:resource=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#nil\"/>", level);
+      return;
     }
-    else // if one variable is a datavalue
+
+    bool use_collection = arguments.at(index).is_variable;
+    if(use_collection)
     {
-      writeString("<" + subfield_var + ">\n", level);
-      writeString("<" + field + ">\n", level + 1);
+      for(size_t i = index + 1; i < arguments.size(); i++)
+        if(arguments.at(i).is_variable == false)
+        {
+          use_collection = false;
+          break;
+        }
+    }
+
+    std::string key = (index == 0) ? "swrl:arguments" : "rdf:rest";
+
+    if(use_collection)
+    {
+      writeString("<" + key + " rdf:parseType=\"Collection\">\n", level);
+      for(size_t i = index; i < arguments.size(); i++)
+        writeString(getArgumentString(arguments.at(i), "rdf:Description"), level + 1);
+      writeString("</" + key + ">\n", level);
+    }
+    else
+    {
+      writeString("<" + key + ">\n", level);
+      writeString("<rdf:Description>\n", level + 1);
       writeString("<rdf:type rdf:resource=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#List\"/>\n", level + 2);
-      writeString("<rdf:first rdf:resource=\"urn:swrl:var#" + builtin_atom.subject.name + "\"/>\n", level + 2);
-
-      writeString("<rdf:rest>\n", level + 2);
-      writeString("<" + field + ">\n", level + 3);
-      writeString("<rdf:type rdf:resource=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#List\"/>\n", level + 4);
-      writeString("<rdf:first rdf:resource=\"urn:swrl:var#" + builtin_atom.object.name + "\"/>\n", level + 4);
-      writeString("<rdf:rest rdf:resource=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#nil\"/>\n", level + 4);
-      writeString("</" + field + ">\n", level + 3);
-      writeString("</rdf:rest>\n", level + 2);
-      writeString("</" + field + ">\n", level + 1);
+      writeString(getArgumentString(arguments.at(index), "rdf:first"), level + 2);
+      writeRuleBuiltinArguments(arguments, index + 1, level + 2);
+      writeString("</rdf:Description>\n", level + 1);
+      writeString("</" + key + ">\n", level);
     }
+  }
 
-    writeString("</" + subfield_var + ">\n", level);
+  void RuleOwlWriter::writeRuleArguments(const std::vector<RuleArgument_t>& arguments, size_t level)
+  {
+    for(size_t i = 0; i < arguments.size(); i++)
+    {
+      std::string line = getArgumentString(arguments.at(i), "swrl:argument" + std::to_string(i+1));
+      writeString(line, level);
+    }
+  }
+
+  std::string RuleOwlWriter::getArgumentString(const RuleArgument_t& arg, const std::string& key)
+  {
+    std::string res = "<" + key + " ";
+    if(arg.datatype_value != nullptr)
+      res += "rdf:datatype=\"" + arg.datatype_value->getNs() + "#" +arg.datatype_value->type_ + "\">" +
+            arg.datatype_value->value_ + "</" + key + ">";
+    else if(arg.indiv_value != nullptr)
+      res += "rdf:resource=\"" + ns_ + "#" + arg.indiv_value->value() + "\"/>";
+    else
+      res += "rdf:resource=\"urn:swrl:var#" + arg.name + "\"/>";
+
+    return res;
   }
 
   void RuleOwlWriter::writeVariable(const std::string& rule_variable)
   {
     const size_t level = 1;
-    std::string field;
-    field = "rdf:Description";
+    std::string field = "rdf:Description";
 
     writeString("<" + field + " rdf:about=\"urn:swrl:var#" + rule_variable + "\">\n", level);
     writeString("<rdf:type rdf:resource=\"http://www.w3.org/2003/11/swrl#Variable\"/>\n", level + 1);
@@ -292,8 +279,7 @@ namespace ontologenius {
     {
       for(auto* tree : equiv->ano_trees_)
       {
-        std::string field;
-        field = "owl:equivalentClass";
+        std::string field = "owl:equivalentClass";
         const size_t level = 2;
 
         auto* tree_root_node = tree->root_node_;
@@ -323,15 +309,13 @@ namespace ontologenius {
 
   void RuleOwlWriter::writeRestriction(AnonymousClassElement* ano_elem, size_t level)
   {
-    std::string tmp, field, subfield;
-
-    field = "owl:Restriction";
-    subfield = "owl:onProperty";
+    std::string field = "owl:Restriction";
+    std::string subfield = "owl:onProperty";
 
     writeString("<" + field + ">\n", level);
 
     // Property
-    tmp = "<" + subfield + " " + getResource(ano_elem, "rdf:resource", true) + "/>\n";
+    std::string tmp = "<" + subfield + " " + getResource(ano_elem, "rdf:resource", true) + "/>\n";
     writeString(tmp, level + 1);
 
     // Cardinality
@@ -356,9 +340,7 @@ namespace ontologenius {
 
   void RuleOwlWriter::writeClassExpression(AnonymousClassElement* ano_elem, size_t level)
   {
-    std::string field;
-
-    field = "owl:Class";
+    std::string field = "owl:Class";
 
     writeString("<" + field + ">\n", level);
 
@@ -376,9 +358,7 @@ namespace ontologenius {
 
   void RuleOwlWriter::writeDatatypeExpression(AnonymousClassElement* ano_elem, size_t level)
   {
-    std::string field;
-
-    field = "rdfs:Datatype";
+    std::string field = "rdfs:Datatype";
 
     writeString("<" + field + ">\n", level);
 
@@ -394,8 +374,7 @@ namespace ontologenius {
 
   void RuleOwlWriter::writeIntersection(AnonymousClassElement* ano_elem, size_t level, bool is_data_prop)
   {
-    std::string field;
-    field = "owl:intersectionOf";
+    std::string field = "owl:intersectionOf";
 
     writeString("<" + field + " " + "rdf:parseType=\"Collection\">\n", level);
 
@@ -500,7 +479,7 @@ namespace ontologenius {
 
   void RuleOwlWriter::writeCardinalityValue(AnonymousClassElement* ano_elem, size_t level)
   {
-    std::string tmp, field;
+    std::string field;
 
     switch(ano_elem->card_.card_type_)
     {
@@ -523,7 +502,7 @@ namespace ontologenius {
       break;
     }
 
-    tmp = "<" + field + " rdf:datatype=\"http://www.w3.org/2001/XMLSchema#nonNegativeInteger\">" +
+    std::string tmp = "<" + field + " rdf:datatype=\"http://www.w3.org/2001/XMLSchema#nonNegativeInteger\">" +
           std::to_string(ano_elem->card_.card_number_) + "</" + field + ">\n";
     writeString(tmp, level);
 
@@ -582,11 +561,11 @@ namespace ontologenius {
 
   void RuleOwlWriter::writeCardinality(AnonymousClassElement* ano_element, size_t level)
   {
-    std::string tmp, field;
+    std::string tmp;
 
     if(ano_element->data_property_involved_ == nullptr)
     {
-      field = "owl:onClass";
+      std::string field = "owl:onClass";
 
       if(ano_element->class_involved_ != nullptr)
       {
@@ -604,7 +583,7 @@ namespace ontologenius {
     }
     else
     {
-      field = "owl:onDataRange";
+      std::string field = "owl:onDataRange";
 
       if(ano_element->card_.card_range_ != nullptr)
       {

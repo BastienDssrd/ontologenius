@@ -35,18 +35,8 @@ namespace ontologenius {
     for(auto* rule_branch : ontology_->rule_graph_.get())
     {
       std::vector<RuleResult_t> results_resolve;
-      std::vector<index_t> empty_accu(rule_branch->to_variables_.size(), index_t()); // need to initialize each index at 0
+      std::vector<index_t> empty_accu(rule_branch->variables_.size(), index_t()); // need to initialize each index at 0
       results_resolve = resolveBody(rule_branch, rule_branch->rule_body_, empty_accu);
-
-      // std::cout << "For rule " << rule_branch->value() << " results are: " << std::endl;
-
-      // for(auto& rs : results_resolve)
-      // {
-      //   std::cout << "--> ";
-      //   for(size_t i = 0; i < rs.assigned_result.size(); i++)
-      //     std::cout << "[" << i << "]" << rs.assigned_result[i] << " ";
-      //   std::cout << std::endl;
-      // }
 
       for(auto& solution : results_resolve) // resolve the consequent for each found solution
         resolveHead(rule_branch->rule_head_, solution, rule_branch);
@@ -109,16 +99,17 @@ namespace ontologenius {
   {
     IndividualBranch* involved_indiv = nullptr;
 
-    if(triplet.subject.is_variable && (solution.assigned_result[triplet.subject.variable_id] != 0))
-      involved_indiv = ontology_->individual_graph_.findBranch(solution.assigned_result[triplet.subject.variable_id]);
+    auto& subject = triplet.arguments[0];
+
+    if(subject.is_variable && (solution.assigned_result[subject.variable_id] != 0))
+      involved_indiv = ontology_->individual_graph_.findBranch(solution.assigned_result[subject.variable_id]);
     else
-      involved_indiv = triplet.subject.indiv_value;
+      involved_indiv = subject.indiv_value;
 
     const bool is_already_a = std::any_of(involved_indiv->is_a_.cbegin(), involved_indiv->is_a_.cend(), [triplet](const auto& is_a) { return is_a.elem == triplet.class_predicate; });
 
     if(involved_indiv != nullptr)
     {
-      // std::cout << "adding inferred " << triplet.class_predicate->value() << "(" << involved_indiv->value() << ")" << std::endl;
       if((is_already_a == false) && (checkClassesDisjointess(involved_indiv, triplet.class_predicate) == false))
       {
         involved_indiv->is_a_.emplaceBack(triplet.class_predicate, 1.0, true); // adding the emplaceBack so that the is_a get in updated mode
@@ -156,18 +147,20 @@ namespace ontologenius {
     IndividualBranch* involved_indiv_from = nullptr;
     IndividualBranch* involved_indiv_on = nullptr;
 
-    if(triplet.subject.is_variable && (solution.assigned_result[triplet.subject.variable_id] != 0))
-      involved_indiv_from = ontology_->individual_graph_.findBranch(solution.assigned_result[triplet.subject.variable_id]);
+    auto& subject = triplet.arguments[0];
+    auto& object = triplet.arguments[1];
+
+    if(subject.is_variable && (solution.assigned_result[subject.variable_id] != 0))
+      involved_indiv_from = ontology_->individual_graph_.findBranch(solution.assigned_result[subject.variable_id]);
     else
-      involved_indiv_from = triplet.subject.indiv_value;
-    if(triplet.object.is_variable && (solution.assigned_result[triplet.object.variable_id] != 0))
-      involved_indiv_on = ontology_->individual_graph_.findBranch(solution.assigned_result[triplet.object.variable_id]);
+      involved_indiv_from = subject.indiv_value;
+    if(object.is_variable && (solution.assigned_result[object.variable_id] != 0))
+      involved_indiv_on = ontology_->individual_graph_.findBranch(solution.assigned_result[object.variable_id]);
     else
-      involved_indiv_on = triplet.object.indiv_value;
+      involved_indiv_on = object.indiv_value;
 
     if(involved_indiv_from != nullptr && involved_indiv_on != nullptr)
     {
-      // std::cout << "adding inferred :" << triplet.object_predicate->value() << "(" << involved_indiv_from->value() << ", " << involved_indiv_on->value() << ")" << std::endl;
       if(ontology_->individual_graph_.relationExists(involved_indiv_from, triplet.object_predicate, involved_indiv_on) == false)
       {
         int relation_index = ontology_->individual_graph_.addRelation(involved_indiv_from, triplet.object_predicate, involved_indiv_on, 1.0, true, false);
@@ -200,18 +193,20 @@ namespace ontologenius {
     IndividualBranch* involved_indiv_from = nullptr;
     LiteralNode* involved_literal_on = nullptr;
 
-    if(triplet.subject.is_variable && (solution.assigned_result[triplet.subject.variable_id] != 0))
-      involved_indiv_from = ontology_->individual_graph_.findBranch(solution.assigned_result[triplet.subject.variable_id]);
+    auto& subject = triplet.arguments[0];
+    auto& object = triplet.arguments[1];
+
+    if(subject.is_variable && (solution.assigned_result[subject.variable_id] != 0))
+      involved_indiv_from = ontology_->individual_graph_.findBranch(solution.assigned_result[subject.variable_id]);
     else
-      involved_indiv_from = triplet.subject.indiv_value;
-    if(triplet.object.is_variable && (solution.assigned_result[triplet.object.variable_id] != 0))
-      involved_literal_on = ontology_->data_property_graph_.createLiteral(LiteralNode::table.get(-solution.assigned_result[triplet.object.variable_id]));
+      involved_indiv_from = subject.indiv_value;
+    if(object.is_variable && (solution.assigned_result[object.variable_id] != 0))
+      involved_literal_on = ontology_->data_property_graph_.createLiteral(LiteralNode::table.get(-solution.assigned_result[object.variable_id]));
     else
-      involved_literal_on = triplet.object.datatype_value;
+      involved_literal_on = object.datatype_value;
 
     if(involved_indiv_from != nullptr && involved_literal_on != nullptr)
     {
-      // std::cout << "adding inference : " << triplet.data_predicate->value() << "(" << involved_indiv_from->value() << ", " << involved_literal_on->value() << ")" << std::endl;
       if(ontology_->individual_graph_.relationExists(involved_indiv_from, triplet.data_predicate, involved_literal_on) == false)
       {
         int relation_index = ontology_->individual_graph_.addRelation(involved_indiv_from, triplet.data_predicate, involved_literal_on, 1.0, true, false);
@@ -322,9 +317,9 @@ namespace ontologenius {
 
   void ReasonerRule::resolveClassAtom(const RuleTriplet_t& triplet, std::vector<index_t>& accu, int64_t& var_index, std::vector<IndivResult_t>& values)
   {
-    // std::cout << "Resolving Class atom : " << triplet.toString() << std::endl;
-    var_index = triplet.subject.variable_id;
-    if(triplet.subject.is_variable == true)
+    auto& subject = triplet.arguments[0];
+    var_index = subject.variable_id;
+    if(subject.is_variable == true)
     {
       if(accu[var_index] == 0) // has no previous value
         getType(triplet.class_predicate, values);
@@ -339,7 +334,7 @@ namespace ontologenius {
     else
     {
       // atom is not variable, so we check the individual in the triplet
-      auto res = isA(triplet.subject.indiv_value, triplet.class_predicate);
+      auto res = isA(subject.indiv_value, triplet.class_predicate);
       if(res.empty() == false)
         values.emplace_back(std::move(res));
     }
@@ -428,40 +423,41 @@ namespace ontologenius {
 
   void ReasonerRule::resolveObjectAtom(RuleTriplet_t& triplet, std::vector<index_t>& accu, int64_t& var_index, std::vector<IndivResult_t>& values)
   {
-    // std::cout << "Resolving Object atom : " << triplet.toString() << std::endl;
-    if(!triplet.subject.is_variable && !triplet.object.is_variable)
+    auto& subject = triplet.arguments[0];
+    auto& object = triplet.arguments[1];
+    if(!subject.is_variable && !object.is_variable)
     {
-      values = getOnObject(triplet, triplet.object.indiv_value->get());
+      values = getOnObject(triplet, object.indiv_value->get());
     }
-    else if(triplet.subject.is_variable && !triplet.object.is_variable)
+    else if(subject.is_variable && !object.is_variable)
     {
-      var_index = triplet.subject.variable_id;
+      var_index = subject.variable_id;
       if(accu[var_index] == 0)
         values = getFromObject(triplet);
       else
       {
-        triplet.subject.indiv_value = ontology_->individual_graph_.findBranch(accu[var_index]);
-        var_index = triplet.object.variable_id;
-        values = getOnObject(triplet, triplet.object.indiv_value->get());
+        subject.indiv_value = ontology_->individual_graph_.findBranch(accu[var_index]);
+        var_index = object.variable_id;
+        values = getOnObject(triplet, object.indiv_value->get());
       }
     }
-    else if(!triplet.subject.is_variable && triplet.object.is_variable)
+    else if(!subject.is_variable && object.is_variable)
     {
-      var_index = triplet.object.variable_id;
+      var_index = object.variable_id;
       values = getOnObject(triplet, accu[var_index]);
     }
-    else if(triplet.subject.is_variable && triplet.object.is_variable)
+    else if(subject.is_variable && object.is_variable)
     {
-      var_index = triplet.subject.variable_id;
+      var_index = subject.variable_id;
       if(accu[var_index] != 0)
       {
-        triplet.subject.indiv_value = ontology_->individual_graph_.findBranch(accu[var_index]);
-        var_index = triplet.object.variable_id;
+        subject.indiv_value = ontology_->individual_graph_.findBranch(accu[var_index]);
+        var_index = object.variable_id;
         values = getOnObject(triplet, accu[var_index]);
       }
-      else if(accu[triplet.object.variable_id] != 0)
+      else if(accu[object.variable_id] != 0)
       {
-        triplet.object.indiv_value = ontology_->individual_graph_.findBranch(accu[triplet.object.variable_id]);
+        object.indiv_value = ontology_->individual_graph_.findBranch(accu[object.variable_id]);
         values = getFromObject(triplet);
       }
       else
@@ -472,14 +468,15 @@ namespace ontologenius {
   std::vector<IndivResult_t> ReasonerRule::getFromObject(const RuleTriplet_t& triplet)
   {
     std::vector<IndivResult_t> res;
+    auto& object = triplet.arguments[1];
 
-    if(triplet.object.indiv_value->same_as_.empty())
+    if(object.indiv_value->same_as_.empty())
     {
       for(auto& indiv : ontology_->individual_graph_.all_branchs_)
         for(size_t i = 0; i < indiv->object_relations_.size(); i++)
         {
           const auto& relations = indiv->object_relations_;
-          if(relations.at(i).second == triplet.object.indiv_value)
+          if(relations.at(i).second == object.indiv_value)
           {
             IndivResult_t local_res;
             if((relations.at(i).first == triplet.object_predicate) ||
@@ -497,20 +494,20 @@ namespace ontologenius {
       for(auto& indiv : ontology_->individual_graph_.all_branchs_)
         for(size_t i = 0; i < indiv->object_relations_.size(); i++)
         {
-          for(size_t j = 0; j < triplet.object.indiv_value->same_as_.size(); j++)
+          for(size_t j = 0; j < object.indiv_value->same_as_.size(); j++)
           {
             const auto& relations = indiv->object_relations_;
-            if(relations.at(i).second == triplet.object.indiv_value->same_as_[j].elem)
+            if(relations.at(i).second == object.indiv_value->same_as_[j].elem)
             {
               IndivResult_t local_res;
               if((relations.at(i).first == triplet.object_predicate) ||
                  isA(relations.at(i).first->value(), triplet.object_predicate, relations.at(i).first->mothers_, local_res))
               {
                 local_res.indiv = indiv;
-                constructResult(triplet.object.indiv_value->same_as_[i].elem->value(), relations, i, local_res);
+                constructResult(object.indiv_value->same_as_[i].elem->value(), relations, i, local_res);
 
-                if(triplet.object.indiv_value != triplet.object.indiv_value->same_as_[i].elem)
-                  constructResult(triplet.object.indiv_value->value(), triplet.object.indiv_value->same_as_, j, local_res);
+                if(object.indiv_value != object.indiv_value->same_as_[i].elem)
+                  constructResult(object.indiv_value->value(), object.indiv_value->same_as_, j, local_res);
 
                 res.emplace_back(std::move(local_res));
                 break;
@@ -526,11 +523,11 @@ namespace ontologenius {
   std::vector<IndivResult_t> ReasonerRule::getOnObject(const RuleTriplet_t& triplet, index_t selector)
   {
     std::vector<IndivResult_t> res;
-    IndividualBranch* indiv = triplet.subject.indiv_value;
+    IndividualBranch* indiv = triplet.arguments[0].indiv_value;
     IndividualBranch* selector_ptr = nullptr;
     if(selector != 0)
       selector_ptr = ontology_->individual_graph_.findBranch(selector);
-
+    
     if(indiv->same_as_.empty())
     {
       const auto& relations = indiv->object_relations_;
@@ -636,39 +633,41 @@ namespace ontologenius {
 
   void ReasonerRule::resolveDataAtom(RuleTriplet_t& triplet, std::vector<index_t>& accu, int64_t& var_index, std::vector<IndivResult_t>& values)
   {
-    if(!triplet.subject.is_variable && !triplet.object.is_variable)
+    auto& subject = triplet.arguments[0];
+    auto& object = triplet.arguments[1];
+    if(!subject.is_variable && !object.is_variable)
     {
-      values = getOnData(triplet, triplet.object.datatype_value->get());
+      values = getOnData(triplet, object.datatype_value->get());
     }
-    else if(triplet.subject.is_variable && !triplet.object.is_variable)
+    else if(subject.is_variable && !object.is_variable)
     {
-      var_index = triplet.subject.variable_id;
+      var_index = subject.variable_id;
       if(accu[var_index] == 0)
         values = getFromData(triplet);
       else
       {
-        triplet.subject.indiv_value = ontology_->individual_graph_.findBranch(accu[var_index]);
-        var_index = triplet.object.variable_id;
-        values = getOnData(triplet, triplet.object.datatype_value->get());
+        subject.indiv_value = ontology_->individual_graph_.findBranch(accu[var_index]);
+        var_index = object.variable_id;
+        values = getOnData(triplet, object.datatype_value->get());
       }
     }
-    else if(!triplet.subject.is_variable && triplet.object.is_variable)
+    else if(!subject.is_variable && object.is_variable)
     {
-      var_index = triplet.object.variable_id;
+      var_index = object.variable_id;
       values = getOnData(triplet, accu[var_index]);
     }
-    else if(triplet.subject.is_variable && triplet.object.is_variable)
+    else if(subject.is_variable && object.is_variable)
     {
-      var_index = triplet.subject.variable_id;
+      var_index = subject.variable_id;
       if(accu[var_index] != 0)
       {
-        triplet.subject.indiv_value = ontology_->individual_graph_.findBranch(accu[var_index]);
-        var_index = triplet.object.variable_id;
+        subject.indiv_value = ontology_->individual_graph_.findBranch(accu[var_index]);
+        var_index = object.variable_id;
         values = getOnData(triplet, accu[var_index]);
       }
-      else if(accu[triplet.object.variable_id] != 0)
+      else if(accu[object.variable_id] != 0)
       {
-        triplet.object.datatype_value = ontology_->data_property_graph_.createLiteral(LiteralNode::table.get(-accu[triplet.object.variable_id]));
+        object.datatype_value = ontology_->data_property_graph_.createLiteral(LiteralNode::table.get(-accu[object.variable_id]));
         values = getFromData(triplet);
       }
       else
@@ -684,7 +683,7 @@ namespace ontologenius {
       for(size_t i = 0; i < indiv->data_relations_.size(); i++)
       {
         const auto& relations = indiv->data_relations_;
-        if(relations.at(i).second == triplet.object.datatype_value)
+        if(relations.at(i).second == triplet.arguments[1].datatype_value)
         {
           IndivResult_t local_res;
           if((relations.at(i).first == triplet.data_predicate) ||
@@ -703,7 +702,7 @@ namespace ontologenius {
   std::vector<IndivResult_t> ReasonerRule::getOnData(const RuleTriplet_t& triplet, index_t selector)
   {
     std::vector<IndivResult_t> res;
-    IndividualBranch* indiv = triplet.subject.indiv_value;
+    IndividualBranch* indiv = triplet.arguments[0].indiv_value;
 
     if(indiv->same_as_.empty())
     {
@@ -759,22 +758,24 @@ namespace ontologenius {
     LiteralNode* object_ptr = nullptr;
     IndivResult_t res;
 
-    var_index = triplet.subject.variable_id;
+    auto& subject = triplet.arguments[0];
+    auto& object = triplet.arguments[1];
+    var_index = subject.variable_id;
 
-    if(accu[triplet.subject.variable_id] != 0)
-      subject_ptr = ontology_->data_property_graph_.createLiteral(LiteralNode::table.get(-accu[triplet.subject.variable_id]));
-    else if(triplet.subject.datatype_value != nullptr)
-      subject_ptr = triplet.subject.datatype_value;
+    if(accu[subject.variable_id] != 0)
+      subject_ptr = ontology_->data_property_graph_.createLiteral(LiteralNode::table.get(-accu[subject.variable_id]));
+    else if(subject.datatype_value != nullptr)
+      subject_ptr = subject.datatype_value;
     else
     {
       std::cout << "No value for arg1 of the builtin :" << triplet.builtin.builtin_str_ << std::endl;
       return;
     }
 
-    if(accu[triplet.object.variable_id] != 0)
-      object_ptr = ontology_->data_property_graph_.createLiteral(LiteralNode::table.get(-accu[triplet.object.variable_id]));
-    else if(triplet.object.datatype_value != nullptr)
-      object_ptr = triplet.object.datatype_value;
+    if(accu[object.variable_id] != 0)
+      object_ptr = ontology_->data_property_graph_.createLiteral(LiteralNode::table.get(-accu[object.variable_id]));
+    else if(object.datatype_value != nullptr)
+      object_ptr = object.datatype_value;
     else
     {
       std::cout << "No value for arg2 of the builtin :" << triplet.builtin.builtin_str_ << std::endl;

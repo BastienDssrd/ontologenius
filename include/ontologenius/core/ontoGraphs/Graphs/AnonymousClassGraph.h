@@ -92,7 +92,7 @@ namespace ontologenius {
                            is_complex(false), is_data_property(false),
                            mother(nullptr) {}
 
-    std::string toString()
+    std::string toString() const
     {
       std::string str_equivalence;
 
@@ -134,7 +134,7 @@ namespace ontologenius {
     }
   };
 
-  struct AnonymousClassVectors_t
+  struct AnonymousClassVectors_t // TODO is it really used ?
   {
     std::string class_equiv;
     std::vector<ExpressionMember_t*> equivalence_trees;

@@ -344,14 +344,12 @@ namespace ontologenius {
 
   void OntologyOwlReader::readSwrlRule(tinyxml2::XMLElement* elem)
   {
-    Rule_t rule;
-    readRuleDescription(rule, elem);
+    Rule_t rule = readRuleDescription(elem);
     if(!rule.rule_str.empty()) // check if the str expression is not empty, to make sure that the rule exists
     {
-      std::size_t rule_id = rule_graph_->all_branchs_.size() + 1;
-      rule_graph_->add(rule_id, rule);
+      rule_graph_->add(rule);
       if(display_)
-        std::cout << "│   ├── " + rule.rule_str << std::endl; // mal fait je pense, à mieux intégrer
+        std::cout << "│   ├── " + rule.rule_str << std::endl; // todo: mal fait je pense, à mieux intégrer
     }
   }
 
