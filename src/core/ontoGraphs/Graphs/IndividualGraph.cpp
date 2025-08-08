@@ -25,20 +25,25 @@
 #include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/Graph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/LiteralGraph.h"
 #include "ontologenius/utils/String.h"
 
 namespace ontologenius {
 
-  IndividualGraph::IndividualGraph(ClassGraph* class_graph,
+  IndividualGraph::IndividualGraph(LiteralGraph* literal_graph,
+                                   ClassGraph* class_graph,
                                    ObjectPropertyGraph* object_property_graph,
-                                   DataPropertyGraph* data_property_graph) : class_graph_(class_graph),
+                                   DataPropertyGraph* data_property_graph) : literal_graph_(literal_graph),
+                                                                             class_graph_(class_graph),
                                                                              object_property_graph_(object_property_graph),
                                                                              data_property_graph_(data_property_graph)
   {}
 
   IndividualGraph::IndividualGraph(const IndividualGraph& other,
+                                   LiteralGraph* literal_graph,
                                    ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph,
                                    DataPropertyGraph* data_property_graph) : Graph(other),
+                                                                             literal_graph_(literal_graph),
                                                                              class_graph_(class_graph),
                                                                              object_property_graph_(object_property_graph),
                                                                              data_property_graph_(data_property_graph)
@@ -220,7 +225,7 @@ namespace ontologenius {
   void IndividualGraph::addDataRelation(IndividualBranch* me, PairElement<std::string, std::string>& relation)
   {
     DataPropertyBranch* property_branch = data_property_graph_->findOrCreateBranch(relation.first);
-    LiteralNode* literal = data_property_graph_->createLiteral(relation.second);
+    LiteralNode* literal = literal_graph_->findOrCreate(relation.second);
 
     me->data_relations_.emplaceBack(property_branch, literal, relation.probability);
   }
@@ -372,7 +377,7 @@ namespace ontologenius {
 
     if(res.empty())
     {
-      LiteralNode* literal = data_property_graph_->literal_container_.find(individual);
+      LiteralNode* literal = literal_graph_->find(individual);
 
       if(literal != nullptr)
         for(auto& indiv : all_branchs_)
@@ -558,7 +563,7 @@ namespace ontologenius {
       indiv_index = indiv_ptr->get();
     else
     {
-      auto* literal_ptr = data_property_graph_->literal_container_.find(individual);
+      auto* literal_ptr = literal_graph_->find(individual);
       if(literal_ptr != nullptr)
         indiv_index = literal_ptr->get();
       else
@@ -683,7 +688,7 @@ namespace ontologenius {
       indiv_index = indiv_ptr->get();
     else
     {
-      auto* literal_ptr = data_property_graph_->literal_container_.find(individual);
+      auto* literal_ptr = literal_graph_->find(individual);
       if(literal_ptr != nullptr)
         indiv_index = literal_ptr->get();
       else
@@ -957,7 +962,7 @@ namespace ontologenius {
     }
     else
     {
-      auto* literal = data_property_graph_->literal_container_.find(second_individual);
+      auto* literal = literal_graph_->find(second_individual);
       if(literal != nullptr)
         second_individual_index = {literal->get()};
       else
@@ -2142,7 +2147,7 @@ namespace ontologenius {
     IndividualBranch* branch_from = indiv_from;
     if(branch_from != nullptr)
     {
-      LiteralNode* literal = data_property_graph_->createLiteral(type + "#" + data);
+      LiteralNode* literal = literal_graph_->findOrCreate(type, data);
 
       DataPropertyBranch* branch_prop = data_property_graph_->findBranchSafe(property);
       if(branch_prop == nullptr)
@@ -2472,7 +2477,7 @@ namespace ontologenius {
   }
 
   std::vector<std::pair<std::string, std::string>> IndividualGraph::removeRelation(const std::string& indiv_from, const std::string& property, const std::string& type, const std::string& data)
-  {
+  {  
     std::vector<std::pair<std::string, std::string>> explanations;
     IndividualBranch* branch_from = findBranchSafe(indiv_from);
     if(branch_from != nullptr)
@@ -2482,8 +2487,8 @@ namespace ontologenius {
       {
         if(branch_from->data_relations_[i].first->value() == property)
         {
-          if(((type == "_") || (branch_from->data_relations_[i].second->type_ == type)) &&
-             ((data == "_") || (branch_from->data_relations_[i].second->value_ == data)))
+          if(((type == "_") || (branch_from->data_relations_[i].second->type_->value() == type)) &&
+             ((data == "_") || (branch_from->data_relations_[i].second->data() == data)))
           {
             auto tmp_expl = removeInductions(branch_from, branch_from->data_relations_, i);
             explanations.insert(explanations.end(), tmp_expl.begin(), tmp_expl.end());
@@ -2617,7 +2622,8 @@ namespace ontologenius {
     }
 
     // RANGE
-    std::unordered_set<std::string> range = data_property_graph_->getRange(prop->value());
+    std::unordered_set<LiteralType*> range;
+    data_property_graph_->getRangePtr(prop, range);
     if(range.empty() == false)
     {
       if(range.find(data->type_) == range.end())
@@ -2677,7 +2683,7 @@ namespace ontologenius {
       else
       {
         auto* prop = data_property_graph_->container_.find(relation.first->value());
-        auto* data = data_property_graph_->literal_container_.find(relation.second->value());
+        auto* data = literal_graph_->findOrCreate(relation.second->value());
         new_branch->data_relations_.emplaceBack(relation, prop, data);
       }
     }

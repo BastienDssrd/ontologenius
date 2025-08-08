@@ -102,14 +102,14 @@ namespace ontologenius {
       }
   }
 
-  void AnnotationOwlWriter::writeRange(const std::vector<LiteralNode*>& ranges)
+  void AnnotationOwlWriter::writeRange(const std::vector<LiteralType*>& ranges)
   {
     for(const auto& range : ranges)
     {
       const std::string tmp = "        <rdfs:range rdf:resource=\"" +
-                              range->getNs() +
+                              range->getNamespace() +
                               "#" +
-                              range->type_ +
+                              range->value() +
                               +"\"/>\n";
       writeString(tmp);
     }

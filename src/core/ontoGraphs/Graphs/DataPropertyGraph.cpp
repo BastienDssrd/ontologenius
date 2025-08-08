@@ -16,26 +16,25 @@
 #include "ontologenius/core/ontoGraphs/Branchs/WordTable.h"
 #include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/Graph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/LiteralGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/OntoGraph.h"
 
 namespace ontologenius {
 
   DataPropertyGraph::DataPropertyGraph(IndividualGraph* individual_graph,
+                                       LiteralGraph* literal_graph,
                                        ClassGraph* class_graph) : OntoGraph(individual_graph),
-                                                                  class_graph_(class_graph)
+                                                                  class_graph_(class_graph),
+                                                                  literal_graph_(literal_graph)
   {}
 
   DataPropertyGraph::DataPropertyGraph(const DataPropertyGraph& other,
                                        IndividualGraph* individual_graph,
+                                       LiteralGraph* literal_graph,
                                        ClassGraph* class_graph) : OntoGraph(other, individual_graph),
-                                                                  class_graph_(class_graph)
-  {
-    all_literals_.reserve(other.all_literals_.size());
-
-    for(auto* literal : other.all_literals_)
-      all_literals_.push_back(new LiteralNode(literal->value()));
-    literal_container_.load(all_literals_);
-  }
+                                                                  class_graph_(class_graph),
+                                                                  literal_graph_(literal_graph)
+  {}
 
   DataPropertyBranch* DataPropertyGraph::add(const std::string& value, DataPropertyVectors_t& property_vectors)
   {
@@ -83,8 +82,8 @@ namespace ontologenius {
     // for all my ranges
     for(const auto& range : property_vectors.ranges_)
     {
-      LiteralNode* literal = createLiteralUnsafe(range + "#");
-      conditionalPushBack(me->ranges_, literal);
+      LiteralType* literal_type = literal_graph_->findOrCreateType(range);
+      conditionalPushBack(me->ranges_, literal_type);
     }
 
     /**********************
@@ -172,38 +171,6 @@ namespace ontologenius {
     }
   }
 
-  LiteralNode* DataPropertyGraph::createLiteral(const std::string& value)
-  {
-    LiteralNode* literal = nullptr;
-    {
-      const std::shared_lock<std::shared_timed_mutex> lock(mutex_);
-      literal = literal_container_.find(value);
-    }
-
-    if(literal == nullptr)
-    {
-      const std::lock_guard<std::shared_timed_mutex> lock(mutex_);
-      literal = new LiteralNode(value);
-      literal_container_.insert(literal);
-      all_literals_.push_back(literal);
-    }
-    return literal;
-  }
-
-  LiteralNode* DataPropertyGraph::createLiteralUnsafe(const std::string& value)
-  {
-    LiteralNode* literal = nullptr;
-    literal = literal_container_.find(value);
-
-    if(literal == nullptr)
-    {
-      literal = new LiteralNode(value);
-      literal_container_.insert(literal);
-      all_literals_.push_back(literal);
-    }
-    return literal;
-  }
-
   std::unordered_set<std::string> DataPropertyGraph::getDomain(const std::string& value, size_t depth)
   {
     std::unordered_set<std::string> res;
@@ -266,7 +233,7 @@ namespace ontologenius {
     DataPropertyBranch* branch = container_.find(value);
     if(branch != nullptr)
       for(auto& range : branch->ranges_)
-        res.insert(range->type_);
+        res.insert(range->value());
 
     return res;
   }
@@ -284,37 +251,13 @@ namespace ontologenius {
     return res;
   }
 
-  index_t DataPropertyGraph::getLiteralIndex(const std::string& name)
+  void DataPropertyGraph::getRangePtr(DataPropertyBranch* branch, std::unordered_set<LiteralType*>& res)
   {
-    const std::shared_lock<std::shared_timed_mutex> lock(mutex_);
-    auto* branch = literal_container_.find(name);
+    const std::shared_lock<std::shared_timed_mutex> lock(Graph<DataPropertyBranch>::mutex_);
+
     if(branch != nullptr)
-      return branch->get();
-    else
-      return 0;
-  }
-
-  std::vector<index_t> DataPropertyGraph::getLiteralIndexes(const std::vector<std::string>& names)
-  {
-    std::vector<index_t> res;
-    std::transform(names.cbegin(), names.cend(), std::back_inserter(res), [this](const auto& name) { return getLiteralIndex(name); });
-    return res;
-  }
-
-  std::string DataPropertyGraph::getLiteralIdentifier(index_t index)
-  {
-    const std::shared_lock<std::shared_timed_mutex> lock(mutex_);
-    if((index < 0) && (index > (index_t)LiteralNode::table.size()))
-      return LiteralNode::table[-index];
-    else
-      return "";
-  }
-
-  std::vector<std::string> DataPropertyGraph::getLiteralIdentifiers(const std::vector<index_t>& indexes)
-  {
-    std::vector<std::string> res;
-    std::transform(indexes.cbegin(), indexes.cend(), std::back_inserter(res), [this](const auto& index) { return getLiteralIdentifier(index); });
-    return res;
+      for(auto& range : branch->ranges_)
+        res.insert(range);
   }
 
   void DataPropertyGraph::deepCopy(const DataPropertyGraph& other)
@@ -341,7 +284,7 @@ namespace ontologenius {
       new_branch->mothers_.emplaceBack(mother, container_.find(mother.elem->value()));
 
     for(auto* range : old_branch->ranges_)
-      new_branch->ranges_.emplace_back(literal_container_.find(range->value()));
+      new_branch->ranges_.emplace_back(literal_graph_->findOrCreateType(range->value()));
 
     for(const auto& domain : old_branch->domains_)
       new_branch->domains_.emplace_back(domain, class_graph_->container_.find(domain.elem->value()));

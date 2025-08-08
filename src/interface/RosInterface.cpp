@@ -361,7 +361,7 @@ namespace ontologenius {
         else if(req->source == req->OBJECT_PROPERTIES)
           res->values_str = onto_->object_property_graph_.getIdentifiers(req->values_int);
         else if(req->source == req->LITERAL)
-          res->values_str = onto_->data_property_graph_.getLiteralIdentifiers(req->values_int);
+          res->values_str = onto_->literal_graph_.getIdentifiers(req->values_int);
         else
           return false;
       }
@@ -377,7 +377,7 @@ namespace ontologenius {
         else if(req->source == req->OBJECT_PROPERTIES)
           res->values_int = onto_->object_property_graph_.getIndexes(req->values_str);
         else if(req->source == req->LITERAL)
-          res->values_int = onto_->data_property_graph_.getLiteralIndexes(req->values_str);
+          res->values_int = onto_->literal_graph_.getIndexes(req->values_str);
         else
           return false;
       }

@@ -262,10 +262,7 @@ namespace ontologenius {
       else if(object.second.empty())
         OntologyReader::push(individual_vector_.object_relations_, PairElement<std::string, std::string>(property, object.first, 1.0), "$", "^");
       else
-      {
-        const LiteralNode data(object.second, object.first);
-        OntologyReader::push(individual_vector_.data_relations_, PairElement<std::string, std::string>(property, data.toString(), 1.0), "$", "^");
-      }
+        OntologyReader::push(individual_vector_.data_relations_, PairElement<std::string, std::string>(property, object.second + "#" + object.first, 1.0), "$", "^");
     }
   }
 

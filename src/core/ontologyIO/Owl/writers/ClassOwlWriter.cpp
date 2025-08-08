@@ -264,7 +264,7 @@ namespace ontologenius {
     std::string tmp;
     const std::string field = "owl:datatypeComplementOf";
 
-    if(ano_elem->sub_elements_.front()->card_.card_range_ != nullptr)
+    if(ano_elem->sub_elements_.front()->card_.card_value_range_ != nullptr)
     {
       tmp = "<" + field + " " + getResource(ano_elem->sub_elements_.front()) + "/>\n";
       writeString(tmp, level);
@@ -349,7 +349,7 @@ namespace ontologenius {
       if(is_data_prop)
       {
         tmp += "<" + field + " rdf:datatype=\"";
-        tmp += ano_elem->card_.card_range_->getNs() + "#" + ano_elem->card_.card_range_->type_ + "\">" + ano_elem->card_.card_range_->value_;
+        tmp += ano_elem->card_.card_value_range_->type_->getNamespace() + "#" + ano_elem->card_.card_value_range_->type_->value() + "\">" + ano_elem->card_.card_value_range_->data();
         tmp += "</" + field + ">\n";
       }
       else
@@ -418,7 +418,7 @@ namespace ontologenius {
     {
       field = "owl:onDataRange";
 
-      if(ano_element->card_.card_range_ != nullptr)
+      if(ano_element->card_.card_value_range_ != nullptr)
       {
         tmp = "<" + field + " " + getResource(ano_element) + "/>\n";
         writeString(tmp, level);
@@ -450,8 +450,8 @@ namespace ontologenius {
     else if(ano_elem->class_involved_ != nullptr)
       return attribute_name + "=\"" + ns_ + "#" + ano_elem->class_involved_->value() + "\"";
 
-    else if(ano_elem->card_.card_range_ != nullptr)
-      return attribute_name + "=\"" + ano_elem->card_.card_range_->getNs() + "#" + ano_elem->card_.card_range_->type_ + "\"";
+    else if(ano_elem->card_.card_type_range_ != nullptr)
+      return attribute_name + "=\"" + ano_elem->card_.card_type_range_->getNamespace() + "#" + ano_elem->card_.card_type_range_->value() + "\"";
 
     else if(ano_elem->individual_involved_ != nullptr)
       return attribute_name + "=\"" + ns_ + "#" + ano_elem->individual_involved_->value() + "\"";
@@ -597,11 +597,11 @@ namespace ontologenius {
                                 relation.first->value() +
                                 proba +
                                 " rdf:datatype=\"" +
-                                relation.second->getNs() +
+                                relation.second->type_->getNamespace() +
                                 "#" +
-                                relation.second->type_ +
+                                relation.second->type_->value() +
                                 "\">" +
-                                relation.second->value_ +
+                                relation.second->data() +
                                 "</" +
                                 relation.first->value() +
                                 ">\n";

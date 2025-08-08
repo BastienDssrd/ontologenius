@@ -40,7 +40,7 @@ namespace ontologenius {
     {}
 
     // instantiated literal variable constructor
-    RuleArgument_t(LiteralNode* literal) : name(literal->toString()),
+    RuleArgument_t(LiteralNode* literal) : name(literal->value()),
                                            variable_id(-1),
                                            is_variable(false),
                                            indiv_value(nullptr),

@@ -87,7 +87,8 @@ namespace ontologenius {
   {
     CardType_e card_type_ = cardinality_none;
     size_t card_number_ = 0;
-    LiteralNode* card_range_ = nullptr;
+    LiteralNode* card_value_range_ = nullptr;
+    LiteralType* card_type_range_ = nullptr;
 
     std::string toString() const
     {

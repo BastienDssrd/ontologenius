@@ -34,6 +34,7 @@ namespace ontologenius {
   // for friend
   class DataPropertyDrawer;
   class IndividualGraph;
+  class LiteralGraph;
   class AnonymousClassGraph;
   class RuleGraph;
 
@@ -49,8 +50,8 @@ namespace ontologenius {
     friend RuleGraph;
 
   public:
-    explicit DataPropertyGraph(IndividualGraph* individual_graph, ClassGraph* class_graph);
-    DataPropertyGraph(const DataPropertyGraph& other, IndividualGraph* individual_graph, ClassGraph* class_graph);
+    explicit DataPropertyGraph(IndividualGraph* individual_graph, LiteralGraph* literal_graph, ClassGraph* class_graph);
+    DataPropertyGraph(const DataPropertyGraph& other, IndividualGraph* individual_graph, LiteralGraph* literal_graph, ClassGraph* class_graph);
     ~DataPropertyGraph() override = default;
 
     void deepCopy(const DataPropertyGraph& other);
@@ -58,24 +59,17 @@ namespace ontologenius {
     DataPropertyBranch* add(const std::string& value, DataPropertyVectors_t& property_vectors);
     void add(std::vector<std::string>& disjoints);
     bool addAnnotation(const std::string& value, DataPropertyVectors_t& property_vectors);
-    LiteralNode* createLiteral(const std::string& value);
-    LiteralNode* createLiteralUnsafe(const std::string& value);
 
     std::unordered_set<std::string> getDomain(const std::string& value, size_t depth = -1);
     std::unordered_set<index_t> getDomain(index_t value, size_t depth = -1);
     void getDomainPtr(DataPropertyBranch* branch, std::unordered_set<ClassBranch*>& res, size_t depth = -1);
     std::unordered_set<std::string> getRange(const std::string& value);
     std::unordered_set<index_t> getRange(index_t value);
-
-    index_t getLiteralIndex(const std::string& name);
-    std::vector<index_t> getLiteralIndexes(const std::vector<std::string>& names);
-    std::string getLiteralIdentifier(index_t index);
-    std::vector<std::string> getLiteralIdentifiers(const std::vector<index_t>& indexes);
+    void getRangePtr(DataPropertyBranch* branch, std::unordered_set<LiteralType*>& res);
 
   private:
     ClassGraph* class_graph_;
-    BranchContainerSet<LiteralNode> literal_container_;
-    std::vector<LiteralNode*> all_literals_;
+    LiteralGraph* literal_graph_;
 
     template<typename T>
     void getDomain(DataPropertyBranch* branch, size_t depth, std::unordered_set<T>& res, std::unordered_set<DataPropertyBranch*>& up_trace);

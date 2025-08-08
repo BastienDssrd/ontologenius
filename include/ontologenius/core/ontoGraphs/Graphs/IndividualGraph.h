@@ -40,6 +40,7 @@ namespace ontologenius {
   class ClassGraph;
   class ObjectPropertyGraph;
   class DataPropertyGraph;
+  class LiteralGraph;
 
   class IndividualGraph : public Graph<IndividualBranch>
   {
@@ -47,8 +48,8 @@ namespace ontologenius {
     friend AnonymousGraph;
 
   public:
-    IndividualGraph(ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph);
-    IndividualGraph(const IndividualGraph& other, ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph);
+    IndividualGraph(LiteralGraph* literal_graph, ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph);
+    IndividualGraph(const IndividualGraph& other, LiteralGraph* literal_graph, ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph);
     ~IndividualGraph() override = default;
 
     void deepCopy(const IndividualGraph& other);
@@ -146,6 +147,7 @@ namespace ontologenius {
     void getSame(IndividualBranch* individual, std::unordered_set<index_t>& res);
 
   private:
+    LiteralGraph* literal_graph_;
     ClassGraph* class_graph_;
     ObjectPropertyGraph* object_property_graph_;
     DataPropertyGraph* data_property_graph_;

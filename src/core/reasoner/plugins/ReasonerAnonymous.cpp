@@ -219,7 +219,7 @@ namespace ontologenius {
   bool ReasonerAnonymous::checkValue(LiteralNode* literal_from, AnonymousClassElement* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
   {
     (void)used;
-    return (literal_from->get() == ano_elem->card_.card_range_->get());
+    return (literal_from->get() == ano_elem->card_.card_value_range_->get());
   }
 
   bool ReasonerAnonymous::resolveFirstLayer(IndividualBranch* indiv, AnonymousClassElement* ano_elem)
@@ -525,7 +525,14 @@ namespace ontologenius {
   {
     // To prevent warning of unused parameter for used
     (void)used;
-    return (literal->type_ == ano_elem->card_.card_range_->type_);
+    if(ano_elem->card_.card_value_range_ != nullptr)
+      return (literal->type_ == ano_elem->card_.card_value_range_->type_);
+    else if(ano_elem->card_.card_type_range_ != nullptr)
+      return (literal->type_ == ano_elem->card_.card_type_range_);
+    else {
+      std::cout << "checkTypeRestriction but no card has been setted" << std::endl;
+      return false;
+    }
   }
 
   bool ReasonerAnonymous::checkIndividualRestriction(IndividualBranch* indiv, AnonymousClassElement* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)

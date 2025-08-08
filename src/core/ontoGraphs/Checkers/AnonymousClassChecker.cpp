@@ -124,7 +124,7 @@ namespace ontologenius {
       for(auto* sub_elem : ano_elem->sub_elements_)
       {
         if(sub_elem->logical_type_ == logical_none)
-          types.insert(sub_elem->card_.card_range_->type_);
+          types.insert(sub_elem->card_.card_type_range_->value());
         else
         {
           auto tmp = resolveTreeDataTypes(sub_elem);

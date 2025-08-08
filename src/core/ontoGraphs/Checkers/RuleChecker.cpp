@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "ontologenius/core/ontoGraphs/Branchs/AnonymousClassBranch.h"
@@ -36,7 +37,7 @@ namespace ontologenius {
     current_rule_ = branch->getRule();
 
     std::unordered_map<std::string, Variable_t> all_arguments;
-    std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralNode*>>> variables_types;
+    std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>> variables_types;
     for(auto& atom : branch->rule_body_)
       checkAtom(atom, variables_types, all_arguments);
 
@@ -51,19 +52,10 @@ namespace ontologenius {
         printError(err_base + " it is used both as an individual and a data value.");
       }
     }
-
-    for(auto& var : variables_types)
-    {
-      std::cout << "types of " << var.first << std::endl;
-      for(auto& type : var.second.first)
-        std::cout << "- " << type->value() << std::endl; 
-      for(auto& type : var.second.second)
-        std::cout << "- " << type->value() << std::endl; 
-    }
   }
 
   void RuleChecker::checkAtom(const RuleTriplet_t& atom,
-                              std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralNode*>>>& variables_types,
+                              std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>>& variables_types,
                               std::unordered_map<std::string, Variable_t>& all_arguments)
   {
     switch(atom.atom_type_)
@@ -113,13 +105,18 @@ namespace ontologenius {
       arg_it->second.is_datavalue = true;
   }
 
-  void RuleChecker::checkClassAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralNode*>>>& variables_types)
+  void RuleChecker::checkClassAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>>& variables_types)
   {
     if(atom.class_predicate != nullptr)
     {
       if(atom.anonymous_element != nullptr)
       {
-
+        const auto& anonymous_trees = atom.anonymous_element->ano_trees_;
+        if(anonymous_trees.empty() == false)
+        {
+          auto* anonymous_root = anonymous_trees.front()->root_node_;
+          //anonymous_root->
+        }
       }
       else
       {
@@ -132,7 +129,7 @@ namespace ontologenius {
     }
   }
 
-  void RuleChecker::checkObjectPropertyAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralNode*>>>& variables_types)
+  void RuleChecker::checkObjectPropertyAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>>& variables_types)
   {
     if(atom.object_predicate != nullptr)
     {
@@ -150,7 +147,7 @@ namespace ontologenius {
     }
   }
 
-  void RuleChecker::checkDataPropertyAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralNode*>>>& variables_types)
+  void RuleChecker::checkDataPropertyAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>>& variables_types)
   {
     if(atom.data_predicate != nullptr)
     {
@@ -168,7 +165,7 @@ namespace ontologenius {
     }
   }
 
-  void RuleChecker::checkBuiltinAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralNode*>>>& variables_types)
+  void RuleChecker::checkBuiltinAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>>& variables_types)
   {
     for(auto& argument : atom.arguments)
     {
@@ -176,7 +173,7 @@ namespace ontologenius {
       {
         if(again_argument.is_variable == false)
         {
-          std::string err = check({again_argument.datatype_value}, variables_types[argument.name].second);
+          std::string err = check({again_argument.datatype_value->type_}, variables_types[argument.name].second);
           if(err.empty() == false)
           {
             raiseError(argument, " using builtin " + atom.builtin.builtin_str_ + ", its arguments are disjoint with other constraints (disjointness between " + err + ").");
@@ -207,7 +204,7 @@ namespace ontologenius {
     return err;
   }
 
-  std::string RuleChecker::check(const std::vector<LiteralNode*>& types, std::unordered_set<LiteralNode*>& variables_types) // todo: use a proper comparison of data types
+  std::string RuleChecker::check(const std::vector<LiteralType*>& types, std::unordered_set<LiteralType*>& variables_types) // todo: use a proper comparison of data types
   {
     if(variables_types.empty())
     {
@@ -221,9 +218,9 @@ namespace ontologenius {
         auto type_it = variables_types.find(type);
         if(type_it == variables_types.end())
         {
-          std::string err = type->type_ + " and ";
+          std::string err = type->value() + " and ";
           for(auto* err_type : variables_types)
-            err += err_type->type_;
+            err += err_type->value();
           return err;
         }
       }

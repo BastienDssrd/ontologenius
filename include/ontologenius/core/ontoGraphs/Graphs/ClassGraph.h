@@ -30,6 +30,7 @@ namespace ontologenius {
   class ObjectPropertyGraph;
   class DataPropertyGraph;
   class IndividualGraph;
+  class LiteralGraph;
   class ClassChecker;
   class AnonymousClassGraph;
 
@@ -44,8 +45,8 @@ namespace ontologenius {
     friend ClassChecker;
 
   public:
-    ClassGraph(IndividualGraph* individual_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph);
-    ClassGraph(const ClassGraph& other, IndividualGraph* individual_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph);
+    ClassGraph(IndividualGraph* individual_graph, LiteralGraph* literal_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph);
+    ClassGraph(const ClassGraph& other, IndividualGraph* individual_graph, LiteralGraph* literal_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph);
     ~ClassGraph() override = default;
 
     ClassBranch* add(const std::string& value, ObjectVectors_t& object_vector);
@@ -96,6 +97,7 @@ namespace ontologenius {
     std::pair<bool, ClassBranch*> checkDomainOrRange(const std::unordered_set<ClassBranch*>& domain_or_range, const std::unordered_set<ClassBranch*>& classes);
 
   private:
+    LiteralGraph* literal_graph_;
     ObjectPropertyGraph* object_property_graph_;
     DataPropertyGraph* data_property_graph_;
 

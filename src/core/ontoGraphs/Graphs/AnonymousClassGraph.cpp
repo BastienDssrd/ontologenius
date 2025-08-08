@@ -15,6 +15,7 @@
 #include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/Graph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/IndividualGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/LiteralGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
 #include "ontologenius/utils/String.h"
 
@@ -22,20 +23,24 @@
 
 namespace ontologenius {
 
-  AnonymousClassGraph::AnonymousClassGraph(ClassGraph* class_graph,
+  AnonymousClassGraph::AnonymousClassGraph(LiteralGraph* literal_graph,
+                                           ClassGraph* class_graph,
                                            ObjectPropertyGraph* object_property_graph,
                                            DataPropertyGraph* data_property_graph,
-                                           IndividualGraph* individual_graph) : class_graph_(class_graph),
+                                           IndividualGraph* individual_graph) : literal_graph_(literal_graph),
+                                                                                class_graph_(class_graph),
                                                                                 object_property_graph_(object_property_graph),
                                                                                 data_property_graph_(data_property_graph),
                                                                                 individual_graph_(individual_graph)
   {}
 
   AnonymousClassGraph::AnonymousClassGraph(const AnonymousClassGraph& other,
+                                           LiteralGraph* literal_graph,
                                            ClassGraph* class_graph,
                                            ObjectPropertyGraph* object_property_graph,
                                            DataPropertyGraph* data_property_graph,
                                            IndividualGraph* individual_graph) : Graph(other),
+                                                                                literal_graph_(literal_graph),
                                                                                 class_graph_(class_graph),
                                                                                 object_property_graph_(object_property_graph),
                                                                                 data_property_graph_(data_property_graph),
@@ -166,11 +171,11 @@ namespace ontologenius {
       if(exp->is_data_property) // data property
       {
         if(ano_element->card_.card_type_ == cardinality_value)
-          ano_element->card_.card_range_ = data_property_graph_->createLiteral(card_range);
+          ano_element->card_.card_value_range_ = literal_graph_->findOrCreate(card_range);
         else
         {
           const std::string type_value = card_range.substr(card_range.find('#') + 1, -1);
-          ano_element->card_.card_range_ = data_property_graph_->createLiteral(type_value + "#"); // need to add the "#"
+          ano_element->card_.card_type_range_ = literal_graph_->findOrCreateType(type_value);
         }
         related_tree->involves_data_property = true;
       }
@@ -196,7 +201,7 @@ namespace ontologenius {
       if(isIn("http://www.w3.org/", rest_range)) // literal node for complex data restriction (ClassX Eq to data_prop some (not(literal)))
       {
         const std::string type = split(rest_range, "#").back();
-        ano_element->card_.card_range_ = data_property_graph_->createLiteral(type + "#"); // need to add the "#"
+        ano_element->card_.card_type_range_ = literal_graph_->findOrCreateType(type);
       }
       else if(exp->mother != nullptr && exp->mother->oneof) // individual node for oneOf (ClassX Eq to oneOf(indiv))
       {
@@ -340,8 +345,8 @@ namespace ontologenius {
       tmp += " " + cardinalityToString(ano_elem->card_.card_type_);
       if(ano_elem->card_.card_number_ != 0)
         tmp += " " + std::to_string(ano_elem->card_.card_number_);
-      if(ano_elem->card_.card_range_ != nullptr)
-        tmp += " " + ano_elem->card_.card_range_->value();
+      if(ano_elem->card_.card_value_range_ != nullptr)
+        tmp += " " + ano_elem->card_.card_value_range_->value();
     }
     else
     {
@@ -349,8 +354,8 @@ namespace ontologenius {
         tmp += ano_elem->class_involved_->value();
       else if(ano_elem->individual_involved_ != nullptr)
         tmp += ano_elem->individual_involved_->value();
-      else if(ano_elem->card_.card_range_ != nullptr)
-        tmp += ano_elem->card_.card_range_->type_;
+      else if(ano_elem->card_.card_value_range_ != nullptr)
+        tmp += ano_elem->card_.card_value_range_->type_->value();
     }
 
     std::cout << tmp << std::endl;

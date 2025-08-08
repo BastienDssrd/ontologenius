@@ -201,7 +201,7 @@ namespace ontologenius {
     else
       involved_indiv_from = subject.indiv_value;
     if(object.is_variable && (solution.assigned_result[object.variable_id] != 0))
-      involved_literal_on = ontology_->data_property_graph_.createLiteral(LiteralNode::table.get(-solution.assigned_result[object.variable_id]));
+      involved_literal_on = ontology_->literal_graph_.find(solution.assigned_result[object.variable_id]);
     else
       involved_literal_on = object.datatype_value;
 
@@ -667,7 +667,7 @@ namespace ontologenius {
       }
       else if(accu[object.variable_id] != 0)
       {
-        object.datatype_value = ontology_->data_property_graph_.createLiteral(LiteralNode::table.get(-accu[object.variable_id]));
+        object.datatype_value = ontology_->literal_graph_.find(accu[object.variable_id]);
         values = getFromData(triplet);
       }
       else
@@ -763,7 +763,7 @@ namespace ontologenius {
     var_index = subject.variable_id;
 
     if(accu[subject.variable_id] != 0)
-      subject_ptr = ontology_->data_property_graph_.createLiteral(LiteralNode::table.get(-accu[subject.variable_id]));
+      subject_ptr = ontology_->literal_graph_.find(accu[subject.variable_id]);
     else if(subject.datatype_value != nullptr)
       subject_ptr = subject.datatype_value;
     else
@@ -773,7 +773,7 @@ namespace ontologenius {
     }
 
     if(accu[object.variable_id] != 0)
-      object_ptr = ontology_->data_property_graph_.createLiteral(LiteralNode::table.get(-accu[object.variable_id]));
+      object_ptr = ontology_->literal_graph_.find(accu[object.variable_id]);
     else if(object.datatype_value != nullptr)
       object_ptr = object.datatype_value;
     else
@@ -784,7 +784,7 @@ namespace ontologenius {
 
     if((subject_ptr != nullptr) && (object_ptr != nullptr))
     {
-      if((subject_ptr->type_ == "string") && (object_ptr->type_ == "string") &&
+      if((subject_ptr->type_->value() == "string") && (object_ptr->type_ == subject_ptr->type_) && // both are strings
          (resolveStringBuiltinAtom(triplet.builtin.builtin_type_, subject_ptr, object_ptr) == true))
       {
         res.literal = subject_ptr;
@@ -808,8 +808,8 @@ namespace ontologenius {
     {
       IndivResult_t res;
 
-      const double subject_cast = stod(subject->value_);
-      const double object_cast = stod(object->value_);
+      const double subject_cast = stod(subject->data());
+      const double object_cast = stod(object->data());
 
       switch(builtin_type)
       {
@@ -842,9 +842,9 @@ namespace ontologenius {
     switch(builtin_type)
     {
     case equal:
-      return subject->value() == object->value();
+      return subject == object;
     case not_equal:
-      return subject->value() != object->value();
+      return subject != object;
     default:
       std::cout << "Unsupported builtin type : " << builtin_type << "for string arguments" << std::endl;
       return false;

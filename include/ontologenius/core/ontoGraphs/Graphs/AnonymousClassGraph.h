@@ -145,6 +145,7 @@ namespace ontologenius {
   class ObjectPropertyGraph;
   class DataPropertyGraph;
   class IndividualGraph;
+  class LiteralGraph;
   class ClassGraph;
 
   class AnonymousClassChecker;
@@ -159,9 +160,10 @@ namespace ontologenius {
     friend AnonymousClassChecker;
 
   public:
-    AnonymousClassGraph(ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph,
+    AnonymousClassGraph(LiteralGraph* literal_graph, ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph,
                         DataPropertyGraph* data_property_graph, IndividualGraph* individual_graph);
-    AnonymousClassGraph(const AnonymousClassGraph& other, ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph,
+    AnonymousClassGraph(const AnonymousClassGraph& other, LiteralGraph* literal_graph,
+                        ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph,
                         DataPropertyGraph* data_property_graph, IndividualGraph* individual_graph);
     ~AnonymousClassGraph() override = default;
 
@@ -169,6 +171,7 @@ namespace ontologenius {
     void deepCopy(const AnonymousClassGraph& other);
 
   private:
+    LiteralGraph* literal_graph_;
     ClassGraph* class_graph_;
     ObjectPropertyGraph* object_property_graph_;
     DataPropertyGraph* data_property_graph_;

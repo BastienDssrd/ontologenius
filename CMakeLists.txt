@@ -151,6 +151,7 @@ add_onto_library(ontologenius_ontoGraphs_lib
   src/core/ontoGraphs/Graphs/ObjectPropertyGraph.cpp
   src/core/ontoGraphs/Graphs/DataPropertyGraph.cpp
   src/core/ontoGraphs/Graphs/IndividualGraph.cpp
+  src/core/ontoGraphs/Graphs/LiteralGraph.cpp
   src/core/ontoGraphs/Graphs/AnonymousClassGraph.cpp
   src/core/ontoGraphs/Graphs/RuleGraph.cpp
   src/core/ontoGraphs/Checkers/ClassChecker.cpp

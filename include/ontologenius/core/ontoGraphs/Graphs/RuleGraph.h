@@ -82,6 +82,7 @@ namespace ontologenius {
   class ObjectPropertyGraph;
   class DataPropertyGraph;
   class IndividualGraph;
+  class LiteralGraph;
   class ClassGraph;
   class AnonymousClassGraph;
 
@@ -100,9 +101,9 @@ namespace ontologenius {
     friend RuleChecker;
 
   public:
-    RuleGraph(ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph,
+    RuleGraph(LiteralGraph* literal_graph, ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph,
               DataPropertyGraph* data_property_graph, IndividualGraph* individual_graph, AnonymousClassGraph* anonymous_graph);
-    RuleGraph(const RuleGraph& other, ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph,
+    RuleGraph(const RuleGraph& other, LiteralGraph* literal_graph, ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph,
               DataPropertyGraph* data_property_graph, IndividualGraph* individual_graph, AnonymousClassGraph* anonymous_graph);
     ~RuleGraph() override = default;
 
@@ -111,6 +112,7 @@ namespace ontologenius {
     void deepCopy(const RuleGraph& other);
 
   private:
+    LiteralGraph* literal_graph_;
     ClassGraph* class_graph_;
     ObjectPropertyGraph* object_property_graph_;
     DataPropertyGraph* data_property_graph_;

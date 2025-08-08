@@ -6,6 +6,7 @@
 #include <unordered_set>
 
 #include "ontologenius/core/ontoGraphs/Branchs/ClassBranch.h"
+#include "ontologenius/core/ontoGraphs/Branchs/LiteralNode.h"
 #include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
 
@@ -129,12 +130,13 @@ namespace ontologenius {
   {
     for(const ClassDataRelationElement& relation : branch->data_relations_)
     {
-      std::unordered_set<std::string> range = class_graph_->data_property_graph_->getRange(relation.first->value());
+      std::unordered_set<LiteralType*> range;
+      class_graph_->data_property_graph_->getRangePtr(relation.first, range);
       if(range.empty() == false)
       {
         auto intersection = range.find(relation.second->type_);
         if(intersection == range.end())
-          printError("'" + relation.second->type_ + "' is not in range of '" + relation.first->value() + "'");
+          printError("'" + relation.second->type_->value() + "' is not in range of '" + relation.first->value() + "'");
       }
     }
   }

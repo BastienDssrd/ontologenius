@@ -18,6 +18,7 @@
 #include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/Graph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/IndividualGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/LiteralGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
 #include "ontologenius/utils/String.h"
 
@@ -25,19 +26,23 @@
 
 namespace ontologenius {
 
-  RuleGraph::RuleGraph(ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph,
-                       IndividualGraph* individual_graph, AnonymousClassGraph* anonymous_graph) : class_graph_(class_graph),
+  RuleGraph::RuleGraph(LiteralGraph* literal_graph, ClassGraph* class_graph,
+                       ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph,
+                       IndividualGraph* individual_graph, AnonymousClassGraph* anonymous_graph) : literal_graph_(literal_graph),
+                                                                                                  class_graph_(class_graph),
                                                                                                   object_property_graph_(object_property_graph),
                                                                                                   data_property_graph_(data_property_graph),
                                                                                                   individual_graph_(individual_graph),
                                                                                                   anonymous_graph_(anonymous_graph)
   {}
 
-  RuleGraph::RuleGraph(const RuleGraph& other, ClassGraph* class_graph,
+  RuleGraph::RuleGraph(const RuleGraph& other, LiteralGraph* literal_graph,
+                       ClassGraph* class_graph,
                        ObjectPropertyGraph* object_property_graph,
                        DataPropertyGraph* data_property_graph,
                        IndividualGraph* individual_graph,
                        AnonymousClassGraph* anonymous_graph) : // Graph copy constructor is not called as RuleBranch need more advanced copy
+                                                               literal_graph_(literal_graph),
                                                                class_graph_(class_graph),
                                                                object_property_graph_(object_property_graph),
                                                                data_property_graph_(data_property_graph),
@@ -146,7 +151,7 @@ namespace ontologenius {
     }
     else if(variable.is_datavalue == true) // literal
     {
-      LiteralNode* involved_datatype = data_property_graph_->createLiteral(variable.var_name);
+      LiteralNode* involved_datatype = literal_graph_->findOrCreate(variable.var_name);
       RuleArgument_t resource(involved_datatype);
       setVariableIndex(rule_branch, resource); // Todo, should be removed, but removing it raise an error in ReasonerRule
       return resource;
@@ -227,7 +232,7 @@ namespace ontologenius {
       if(arg.indiv_value != nullptr)
         new_arg.indiv_value = individual_graph_->container_.find(arg.indiv_value->value());
       if(arg.datatype_value != nullptr)
-        new_arg.datatype_value = data_property_graph_->literal_container_.find(arg.datatype_value->value());
+        new_arg.datatype_value = literal_graph_->find(arg.datatype_value->value());
 
       new_triplet.arguments.push_back(new_arg);
 

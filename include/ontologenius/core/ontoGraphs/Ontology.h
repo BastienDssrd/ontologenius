@@ -7,6 +7,7 @@
 #include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/IndividualGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/LiteralGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/RuleGraph.h"
 #include "ontologenius/core/ontologyIO/OntologyLoader.h"
@@ -34,6 +35,7 @@ namespace ontologenius {
 
     void setDisplay(bool display);
 
+    LiteralGraph literal_graph_;
     ClassGraph class_graph_;
     ObjectPropertyGraph object_property_graph_;
     DataPropertyGraph data_property_graph_;

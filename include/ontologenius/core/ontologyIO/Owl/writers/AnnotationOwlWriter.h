@@ -25,7 +25,7 @@ namespace ontologenius {
     void writeAnnotation(DataPropertyBranch* branch);
     void writeSubPropertyOf(ObjectPropertyBranch* branch);
     void writeSubPropertyOf(DataPropertyBranch* branch);
-    void writeRange(const std::vector<LiteralNode*>& ranges);
+    void writeRange(const std::vector<LiteralType*>& ranges);
     void writeRange(const std::vector<ClassElement>& ranges);
     void writeDomain(const std::vector<ClassElement>& domains);
   };

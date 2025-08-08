@@ -26,18 +26,18 @@ namespace ontologenius {
 
     void checkRuleDisjoint(RuleBranch* branch);
     void checkAtom(const RuleTriplet_t& atom,
-                   std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralNode*>>>& variables_types,
+                   std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>>& variables_types,
                    std::unordered_map<std::string, Variable_t>& all_arguments);
 
     void setArgument(const RuleArgument_t& arg, std::unordered_map<std::string, Variable_t>& all_arguments, bool individual_usage);
 
-    void checkClassAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralNode*>>>& variables_types);
-    void checkObjectPropertyAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralNode*>>>& variables_types);
-    void checkDataPropertyAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralNode*>>>& variables_types);
-    void checkBuiltinAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralNode*>>>& variables_types);
+    void checkClassAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>>& variables_types);
+    void checkObjectPropertyAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>>& variables_types);
+    void checkDataPropertyAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>>& variables_types);
+    void checkBuiltinAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>>& variables_types);
 
     std::string check(const std::vector<ClassElement>& classes, std::unordered_set<ClassBranch*>& variables_classes);
-    std::string check(const std::vector<LiteralNode*>& types, std::unordered_set<LiteralNode*>& variables_types);
+    std::string check(const std::vector<LiteralType*>& types, std::unordered_set<LiteralType*>& variables_types);
     void raiseError(const RuleArgument_t& var, const std::string& msg);
   };
 

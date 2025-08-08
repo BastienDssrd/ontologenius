@@ -79,7 +79,7 @@ TEST(api_relations, class_getRelationOn)
   EXPECT_TRUE(res_bool);
 
   res = onto_ptr->classes.getRelationOn("integer#2");
-  EXPECT_EQ(res.size(), 1);
+  EXPECT_EQ(res.size(), 1); // error
   res_bool = (std::find(res.begin(), res.end(), "hasLeg") != res.end());
   EXPECT_TRUE(res_bool);
 

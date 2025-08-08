@@ -101,11 +101,11 @@ namespace ontologenius {
                                 relation.first->value() +
                                 proba +
                                 " rdf:datatype=\"" +
-                                relation.second->getNs() +
+                                relation.second->type_->getNamespace() +
                                 "#" +
-                                relation.second->type_ +
+                                relation.second->type_->value() +
                                 "\">" +
-                                relation.second->value_ +
+                                relation.second->data() +
                                 "</onto:" +
                                 relation.first->value() +
                                 ">\n";

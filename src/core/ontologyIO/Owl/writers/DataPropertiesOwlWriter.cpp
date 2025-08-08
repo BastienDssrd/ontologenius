@@ -66,9 +66,9 @@ namespace ontologenius {
     for(auto& range : branch->ranges_)
     {
       const std::string tmp = "        <rdfs:range rdf:resource=\"" +
-                              range->getNs() +
+                              range->getNamespace() +
                               "#" +
-                              range->type_ +
+                              range->value() +
                               +"\"/>\n";
       writeString(tmp);
     }
