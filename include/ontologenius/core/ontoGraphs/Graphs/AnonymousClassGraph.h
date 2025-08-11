@@ -27,11 +27,6 @@ namespace ontologenius {
         res += cardinality_range;
       return res;
     }
-
-    std::vector<std::string> toVector() const
-    {
-      return {cardinality_range, cardinality_number, cardinality_type};
-    }
   };
 
   struct Restriction_t
@@ -53,23 +48,6 @@ namespace ontologenius {
         res += restriction_range;
 
       return res;
-    }
-
-    std::vector<std::string> toVector() const
-    {
-      std::vector<std::string> result;
-      if(property.empty() == false)
-        result.push_back(property);
-      if(card.cardinality_type.empty() == false)
-        result.push_back(card.cardinality_type);
-      if(card.cardinality_number.empty() == false)
-        result.push_back(card.cardinality_number);
-      if(card.cardinality_range.empty() == false)
-        result.push_back(card.cardinality_range);
-      if(restriction_range.empty() == false)
-        result.push_back(restriction_range);
-
-      return result;
     }
   };
 

@@ -44,7 +44,7 @@ namespace ontologenius {
                                                                    data_property_graph_(data_property_graph)
   {}
 
-  ClassBranch* ClassGraph::add(const std::string& value, ObjectVectors_t& object_vector)
+  ClassBranch* ClassGraph::add(const std::string& value, ClassDescriptor_t& class_descriptor)
   {
     const std::lock_guard<std::shared_timed_mutex> lock(Graph<ClassBranch>::mutex_);
 
@@ -55,7 +55,7 @@ namespace ontologenius {
     ** Class assertion
     **********************/
     // for all my mothers
-    for(auto& mother : object_vector.mothers_)
+    for(auto& mother : class_descriptor.mothers_)
     {
       ClassBranch* mother_branch = findOrCreateBranch(mother.elem);
 
@@ -67,7 +67,7 @@ namespace ontologenius {
     ** Disjoint assertion
     **********************/
     // for all my disjoints
-    for(auto& disjoint : object_vector.disjoints_)
+    for(auto& disjoint : class_descriptor.disjoints_)
     {
       ClassBranch* disjoint_branch = findOrCreateBranch(disjoint.elem);
 
@@ -78,18 +78,18 @@ namespace ontologenius {
     /**********************
     ** Object Property assertion
     **********************/
-    for(auto& object_relation : object_vector.object_relations_)
+    for(auto& object_relation : class_descriptor.object_relations_)
       addObjectRelation(me, object_relation);
 
     /**********************
     ** Data Property assertion
     **********************/
     // for all my properties
-    for(auto& data_relation : object_vector.data_relations_)
+    for(auto& data_relation : class_descriptor.data_relations_)
       addDataRelation(me, data_relation);
 
-    me->setSteadyDictionary(object_vector.dictionary_);
-    me->setSteadyMutedDictionary(object_vector.muted_dictionary_);
+    me->setSteadyDictionary(class_descriptor.dictionary_);
+    me->setSteadyMutedDictionary(class_descriptor.muted_dictionary_);
 
     mitigate(me);
     return me;
@@ -283,7 +283,7 @@ namespace ontologenius {
 
   void ClassGraph::getRelationOnDataProperties(const std::string& class_name, std::unordered_set<index_t>& res, int depth)
   {
-    LiteralNode* literal = literal_graph_->findOrCreate(class_name);
+    LiteralNode* literal = literal_graph_->find(class_name);
 
     if(literal != nullptr)
       for(auto& branch : all_branchs_)
@@ -512,7 +512,7 @@ namespace ontologenius {
     std::unordered_set<index_t> do_not_take;
     const std::shared_lock<std::shared_timed_mutex> lock(Graph<ClassBranch>::mutex_);
 
-    LiteralNode* literal = literal_graph_->findOrCreate(class_name);
+    LiteralNode* literal = literal_graph_->find(class_name);
     ClassBranch* class_branch = container_.find(class_name);
 
     for(auto& branch : all_branchs_)
@@ -554,7 +554,7 @@ namespace ontologenius {
     }
     else
     {
-      LiteralNode* literal = literal_graph_->findOrCreate(LiteralNode::table.get(-class_id));
+      LiteralNode* literal = literal_graph_->find(LiteralNode::table.get(-class_id));
 
       if(literal != nullptr)
         for(auto& branch : all_branchs_)
@@ -654,7 +654,7 @@ namespace ontologenius {
     std::unordered_set<index_t> do_not_take;
     const std::shared_lock<std::shared_timed_mutex> lock(Graph<ClassBranch>::mutex_);
 
-    LiteralNode* literal = literal_graph_->findOrCreate(class_name);
+    LiteralNode* literal = literal_graph_->find(class_name);
 
     for(auto& branch : all_branchs_)
     {
@@ -705,16 +705,17 @@ namespace ontologenius {
     }
     else
     {
-      LiteralNode* literal = literal_graph_->findOrCreate(LiteralNode::table.get(-class_id));
+      LiteralNode* literal = literal_graph_->find(LiteralNode::table.get(-class_id));
 
-      for(auto& branch : all_branchs_)
-      {
-        for(const ClassDataRelationElement& relation : branch->data_relations_)
-          if(relation.second == literal)
-            for(const index_t id : data_properties)
-              if(relation.first->get() == id)
-                dataGetRelatedWith(branch, relation.first->get(), literal, res, do_not_take);
-      }
+      if(literal != nullptr)
+        for(auto& branch : all_branchs_)
+        {
+          for(const ClassDataRelationElement& relation : branch->data_relations_)
+            if(relation.second == literal)
+              for(const index_t id : data_properties)
+                if(relation.first->get() == id)
+                  dataGetRelatedWith(branch, relation.first->get(), literal, res, do_not_take);
+        }
     }
 
     for(auto i : do_not_take)
@@ -842,7 +843,7 @@ namespace ontologenius {
       second_class_index = second_class_ptr->get();
     else
     {
-      auto* literal = literal_graph_->findOrCreate(second_class);
+      auto* literal = literal_graph_->find(second_class);
       if(literal != nullptr)
         second_class_index = literal->get();
     }

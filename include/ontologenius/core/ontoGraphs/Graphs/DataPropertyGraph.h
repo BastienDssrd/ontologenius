@@ -17,7 +17,7 @@
 
 namespace ontologenius {
 
-  struct DataPropertyVectors_t
+  struct DataPropertyDescriptor_t
   {
     std::vector<SingleElement<std::string>> mothers_;
     std::vector<SingleElement<std::string>> disjoints_;
@@ -28,7 +28,7 @@ namespace ontologenius {
     std::map<std::string, std::vector<std::string>> muted_dictionary_;
     bool annotation_usage_;
 
-    DataPropertyVectors_t() : annotation_usage_(false) {}
+    DataPropertyDescriptor_t() : annotation_usage_(false) {}
   };
 
   // for friend
@@ -56,9 +56,9 @@ namespace ontologenius {
 
     void deepCopy(const DataPropertyGraph& other);
 
-    DataPropertyBranch* add(const std::string& value, DataPropertyVectors_t& property_vectors);
+    DataPropertyBranch* add(const std::string& value, DataPropertyDescriptor_t& property_descriptor);
     void add(std::vector<std::string>& disjoints);
-    bool addAnnotation(const std::string& value, DataPropertyVectors_t& property_vectors);
+    bool addAnnotation(const std::string& value, DataPropertyDescriptor_t& property_descriptor);
 
     std::unordered_set<std::string> getDomain(const std::string& value, size_t depth = -1);
     std::unordered_set<index_t> getDomain(index_t value, size_t depth = -1);

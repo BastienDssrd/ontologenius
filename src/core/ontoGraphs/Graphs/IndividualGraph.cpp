@@ -56,7 +56,7 @@ namespace ontologenius {
     }
   }
 
-  IndividualBranch* IndividualGraph::add(const std::string& value, IndividualVectors_t& individual_vector)
+  IndividualBranch* IndividualGraph::add(const std::string& value, IndividualDescriptor_t& individual_descriptor)
   {
     const std::lock_guard<std::shared_timed_mutex> lock(Graph<IndividualBranch>::mutex_);
     // am I created ?
@@ -74,7 +74,7 @@ namespace ontologenius {
     ** Class assertion
     **********************/
     // for all my classes
-    for(auto& is_a : individual_vector.is_a_)
+    for(auto& is_a : individual_descriptor.is_a_)
     {
       ClassBranch* mother_branch = class_graph_->findOrCreateBranch(is_a.elem);
 
@@ -93,23 +93,23 @@ namespace ontologenius {
     /**********************
     ** Object Property assertion
     **********************/
-    for(auto& object_relation : individual_vector.object_relations_)
+    for(auto& object_relation : individual_descriptor.object_relations_)
       addObjectRelation(me, object_relation);
 
     /**********************
     ** Data Property assertion name
     **********************/
     // for all my properties
-    for(auto& data_relation : individual_vector.data_relations_)
+    for(auto& data_relation : individual_descriptor.data_relations_)
       addDataRelation(me, data_relation);
 
     /**********************
     ** Same In Individual
     **********************/
-    addSames(me, individual_vector.same_as_);
+    addSames(me, individual_descriptor.same_as_);
 
-    me->setSteadyDictionary(individual_vector.dictionary_);
-    me->setSteadyMutedDictionary(individual_vector.muted_dictionary_);
+    me->setSteadyDictionary(individual_descriptor.dictionary_);
+    me->setSteadyMutedDictionary(individual_descriptor.muted_dictionary_);
 
     return me;
   }

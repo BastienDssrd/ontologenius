@@ -13,7 +13,7 @@
 
 namespace ontologenius {
 
-  struct ObjectVectors_t
+  struct ClassDescriptor_t
   {
     std::vector<SingleElement<std::string>> mothers_;
     std::vector<SingleElement<std::string>> disjoints_;
@@ -49,7 +49,7 @@ namespace ontologenius {
     ClassGraph(const ClassGraph& other, IndividualGraph* individual_graph, LiteralGraph* literal_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph);
     ~ClassGraph() override = default;
 
-    ClassBranch* add(const std::string& value, ObjectVectors_t& object_vector);
+    ClassBranch* add(const std::string& value, ClassDescriptor_t& class_descriptor);
     void add(std::vector<std::string>& disjoints);
 
     void deepCopy(const ClassGraph& other);

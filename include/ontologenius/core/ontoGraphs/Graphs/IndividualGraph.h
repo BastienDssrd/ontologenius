@@ -19,7 +19,7 @@
 
 namespace ontologenius {
 
-  struct IndividualVectors_t
+  struct IndividualDescriptor_t
   {
     std::vector<SingleElement<std::string>> is_a_;
 
@@ -54,7 +54,7 @@ namespace ontologenius {
 
     void deepCopy(const IndividualGraph& other);
 
-    IndividualBranch* add(const std::string& value, IndividualVectors_t& individual_vector);
+    IndividualBranch* add(const std::string& value, IndividualDescriptor_t& individual_descriptor);
     void add(std::vector<std::string>& distinct_);
 
     std::unordered_set<std::string> getSame(const std::string& individual); // C1

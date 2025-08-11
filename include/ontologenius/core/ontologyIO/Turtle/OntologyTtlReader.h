@@ -31,7 +31,7 @@ namespace ontologenius {
 
   private:
     std::string previous_subject_;
-    IndividualVectors_t individual_vector_;
+    IndividualDescriptor_t individual_vector_;
 
     std::regex double_reg_;
     std::regex decimal_reg_;

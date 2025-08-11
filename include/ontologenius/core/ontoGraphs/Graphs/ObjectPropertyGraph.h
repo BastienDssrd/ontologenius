@@ -16,7 +16,7 @@
 
 namespace ontologenius {
 
-  struct ObjectPropertyVectors_t
+  struct ObjectPropertyDescriptor_t
   {
     std::vector<SingleElement<std::string>> mothers_;
     std::vector<SingleElement<std::string>> disjoints_;
@@ -29,7 +29,7 @@ namespace ontologenius {
     std::map<std::string, std::vector<std::string>> muted_dictionary_;
     bool annotation_usage_;
 
-    ObjectPropertyVectors_t() : annotation_usage_(false) {}
+    ObjectPropertyDescriptor_t() : annotation_usage_(false) {}
   };
 
   // for friend
@@ -54,7 +54,7 @@ namespace ontologenius {
 
     void deepCopy(const ObjectPropertyGraph& other);
 
-    ObjectPropertyBranch* add(const std::string& value, ObjectPropertyVectors_t& property_vectors);
+    ObjectPropertyBranch* add(const std::string& value, ObjectPropertyDescriptor_t& property_descriptor);
     void add(std::vector<std::string>& disjoints);
 
     std::unordered_set<std::string> getInverse(const std::string& value);

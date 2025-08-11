@@ -90,7 +90,7 @@ namespace ontologenius {
     {
       individual_graph_->add(previous_subject_, individual_vector_);
       nb_loaded_elem_++;
-      individual_vector_ = IndividualVectors_t();
+      individual_vector_ = IndividualDescriptor_t();
     }
 
     if(display_)
@@ -235,7 +235,7 @@ namespace ontologenius {
       {
         individual_graph_->add(previous_subject_, individual_vector_);
         nb_loaded_elem_++;
-        individual_vector_ = IndividualVectors_t();
+        individual_vector_ = IndividualDescriptor_t();
       }
       previous_subject_ = subject;
 

@@ -36,7 +36,7 @@ namespace ontologenius {
                                                                   literal_graph_(literal_graph)
   {}
 
-  DataPropertyBranch* DataPropertyGraph::add(const std::string& value, DataPropertyVectors_t& property_vectors)
+  DataPropertyBranch* DataPropertyGraph::add(const std::string& value, DataPropertyDescriptor_t& property_descriptor)
   {
     const std::lock_guard<std::shared_timed_mutex> lock(Graph<DataPropertyBranch>::mutex_);
     /**********************
@@ -45,7 +45,7 @@ namespace ontologenius {
     DataPropertyBranch* me = findOrCreateBranch(value);
 
     // for all my mothers
-    for(auto& mother : property_vectors.mothers_)
+    for(auto& mother : property_descriptor.mothers_)
     {
       DataPropertyBranch* mother_branch = findOrCreateBranch(mother.elem);
 
@@ -57,7 +57,7 @@ namespace ontologenius {
     ** Disjoints
     **********************/
     // for all my disjoints
-    for(auto& disjoint : property_vectors.disjoints_)
+    for(auto& disjoint : property_descriptor.disjoints_)
     {
       DataPropertyBranch* disjoint_branch = findOrCreateBranch(disjoint.elem);
 
@@ -69,7 +69,7 @@ namespace ontologenius {
     ** Domains
     **********************/
     // for all my domains
-    for(auto& domain : property_vectors.domains_)
+    for(auto& domain : property_descriptor.domains_)
     {
       ClassBranch* domain_branch = class_graph_->findOrCreateBranch(domain.elem);
 
@@ -80,7 +80,7 @@ namespace ontologenius {
     ** Ranges
     **********************/
     // for all my ranges
-    for(const auto& range : property_vectors.ranges_)
+    for(const auto& range : property_descriptor.ranges_)
     {
       LiteralType* literal_type = literal_graph_->findOrCreateType(range);
       conditionalPushBack(me->ranges_, literal_type);
@@ -89,10 +89,10 @@ namespace ontologenius {
     /**********************
     ** Language and properties
     **********************/
-    me->properties_.apply(property_vectors.properties_);
-    me->annotation_usage_ = me->annotation_usage_ || property_vectors.annotation_usage_;
-    me->setSteadyDictionary(property_vectors.dictionary_);
-    me->setSteadyMutedDictionary(property_vectors.muted_dictionary_);
+    me->properties_.apply(property_descriptor.properties_);
+    me->annotation_usage_ = me->annotation_usage_ || property_descriptor.annotation_usage_;
+    me->setSteadyDictionary(property_descriptor.dictionary_);
+    me->setSteadyMutedDictionary(property_descriptor.muted_dictionary_);
 
     mitigate(me);
     return me;
@@ -122,7 +122,7 @@ namespace ontologenius {
     }
   }
 
-  bool DataPropertyGraph::addAnnotation(const std::string& value, DataPropertyVectors_t& property_vectors)
+  bool DataPropertyGraph::addAnnotation(const std::string& value, DataPropertyDescriptor_t& property_descriptor)
   {
     /**********************
     ** Mothers
@@ -131,7 +131,7 @@ namespace ontologenius {
     if(me == nullptr)
     {
       DataPropertyBranch* mother_branch = nullptr;
-      for(auto& mother : property_vectors.mothers_)
+      for(auto& mother : property_descriptor.mothers_)
       {
         mother_branch = this->container_.find(mother.elem);
         if(mother_branch != nullptr)
@@ -141,13 +141,13 @@ namespace ontologenius {
       // I do not exist but one of my mother do so I should exist
       if(mother_branch != nullptr)
       {
-        add(value, property_vectors);
+        add(value, property_descriptor);
         return true;
       }
       else
       {
         ClassBranch* range_branch = nullptr;
-        for(auto& range : property_vectors.ranges_)
+        for(auto& range : property_descriptor.ranges_)
         {
           range_branch = class_graph_->container_.find(range);
           if(range_branch != nullptr)
@@ -155,9 +155,9 @@ namespace ontologenius {
         }
 
         // My ranges are not classes so there are data and I should exists
-        if((range_branch == nullptr) && (property_vectors.ranges_.empty() == false))
+        if((range_branch == nullptr) && (property_descriptor.ranges_.empty() == false))
         {
-          add(value, property_vectors);
+          add(value, property_descriptor);
           return true;
         }
         else
@@ -166,7 +166,7 @@ namespace ontologenius {
     }
     else
     {
-      add(value, property_vectors);
+      add(value, property_descriptor);
       return true;
     }
   }

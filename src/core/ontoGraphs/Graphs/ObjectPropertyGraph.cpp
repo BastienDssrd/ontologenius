@@ -32,7 +32,7 @@ namespace ontologenius {
                                                                       class_graph_(class_graph)
   {}
 
-  ObjectPropertyBranch* ObjectPropertyGraph::add(const std::string& value, ObjectPropertyVectors_t& property_vectors)
+  ObjectPropertyBranch* ObjectPropertyGraph::add(const std::string& value, ObjectPropertyDescriptor_t& property_descriptor)
   {
     const std::lock_guard<std::shared_timed_mutex> lock(Graph<ObjectPropertyBranch>::mutex_);
     /**********************
@@ -41,7 +41,7 @@ namespace ontologenius {
     ObjectPropertyBranch* me = findOrCreateBranch(value);
 
     // for all my mothers
-    for(auto& mother : property_vectors.mothers_)
+    for(auto& mother : property_descriptor.mothers_)
     {
       ObjectPropertyBranch* mother_branch = findOrCreateBranch(mother.elem);
 
@@ -53,7 +53,7 @@ namespace ontologenius {
     ** Disjoints
     **********************/
     // for all my disjoints
-    for(auto& disjoint : property_vectors.disjoints_)
+    for(auto& disjoint : property_descriptor.disjoints_)
     {
       ObjectPropertyBranch* disjoint_branch = findOrCreateBranch(disjoint.elem);
 
@@ -65,7 +65,7 @@ namespace ontologenius {
     ** Inverses
     **********************/
     // for all my inverses
-    for(auto& inverse : property_vectors.inverses_)
+    for(auto& inverse : property_descriptor.inverses_)
     {
       ObjectPropertyBranch* inverse_branch = findOrCreateBranch(inverse.elem);
 
@@ -77,7 +77,7 @@ namespace ontologenius {
     ** Domains
     **********************/
     // for all my domains
-    for(auto& domain : property_vectors.domains_)
+    for(auto& domain : property_descriptor.domains_)
     {
       ClassBranch* domain_branch = class_graph_->findOrCreateBranch(domain.elem);
 
@@ -88,7 +88,7 @@ namespace ontologenius {
     ** Ranges
     **********************/
     // for all my ranges
-    for(auto& range : property_vectors.ranges_)
+    for(auto& range : property_descriptor.ranges_)
     {
       ClassBranch* range_branch = class_graph_->findOrCreateBranch(range.elem);
 
@@ -98,15 +98,15 @@ namespace ontologenius {
     /**********************
     ** Language and properties
     **********************/
-    me->properties_.apply(property_vectors.properties_);
-    me->annotation_usage_ = me->annotation_usage_ || property_vectors.annotation_usage_;
-    me->setSteadyDictionary(property_vectors.dictionary_);
-    me->setSteadyMutedDictionary(property_vectors.muted_dictionary_);
+    me->properties_.apply(property_descriptor.properties_);
+    me->annotation_usage_ = me->annotation_usage_ || property_descriptor.annotation_usage_;
+    me->setSteadyDictionary(property_descriptor.dictionary_);
+    me->setSteadyMutedDictionary(property_descriptor.muted_dictionary_);
 
     /**********************
     ** Chain axiom
     **********************/
-    for(auto& chain_i : property_vectors.chains_)
+    for(auto& chain_i : property_descriptor.chains_)
     {
       if(chain_i.empty())
         continue;
