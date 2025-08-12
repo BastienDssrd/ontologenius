@@ -20,6 +20,7 @@ namespace ontologenius {
     findOrCreateType("string", "http://www.w3.org/2001/XMLSchema");
     findOrCreateType("double", "http://www.w3.org/2001/XMLSchema");
     findOrCreateType("integer", "http://www.w3.org/2001/XMLSchema");
+    findOrCreateType("nonNegativeInteger", "http://www.w3.org/2001/XMLSchema");
   }
 
   LiteralGraph::LiteralGraph(const LiteralGraph& other)

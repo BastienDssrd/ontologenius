@@ -9,294 +9,196 @@
 
 namespace ontologenius {
 
-  void OntologyOwlReader::readEquivalentClass(AnonymousClassVectors_t& ano, tinyxml2::XMLElement* elem, const std::string& class_name)
+  ClassExpressionDescriptor_t* OntologyOwlReader::readEquivalentClass(tinyxml2::XMLElement* elem, bool force_datatype, bool is_instanciated, bool take_child)
   {
-    ano.class_equiv = class_name;
-    ExpressionMember_t* exp = nullptr;
-
-    // Class only equivalence  : Camera Eq to Component
-    if(elem->FirstChild() == nullptr)
+    auto* class_expression = new ClassExpressionDescriptor_t();
+    class_expression->data_usage = force_datatype;
+    if(elem->FirstChild() == nullptr) // direct equivalence
     {
-      exp = new ExpressionMember_t();
-      exp->rest.restriction_range = getName(elem->Attribute("rdf:resource"));
+      class_expression->resource_value = getAttribute(elem, "rdf:resource");
+      if(class_expression->resource_value.empty())
+        class_expression->resource_value = getAttribute(elem, "rdf:about");
+      class_expression->type = ClassExpressionType_e::class_expression_identifier;
+      class_expression->is_instanciated = is_instanciated;
     }
-    // Expression equivalence :
+    else if(take_child)
+      readEquivalentClass(elem->FirstChildElement(), class_expression);
     else
-    {
-      tinyxml2::XMLElement* sub_elem = elem->FirstChildElement(); // should be the only child element
-      const std::string sub_elem_name = sub_elem->Value();
+      readEquivalentClass(elem, class_expression);
 
-      // Restriction equivalence : Camera Eq to hasComponent some Component
-      if(sub_elem_name == "owl:Restriction")
-        exp = readAnonymousRestriction(sub_elem);
-      // Logical expression equivalence : Camera Eq to (hasComponent some Component and has_node only rational)
-      else if(sub_elem_name == "owl:Class")
-        exp = readAnonymousClassExpression(sub_elem);
-    }
-
-    ano.equivalence_trees.push_back(exp);
-    ano.str_equivalences.push_back(exp->toString());
+    return class_expression;
   }
 
-  ExpressionMember_t* OntologyOwlReader::readAnonymousRestriction(tinyxml2::XMLElement* elem)
+  void OntologyOwlReader::readEquivalentClass(tinyxml2::XMLElement* elem, ClassExpressionDescriptor_t* class_expression)
   {
-    ExpressionMember_t* exp = new ExpressionMember_t();
-
-    // get property
-    auto* property_elem = elem->FirstChildElement("owl:onProperty");
-    if(property_elem != nullptr)
-      exp->rest.property = getName(property_elem->Attribute("rdf:resource"));
-    // get cardinality
-
-    for(tinyxml2::XMLElement* sub_elem = elem->FirstChildElement(); sub_elem != nullptr; sub_elem = sub_elem->NextSiblingElement())
-    {
-      const std::string sub_elem_name = sub_elem->Value();
-      if((sub_elem_name == "owl:maxQualifiedCardinality") ||
-         (sub_elem_name == "owl:minQualifiedCardinality") ||
-         (sub_elem_name == "owl:qualifiedCardinality"))
-      {
-        readAnonymousCardinalityValue(sub_elem, exp);
-        break;
-      }
-
-      else if((sub_elem_name == "owl:allValuesFrom") ||
-              (sub_elem_name == "owl:hasValue") ||
-              (sub_elem_name == "owl:someValuesFrom"))
-      {
-        if(readAnonymousCardinalityRange(sub_elem, exp) == false)
-        {
-          exp->is_complex = true;
-          addAnonymousChildMember(exp, readAnonymousComplexDescription(sub_elem->FirstChildElement()), sub_elem->FirstChildElement());
-        }
-        break;
-      }
-    }
-
-    // get range
-    auto* class_elem = elem->FirstChildElement("owl:onClass");
-    auto* data_elem = elem->FirstChildElement("owl:onDataRange");
-
-    if(class_elem != nullptr)
-    {
-      exp->is_data_property = false;
-      const char* resource = class_elem->Attribute("rdf:resource");
-      // Simple restriction range : Camera Eq to  hasComponent some Lidar
-      if(resource != nullptr)
-        exp->rest.restriction_range = getName(resource);
-      // Complex restriction range with max, min, exactly : Camera Eq to  hasComponent max 2 (not DirtyCutlery)
-      else
-      {
-        exp->is_complex = true;
-        addAnonymousChildMember(exp, readAnonymousComplexDescription(class_elem->FirstChildElement()), class_elem->FirstChildElement());
-      }
-    }
-    else if(data_elem != nullptr)
-    {
-      exp->is_data_property = true;
-      const char* resource = data_elem->Attribute("rdf:resource");
-      // Simple restriction range : Camera Eq to  has_node some boolean
-      if(resource != nullptr)
-        exp->rest.restriction_range = resource; // getName(resource);
-      // Complex restriction range with max, min, exactly : Camera Eq to  has_node some (not(boolean))
-      else
-      {
-        exp->is_complex = true;
-        addAnonymousChildMember(exp, readAnonymousComplexDescription(data_elem->FirstChildElement()), data_elem->FirstChildElement());
-      }
-    }
-
-    return exp;
-  }
-
-  ExpressionMember_t* OntologyOwlReader::readAnonymousClassExpression(tinyxml2::XMLElement* elem)
-  {
-    for(tinyxml2::XMLElement* sub_elem = elem->FirstChildElement(); sub_elem != nullptr; sub_elem = sub_elem->NextSiblingElement())
-    {
-      const std::string sub_elem_name = sub_elem->Value();
-      if(sub_elem_name == "owl:unionOf")
-        return readAnonymousUnion(sub_elem);
-      else if(sub_elem_name == "owl:intersectionOf")
-        return readAnonymousIntersection(sub_elem);
-      else if(sub_elem_name == "owl:complementOf")
-        return readAnonymousComplement(sub_elem);
-      else if(sub_elem_name == "owl:oneOf")
-        return readAnonymousOneOf(sub_elem);
-    }
-
-    return nullptr;
-  }
-
-  ExpressionMember_t* OntologyOwlReader::readAnonymousDatatypeExpression(tinyxml2::XMLElement* elem)
-  {
-    for(tinyxml2::XMLElement* sub_elem = elem->FirstChildElement(); sub_elem != nullptr; sub_elem = sub_elem->NextSiblingElement())
-    {
-      ExpressionMember_t* exp = nullptr;
-      const std::string sub_elem_name = sub_elem->Value();
-      if(sub_elem_name == "owl:unionOf")
-        exp = readAnonymousUnion(sub_elem);
-      else if(sub_elem_name == "owl:intersectionOf")
-        exp = readAnonymousIntersection(sub_elem);
-      else if(sub_elem_name == "owl:datatypeComplementOf")
-        exp = readAnonymousComplement(sub_elem);
-
-      if(exp != nullptr)
-      {
-        exp->is_data_property = true;
-        return exp;
-      }
-    }
-
-    return nullptr;
-  }
-
-  ExpressionMember_t* OntologyOwlReader::readAnonymousIntersection(tinyxml2::XMLElement* elem)
-  {
-    ExpressionMember_t* exp = new ExpressionMember_t();
-    exp->logical_type_ = logical_and;
-
-    for(tinyxml2::XMLElement* sub_elem = elem->FirstChildElement(); sub_elem != nullptr; sub_elem = sub_elem->NextSiblingElement())
-    {
-      ExpressionMember_t* child_exp = readAnonymousComplexDescription(sub_elem);
-      addAnonymousChildMember(exp, child_exp, sub_elem);
-    }
-
-    return exp;
-  }
-
-  ExpressionMember_t* OntologyOwlReader::readAnonymousUnion(tinyxml2::XMLElement* elem)
-  {
-    ExpressionMember_t* exp = new ExpressionMember_t();
-    exp->logical_type_ = logical_or;
-
-    for(tinyxml2::XMLElement* sub_elem = elem->FirstChildElement(); sub_elem != nullptr; sub_elem = sub_elem->NextSiblingElement())
-    {
-      ExpressionMember_t* child_exp = readAnonymousComplexDescription(sub_elem);
-      addAnonymousChildMember(exp, child_exp, sub_elem);
-    }
-
-    return exp;
-  }
-
-  ExpressionMember_t* OntologyOwlReader::readAnonymousOneOf(tinyxml2::XMLElement* elem)
-  {
-    ExpressionMember_t* exp = new ExpressionMember_t();
-    exp->oneof = true;
-
-    for(tinyxml2::XMLElement* sub_elem = elem->FirstChildElement(); sub_elem != nullptr; sub_elem = sub_elem->NextSiblingElement())
-    {
-      ExpressionMember_t* child_exp = readAnonymousResource(sub_elem, "rdf:about");
-      addAnonymousChildMember(exp, child_exp, sub_elem);
-    }
-
-    return exp;
-  }
-
-  ExpressionMember_t* OntologyOwlReader::readAnonymousComplement(tinyxml2::XMLElement* elem)
-  {
-    ExpressionMember_t* exp = new ExpressionMember_t();
-    exp->logical_type_ = logical_not;
-    ExpressionMember_t* child_exp = nullptr;
-
-    const char* resource = elem->Attribute("rdf:resource");
-
-    if(resource != nullptr)
-      child_exp = readAnonymousResource(elem);
-    else
-      child_exp = readAnonymousComplexDescription(elem->FirstChildElement());
-
-    addAnonymousChildMember(exp, child_exp, elem->FirstChildElement());
-
-    return exp;
-  }
-
-  ExpressionMember_t* OntologyOwlReader::readAnonymousComplexDescription(tinyxml2::XMLElement* elem)
-  {
-    if(elem == nullptr)
-      return nullptr;
-
     const std::string elem_name = elem->Value();
-    if(elem_name == "owl:Class")
-      return readAnonymousClassExpression(elem);
+    if(elem_name == "owl:Restriction")
+      readAnonymousRestriction(elem, class_expression);
+    else if(elem_name == "owl:Class")
+      readAnonymousClassExpression(elem, class_expression);
     else if(elem_name == "rdfs:Datatype")
-      return readAnonymousDatatypeExpression(elem);
-    else if(elem_name == "owl:Restriction")
-      return readAnonymousRestriction(elem);
-    else if(elem_name == "rdf:Description")
-      return readAnonymousResource(elem, "rdf:about");
+    {
+      class_expression->data_usage = true;
+      readAnonymousClassExpression(elem, class_expression);
+    }
+  }
+
+  void OntologyOwlReader::readAnonymousRestriction(tinyxml2::XMLElement* elem, ClassExpressionDescriptor_t* class_expression)
+  {
+    class_expression->type = ClassExpressionType_e::class_expression_restriction;
+    for(tinyxml2::XMLElement* sub_elem = elem->FirstChildElement(); sub_elem != nullptr; sub_elem = sub_elem->NextSiblingElement())
+    {
+      bool extract_range = false;
+      const std::string sub_elem_name = sub_elem->Value();
+      if(sub_elem_name == "owl:onProperty")
+        class_expression->restriction_property = getName(sub_elem->Attribute("rdf:resource"));
+      else if(sub_elem_name == "owl:allValuesFrom")
+        class_expression->restriction_type = RestrictionConstraintType_e::restriction_all_values_from;
+      else if(sub_elem_name == "owl:someValuesFrom")
+        class_expression->restriction_type = RestrictionConstraintType_e::restriction_some_values_from;
+      else if(sub_elem_name == "owl:hasValue")
+        class_expression->restriction_type = RestrictionConstraintType_e::restriction_has_value;
+      else if((sub_elem_name == "owl:maxQualifiedCardinality") || (sub_elem_name == "owl:maxCardinality"))
+        class_expression->restriction_type = RestrictionConstraintType_e::restriction_max_cardinality;
+      else if((sub_elem_name == "owl:minQualifiedCardinality") || (sub_elem_name == "owl:minCardinality"))
+        class_expression->restriction_type = RestrictionConstraintType_e::restriction_min_cardinality;
+      else if((sub_elem_name == "owl:qualifiedCardinality") || (sub_elem_name == "owl:cardinality"))
+        class_expression->restriction_type = RestrictionConstraintType_e::restriction_cardinality;
+      else if(sub_elem_name == "owl:onClass")
+        extract_range = true;
+      else if(sub_elem_name == "owl:onDataRange")
+      {
+        class_expression->data_usage = true;
+        extract_range = true;
+      }
+
+      if(extract_range)
+      {
+        if(getResourceValue(sub_elem, class_expression, false) == false)
+          class_expression->sub_expressions.push_back(readEquivalentClass(sub_elem));
+      }
+      else if((class_expression->restriction_type == RestrictionConstraintType_e::restriction_all_values_from) ||
+              (class_expression->restriction_type == RestrictionConstraintType_e::restriction_some_values_from) ||
+              (class_expression->restriction_type == RestrictionConstraintType_e::restriction_has_value))
+      {
+        bool instanciated = (class_expression->restriction_type == RestrictionConstraintType_e::restriction_has_value);
+        if(getResourceValue(sub_elem, class_expression, instanciated) == false)
+          class_expression->sub_expressions.push_back(readEquivalentClass(sub_elem)); 
+      }
+      else if((class_expression->restriction_type == RestrictionConstraintType_e::restriction_max_cardinality) ||
+              (class_expression->restriction_type == RestrictionConstraintType_e::restriction_min_cardinality) ||
+              (class_expression->restriction_type == RestrictionConstraintType_e::restriction_cardinality))
+      {
+        std::string type = getAttribute(sub_elem, "rdf:datatype");
+        const auto* datavalue = sub_elem->GetText();
+        if(datavalue != nullptr)
+          class_expression->cardinality_value = type + "#" + std::string(datavalue);
+      }
+    }
+  }
+
+  void OntologyOwlReader::readAnonymousClassExpression(tinyxml2::XMLElement* elem, ClassExpressionDescriptor_t* class_expression)
+  {
+    auto* expression_type_elem = elem->FirstChildElement();
+    if(expression_type_elem != nullptr)
+    {
+      const std::string expression_type = expression_type_elem->Value();
+      if(expression_type == "owl:oneOf")
+      {
+        class_expression->type = ClassExpressionType_e::class_expression_one_of;
+        if(testAttribute(expression_type_elem, "rdf:parseType") == false)
+        {
+          readDatatypeEnumeration(expression_type_elem, class_expression);
+          return;
+        }
+      }
+      else if(expression_type == "owl:complementOf")
+        class_expression->type = ClassExpressionType_e::class_expression_complement_of;
+      else if(expression_type == "owl:datatypeComplementOf")
+      {
+        class_expression->type = ClassExpressionType_e::class_expression_complement_of;
+        class_expression->data_usage = true;
+      }
+      else if(expression_type == "owl:intersectionOf")
+        class_expression->type = ClassExpressionType_e::class_expression_intersection_of;
+      else if(expression_type == "owl:unionOf") // not yet tested
+        class_expression->type = ClassExpressionType_e::class_expression_union_of;
+
+      if(class_expression->type == ClassExpressionType_e::class_expression_complement_of)
+      {
+        std::string single_value = getAttribute(expression_type_elem, "rdf:resource");
+        if(single_value.empty() == false)
+        {
+          class_expression->sub_expressions.emplace_back(new ClassExpressionDescriptor_t());
+          class_expression->sub_expressions.back()->data_usage = class_expression->data_usage;
+          class_expression->sub_expressions.back()->resource_value = single_value;
+          class_expression->sub_expressions.back()->type = ClassExpressionType_e::class_expression_identifier;
+          return;
+        }
+      }
+      
+      if(class_expression->type != ClassExpressionType_e::class_expression_unknown)
+      {
+        bool is_instanciated = (class_expression->type == ClassExpressionType_e::class_expression_one_of);
+        for(tinyxml2::XMLElement* sub_elem = expression_type_elem->FirstChildElement(); sub_elem != nullptr; sub_elem = sub_elem->NextSiblingElement())
+          class_expression->sub_expressions.push_back(readEquivalentClass(sub_elem, class_expression->data_usage, is_instanciated, false));
+      }
+    }
+  }
+
+  void OntologyOwlReader::readDatatypeEnumeration(tinyxml2::XMLElement* elem, ClassExpressionDescriptor_t* class_expression)
+  {
+    auto* list_elem = elem->FirstChildElement("rdf:List");
+    if(list_elem != nullptr)
+    {
+      auto* first = list_elem->FirstChildElement("rdf:first");
+      std::string type = getAttribute(first, "rdf:datatype");
+      const auto* datavalue = first->GetText();
+      if(datavalue != nullptr)
+      {
+        class_expression->sub_expressions.emplace_back(new ClassExpressionDescriptor_t());
+        class_expression->sub_expressions.back()->data_usage = true;
+        class_expression->sub_expressions.back()->is_instanciated = true;
+        class_expression->sub_expressions.back()->resource_value = type + "#" + std::string(datavalue);
+        class_expression->sub_expressions.back()->type = ClassExpressionType_e::class_expression_identifier;
+      }
+
+      auto* rest = list_elem->FirstChildElement("rdf:rest");
+      if(testAttribute(rest, "rdf:resource") == false)
+        readDatatypeEnumeration(rest, class_expression);
+    }
+  }
+
+  bool OntologyOwlReader::getResourceValue(tinyxml2::XMLElement* elem, ClassExpressionDescriptor_t* class_expression, bool is_instanciated)
+  {
+    std::string data_type = getAttribute(elem, "rdf:datatype");
+    if(data_type.empty())
+    {
+      class_expression->resource_value = getAttribute(elem, "rdf:resource");
+      if(class_expression->resource_value.empty())
+      {
+        class_expression->resource_value = getAttribute(elem, "rdf:datatype");
+        if(class_expression->resource_value.empty() == false)
+          class_expression->data_usage = true;
+        else
+          return false;
+      }
+      class_expression->is_instanciated = is_instanciated;
+      return true;
+    }
     else
-      return nullptr;
-  }
-
-  ExpressionMember_t* OntologyOwlReader::readAnonymousResource(tinyxml2::XMLElement* elem, const std::string& attribute_name)
-  {
-    ExpressionMember_t* exp = nullptr;
-
-    const char* resource = elem->Attribute(attribute_name.c_str());
-    if(resource != nullptr)
     {
-      exp = new ExpressionMember_t();
-
-      const std::string attr_class = elem->Attribute(attribute_name.c_str());
-      if(isIn("http://www.w3.org/", attr_class))
+      const auto* datavalue = elem->GetText();
+      if(datavalue != nullptr)
       {
-        exp->rest.restriction_range = attr_class;
-        exp->is_data_property = true;
+        class_expression->resource_value = data_type + "#" + std::string(datavalue);
+        class_expression->data_usage = true;
+        class_expression->is_instanciated = true;
+        return true;
       }
       else
-        exp->rest.restriction_range = getName(attr_class);
+        return false;
     }
-
-    return exp;
-  }
-
-  void OntologyOwlReader::addAnonymousChildMember(ExpressionMember_t* parent, ExpressionMember_t* child, tinyxml2::XMLElement* used_elem)
-  {
-    if(child != nullptr)
-    {
-      parent->child_members.push_back(child);
-      child->mother = parent;
-      if((used_elem != nullptr) && (std::string(used_elem->Value()) != "owl:Restriction"))
-        parent->is_data_property = child->is_data_property;
-    }
-  }
-
-  void OntologyOwlReader::readAnonymousCardinalityValue(tinyxml2::XMLElement* elem, ExpressionMember_t* exp)
-  {
-    const std::string sub_elem_name = elem->Value();
-
-    exp->rest.card.cardinality_type = card_map_[sub_elem_name];
-
-    if(elem->GetText() != nullptr)
-      exp->rest.card.cardinality_number = elem->GetText();
-  }
-
-  bool OntologyOwlReader::readAnonymousCardinalityRange(tinyxml2::XMLElement* elem, ExpressionMember_t* exp)
-  {
-    const std::string sub_elem_name = elem->Value();
-
-    const char* resource = elem->Attribute("rdf:resource");
-    const char* resource_data = elem->Attribute("rdf:datatype");
-    exp->rest.card.cardinality_type = card_map_[sub_elem_name];
-
-    if(resource != nullptr)
-    {
-      const std::string s = resource;
-      if(isIn("http://www.w3.org/", s))
-      {
-        exp->rest.card.cardinality_range = getName(resource);
-        exp->is_data_property = true;
-      }
-      else
-        exp->rest.card.cardinality_range = getName(resource);
-      return true;
-    }
-    else if(resource_data != nullptr)
-    {
-      exp->is_data_property = true;
-      exp->rest.card.cardinality_range = getName(std::string(resource_data)) + "#" + elem->GetText(); // without getName before
-      return true;
-    }
-    return false;
   }
 
 } // namespace ontologenius

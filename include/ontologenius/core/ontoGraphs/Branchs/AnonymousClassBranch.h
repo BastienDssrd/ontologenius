@@ -11,6 +11,28 @@
 
 namespace ontologenius {
 
+  enum RestrictionConstraintType_e
+  {
+    restriction_all_values_from,
+    restriction_some_values_from,
+    restriction_has_value,
+    restriction_max_cardinality,
+    restriction_min_cardinality,
+    restriction_cardinality,
+    restriction_unknown
+  };
+
+  enum ClassExpressionType_e
+  {
+    class_expression_identifier,      // type 1
+    class_expression_one_of,          // type 2
+    class_expression_restriction,     // type 3
+    class_expression_intersection_of, // type 4
+    class_expression_union_of,        // type 5
+    class_expression_complement_of,   // type 6
+    class_expression_unknown
+  };
+
   enum CardType_e
   {
     cardinality_none,

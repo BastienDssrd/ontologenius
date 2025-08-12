@@ -48,6 +48,31 @@ namespace ontologenius {
 
   {}
 
+  AnonymousClassBranch* AnonymousClassGraph::add(EquivalentClassDescriptor_t& equivalence_descriptor, bool hidden_anonymous)
+  {
+    const std::lock_guard<std::shared_timed_mutex> lock(Graph<AnonymousClassBranch>::mutex_);
+    const std::string ano_name = "anonymous_" + equivalence_descriptor.class_name;
+    AnonymousClassBranch* anonymous_branch = new AnonymousClassBranch(ano_name);
+    ClassBranch* class_branch = class_graph_->findOrCreateBranch(equivalence_descriptor.class_name, hidden_anonymous);
+
+    anonymous_branch->class_equiv_ = class_branch;
+    all_branchs_.push_back(anonymous_branch);
+    class_branch->equiv_anonymous_class_ = anonymous_branch;
+
+    for(size_t i = 0; i < equivalence_descriptor.expression_members.size(); i++)
+    {
+      AnonymousClassTree* tree = createTree(equivalence_descriptor.expression_members[i]);
+      tree->ano_name = ano_name + "_" + std::to_string(i);
+      anonymous_branch->ano_trees_.push_back(tree);
+
+#ifdef DEBUG
+      printTree(tree->root_node, 3, true);
+#endif
+    }
+
+    return anonymous_branch;
+  }
+
   AnonymousClassBranch* AnonymousClassGraph::add(const std::string& value, AnonymousClassVectors_t& ano, bool hidden_anonymous)
   {
     const std::lock_guard<std::shared_timed_mutex> lock(Graph<AnonymousClassBranch>::mutex_);
@@ -78,6 +103,178 @@ namespace ontologenius {
   {
     for(size_t i = 0; i < other.all_branchs_.size(); i++)
       cpyBranch(other.all_branchs_[i], all_branchs_[i]);
+  }
+
+  AnonymousClassTree* AnonymousClassGraph::createTree(ClassExpressionDescriptor_t* class_expression_descriptor)
+  {
+    std::string rule = class_expression_descriptor->toString();
+    AnonymousClassTree* tree = new AnonymousClassTree(rule);
+    size_t depth = 0;
+    tree->root_node_ = createTreeNodes(class_expression_descriptor, depth, tree);
+    tree->depth_ = depth;
+
+    return tree;
+  }
+
+  AnonymousClassElement* AnonymousClassGraph::createTreeNodes(ClassExpressionDescriptor_t* class_expression_descriptor, size_t& depth, AnonymousClassTree* related_tree)
+  {
+    size_t local_depth = depth + 1;
+
+    AnonymousClassElement* node = createNodeContent(class_expression_descriptor, related_tree);
+
+    for(auto* child : class_expression_descriptor->sub_expressions)
+    {
+      size_t child_depth = depth + 1;
+      node->sub_elements_.push_back(createTreeNodes(child, child_depth, related_tree));
+      local_depth = std::max(child_depth, local_depth);
+    }
+
+    depth = local_depth;
+
+    return node;
+  }
+
+  /*
+  ClassExpressionType_e type;
+  std::string resource_value;                     // resource_value should be used as an end node to represent a specific URI (individual, class, datatype)
+  std::string restriction_property;
+  RestrictionConstraintType_e restriction_type;
+  std::string cardinality_value;
+  bool data_usage;
+  std::vector<ClassExpressionDescriptor_t*> sub_expressions;
+  */
+
+  AnonymousClassElement* AnonymousClassGraph::createNodeContent(ClassExpressionDescriptor_t* expression_leaf, AnonymousClassTree* related_tree)
+  {
+    AnonymousClassElement* ano_element = new AnonymousClassElement();
+    ano_element->logical_type_ = LogicalNodeType_e::logical_none;
+
+    switch (expression_leaf->type)
+    {
+    case ClassExpressionType_e::class_expression_identifier:
+      //std::cout << "-->" << expression_leaf->resource_value << " => data=" << expression_leaf->data_usage << " instance=" << expression_leaf->is_instanciated << std::endl;
+      if(expression_leaf->data_usage)
+      {
+        if(expression_leaf->is_instanciated)
+          ano_element->card_.card_value_range_ = literal_graph_->findOrCreate(expression_leaf->resource_value);
+        else
+          ano_element->card_.card_type_range_ = literal_graph_->findOrCreateType(expression_leaf->resource_value);
+      }
+      else
+      {
+        if(expression_leaf->is_instanciated)
+        {
+          ano_element->individual_involved_ = individual_graph_->findOrCreateBranch(expression_leaf->resource_value);
+          related_tree->involves_individual = true;
+        }
+        else
+        {
+          ano_element->class_involved_ = class_graph_->findOrCreateBranch(expression_leaf->resource_value);
+          related_tree->involves_class = true;
+        }
+      }
+      break;
+    case ClassExpressionType_e::class_expression_one_of:
+      ano_element->oneof = true;
+      break;
+    case ClassExpressionType_e::class_expression_restriction:
+      if(expression_leaf->data_usage == true)
+      {
+        ano_element->data_property_involved_ = data_property_graph_->findOrCreateBranch(expression_leaf->restriction_property);
+        related_tree->involves_data_property = true;
+      }
+      else
+      {
+        ano_element->object_property_involved_ = object_property_graph_->findBranch(expression_leaf->restriction_property);
+        if(ano_element->object_property_involved_ != nullptr)
+          related_tree->involves_object_property = true;
+        else
+        {
+          ano_element->data_property_involved_ = data_property_graph_->findOrCreateBranch(expression_leaf->restriction_property);
+          if(ano_element->data_property_involved_ != nullptr)
+          {
+            related_tree->involves_data_property = true;
+            expression_leaf->data_usage = true;
+          }
+          else
+            std::cout << "[Error][AnonymousClassGraph] unknown property " << expression_leaf->restriction_property << std::endl;
+        }
+      }
+
+      switch (expression_leaf->restriction_type)
+      {
+      case RestrictionConstraintType_e::restriction_all_values_from:
+        ano_element->card_.card_type_ = cardinality_only;
+        setCardRange(ano_element, expression_leaf, related_tree);
+        break;
+      case RestrictionConstraintType_e::restriction_some_values_from:
+        ano_element->card_.card_type_ = cardinality_some;
+        setCardRange(ano_element, expression_leaf, related_tree);
+        break;
+      case RestrictionConstraintType_e::restriction_has_value:
+        ano_element->card_.card_type_ = cardinality_value;
+        if(expression_leaf->resource_value.empty() == false)
+        {
+          if(expression_leaf->data_usage == true)
+            ano_element->card_.card_value_range_ = literal_graph_->findOrCreate(expression_leaf->resource_value);
+          else
+          {
+            ano_element->individual_involved_ = individual_graph_->findOrCreateBranch(expression_leaf->resource_value);
+            related_tree->involves_individual = true;
+          }
+        }
+        break;
+      case RestrictionConstraintType_e::restriction_max_cardinality:
+        ano_element->card_.card_type_ = cardinality_max;
+        ano_element->card_.card_number_ = std::stoi(ClassExpressionDescriptor_t::splitData(expression_leaf->cardinality_value).second);
+        setCardRange(ano_element, expression_leaf, related_tree); // todo: remove complex flag if no child
+        break;
+      case RestrictionConstraintType_e::restriction_min_cardinality:
+        ano_element->card_.card_type_ = cardinality_min;
+        ano_element->card_.card_number_ = std::stoi(ClassExpressionDescriptor_t::splitData(expression_leaf->cardinality_value).second);
+        setCardRange(ano_element, expression_leaf, related_tree); // todo: remove complex flag if no child
+        break;
+      case RestrictionConstraintType_e::restriction_cardinality:
+        ano_element->card_.card_type_ = cardinality_exactly;
+        ano_element->card_.card_number_ = std::stoi(ClassExpressionDescriptor_t::splitData(expression_leaf->cardinality_value).second);
+        setCardRange(ano_element, expression_leaf, related_tree); // todo: remove complex flag if no child
+        break;
+      
+      default:
+        break;
+      }
+      break;
+    case ClassExpressionType_e::class_expression_intersection_of:
+      ano_element->logical_type_ = LogicalNodeType_e::logical_and;
+      break;
+    case ClassExpressionType_e::class_expression_union_of:
+      ano_element->logical_type_ = LogicalNodeType_e::logical_or;
+      break;
+    case ClassExpressionType_e::class_expression_complement_of:
+      ano_element->logical_type_ = LogicalNodeType_e::logical_not;
+      break;
+    
+    default:
+      break;
+    }
+
+    return ano_element;
+  }
+
+  void AnonymousClassGraph::setCardRange(AnonymousClassElement* ano_element, ClassExpressionDescriptor_t* expression_leaf, AnonymousClassTree* related_tree)
+  {
+    if(expression_leaf->resource_value.empty() == false)
+    {
+      if(expression_leaf->data_usage == true)
+        ano_element->card_.card_type_range_ = literal_graph_->findOrCreateType(expression_leaf->resource_value);
+      else
+      {
+        ano_element->class_involved_ = class_graph_->findOrCreateBranch(expression_leaf->resource_value);
+        related_tree->involves_class = true;
+      }
+    }
+    else
+      ano_element->is_complex = true; // todo: check that child has the data usage info
   }
 
   AnonymousClassTree* AnonymousClassGraph::createTree(ExpressionMember_t* member_node)

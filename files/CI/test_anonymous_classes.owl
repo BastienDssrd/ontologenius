@@ -63,39 +63,6 @@
     //
     ///////////////////////////////////////////////////////////////////////////////////////
      -->
-
-    
-
-
-    <!-- test_anonymous#data1 -->
-
-    <owl:DatatypeProperty rdf:about="test_anonymous#data1">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- test_anonymous#data2 -->
-
-    <owl:DatatypeProperty rdf:about="test_anonymous#data2">
-        <rdfs:subPropertyOf rdf:resource="test_anonymous#data1"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- test_anonymous#data3 -->
-
-    <owl:DatatypeProperty rdf:about="test_anonymous#data3">
-        <rdfs:subPropertyOf rdf:resource="test_anonymous#data1"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- test_anonymous#data4 -->
-
-    <owl:DatatypeProperty rdf:about="test_anonymous#data4">
-        <rdfs:subPropertyOf rdf:resource="test_anonymous#data3"/>
-    </owl:DatatypeProperty>
     
 
 
@@ -194,8 +161,6 @@
         </owl:equivalentClass>
         <rdfs:subClassOf rdf:resource="test_anonymous#AgentCapability"/>
     </owl:Class>
-    
-
 
     <!-- test_anonymous#Bumper -->
 
@@ -279,7 +244,22 @@
 
     <!-- test_anonymous#Heart -->
 
-    <owl:Class rdf:about="test_anonymous#Heart"/>
+    <owl:Class rdf:about="test_anonymous#Heart">
+        <owl:equivalentClass>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="test_anonymous#hasComponent"/>
+                <owl:someValuesFrom>
+                    <owl:Class>
+                        <owl:oneOf rdf:parseType="Collection">
+                            <rdf:Description rdf:about="test_anonymous#lidar_1"/>
+                            <rdf:Description rdf:about="test_anonymous#realsense"/>
+                        </owl:oneOf>
+                    </owl:Class>
+                </owl:someValuesFrom>
+            </owl:Restriction>
+        </owl:equivalentClass>
+    </owl:Class>
+
     
 
 

@@ -155,14 +155,6 @@ namespace ontologenius {
       }
 
       if(display_)
-        std::cout << "├── Class" << std::endl;
-      for(tinyxml2::XMLElement* elem = rdf->FirstChildElement("owl:Class"); elem != nullptr; elem = elem->NextSiblingElement("owl:Class"))
-        readClass(elem);
-      if(display_)
-        std::cout << "├── Description" << std::endl;
-      for(tinyxml2::XMLElement* elem = rdf->FirstChildElement("rdf:Description"); elem != nullptr; elem = elem->NextSiblingElement("rdf:Description"))
-        readDescription(elem);
-      if(display_)
         std::cout << "├── Object property" << std::endl;
       for(tinyxml2::XMLElement* elem = rdf->FirstChildElement("owl:ObjectProperty"); elem != nullptr; elem = elem->NextSiblingElement("owl:ObjectProperty"))
         readObjectProperty(elem);
@@ -170,6 +162,14 @@ namespace ontologenius {
         std::cout << "├── Data property" << std::endl;
       for(tinyxml2::XMLElement* elem = rdf->FirstChildElement("owl:DatatypeProperty"); elem != nullptr; elem = elem->NextSiblingElement("owl:DatatypeProperty"))
         readDataProperty(elem);
+      if(display_)
+        std::cout << "├── Class" << std::endl;
+      for(tinyxml2::XMLElement* elem = rdf->FirstChildElement("owl:Class"); elem != nullptr; elem = elem->NextSiblingElement("owl:Class"))
+        readClass(elem);
+      if(display_)
+        std::cout << "├── Description" << std::endl;
+      for(tinyxml2::XMLElement* elem = rdf->FirstChildElement("rdf:Description"); elem != nullptr; elem = elem->NextSiblingElement("rdf:Description"))
+        readDescription(elem);
       if(display_)
         std::cout << "├── Annotation property" << std::endl;
       for(tinyxml2::XMLElement* elem = rdf->FirstChildElement("owl:AnnotationProperty"); elem != nullptr; elem = elem->NextSiblingElement("owl:AnnotationProperty"))
@@ -221,7 +221,7 @@ namespace ontologenius {
   {
     std::string node_name;
     ClassDescriptor_t class_descriptor;
-    AnonymousClassVectors_t ano_vector;
+    EquivalentClassDescriptor_t anonymous_descriptor;
     const char* attr = elem->Attribute("rdf:about");
     if(attr != nullptr)
     {
@@ -243,7 +243,7 @@ namespace ontologenius {
         else if(sub_elem_name == "onto:label")
           pushLang(class_descriptor.muted_dictionary_, sub_elem);
         else if(sub_elem_name == "owl:equivalentClass")
-          readEquivalentClass(ano_vector, sub_elem, attr);
+          anonymous_descriptor.expression_members.emplace_back(readEquivalentClass(sub_elem));
         else
         {
           const std::string ns = sub_elem_name.substr(0, sub_elem_name.find(':'));
@@ -263,11 +263,12 @@ namespace ontologenius {
       }
     }
 
-    if(ano_vector.equivalence_trees.empty() == false)
+    if(anonymous_descriptor.expression_members.empty() == false)
     {
-      anonymous_graph_->add(node_name, ano_vector);
-      for(auto& str_elem : ano_vector.str_equivalences)
-        push(class_descriptor.equivalences_, str_elem, "=");
+      anonymous_descriptor.class_name = node_name;
+      anonymous_graph_->add(anonymous_descriptor);
+      for(auto* expression_elem : anonymous_descriptor.expression_members)
+        push(class_descriptor.equivalences_, expression_elem->toString(), "=");
     }
 
     class_graph_->add(node_name, class_descriptor);

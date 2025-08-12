@@ -67,21 +67,12 @@ namespace ontologenius {
 
     std::unordered_map<std::string, std::string> card_map_;
 
-    void readEquivalentClass(AnonymousClassVectors_t& ano, tinyxml2::XMLElement* elem, const std::string& class_name);
-    ExpressionMember_t* readAnonymousRestriction(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readAnonymousClassExpression(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readAnonymousDatatypeExpression(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readAnonymousIntersection(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readAnonymousUnion(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readAnonymousOneOf(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readAnonymousComplement(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readAnonymousComplexDescription(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readAnonymousResource(tinyxml2::XMLElement* elem, const std::string& attribute_name = "rdf:resource");
-
-    void addAnonymousChildMember(ExpressionMember_t* parent, ExpressionMember_t* child, tinyxml2::XMLElement* used_elem);
-
-    bool readAnonymousCardinalityRange(tinyxml2::XMLElement* elem, ExpressionMember_t* exp);
-    void readAnonymousCardinalityValue(tinyxml2::XMLElement* elem, ExpressionMember_t* exp);
+    ClassExpressionDescriptor_t* readEquivalentClass(tinyxml2::XMLElement* elem, bool force_datatype = false, bool is_instanciated = false, bool take_child = true);
+    void readEquivalentClass(tinyxml2::XMLElement* elem, ClassExpressionDescriptor_t* class_expression);
+    void readAnonymousRestriction(tinyxml2::XMLElement* elem, ClassExpressionDescriptor_t* class_expression);
+    void readAnonymousClassExpression(tinyxml2::XMLElement* elem, ClassExpressionDescriptor_t* class_expression);
+    void readDatatypeEnumeration(tinyxml2::XMLElement* elem, ClassExpressionDescriptor_t* class_expression);
+    bool getResourceValue(tinyxml2::XMLElement* elem, ClassExpressionDescriptor_t* class_expression, bool is_instanciated);
 
     /**********************
      *   SWRL Rule Reader  *
