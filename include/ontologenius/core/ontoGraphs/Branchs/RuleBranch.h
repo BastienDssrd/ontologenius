@@ -124,25 +124,13 @@ namespace ontologenius {
         res = data_predicate->value() + "(" + arguments.at(0).toString() + ", " + arguments.at(1).toString() + ")";
         break;
       case rule_atom_builtin:
-        /* code */
+        res = builtinToString() + "(" + arguments.at(0).toString() + ", " + arguments.at(1).toString() + ")"; // should be made more generic
         break;
       default:
         break;
       }
       return res;
     }
-  };
-
-  struct Variable_t
-  {
-    Variable_t() : is_individual(false), is_datavalue(false), var_index(-1) {}
-
-    std::string var_name;
-    bool is_individual;  // for indiv
-    bool is_datavalue;     // for literal
-    int64_t var_index;
-
-    std::string toString() const { return var_name; }
   };
 
   class RuleBranch : public ValuedNode,

@@ -27,9 +27,9 @@ namespace ontologenius {
     void checkRuleDisjoint(RuleBranch* branch);
     void checkAtom(const RuleTriplet_t& atom,
                    std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>>& variables_types,
-                   std::unordered_map<std::string, Variable_t>& all_arguments);
+                   std::unordered_map<std::string, uint8_t>& all_arguments);
 
-    void setArgument(const RuleArgument_t& arg, std::unordered_map<std::string, Variable_t>& all_arguments, bool individual_usage);
+    void setArgument(const RuleArgument_t& arg, std::unordered_map<std::string, uint8_t>& all_arguments, bool individual_usage);
 
     void checkClassAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>>& variables_types);
     void checkObjectPropertyAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>>& variables_types);

@@ -17,6 +17,11 @@
 #include "ontologenius/core/ontoGraphs/Branchs/RuleBranch.h"
 #include "ontologenius/core/ontoGraphs/Graphs/RuleGraph.h"
 
+#define USE_NONE       0
+#define USE_INDIVIDUAL 1<<0
+#define USE_DATATYPE   1<<1
+#define USE_BOTH       (USE_INDIVIDUAL | USE_DATATYPE)
+
 namespace ontologenius {
 
   size_t RuleChecker::check()
@@ -36,7 +41,7 @@ namespace ontologenius {
   {
     current_rule_ = branch->getRule();
 
-    std::unordered_map<std::string, Variable_t> all_arguments;
+    std::unordered_map<std::string, uint8_t> all_arguments;
     std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>> variables_types;
     for(auto& atom : branch->rule_body_)
       checkAtom(atom, variables_types, all_arguments);
@@ -46,7 +51,7 @@ namespace ontologenius {
 
     for(auto& arg : all_arguments)
     {
-      if(arg.second.is_datavalue && arg.second.is_individual)
+      if(arg.second == USE_BOTH)
       {
         const std::string err_base = "In rule " + current_rule_ + ": error related to variable " + arg.first + " because ";
         printError(err_base + " it is used both as an individual and a data value.");
@@ -56,7 +61,7 @@ namespace ontologenius {
 
   void RuleChecker::checkAtom(const RuleTriplet_t& atom,
                               std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>>& variables_types,
-                              std::unordered_map<std::string, Variable_t>& all_arguments)
+                              std::unordered_map<std::string, uint8_t>& all_arguments)
   {
     switch(atom.atom_type_)
     {
@@ -84,25 +89,20 @@ namespace ontologenius {
     }
   }
 
-  void RuleChecker::setArgument(const RuleArgument_t& arg, std::unordered_map<std::string, Variable_t>& all_arguments, bool individual_usage)
+  void RuleChecker::setArgument(const RuleArgument_t& arg, std::unordered_map<std::string, uint8_t>& all_arguments, bool individual_usage)
   {
     auto arg_it = all_arguments.find(arg.name);
     if(arg_it == all_arguments.end())
     {
-      Variable_t var;
-      var.var_name = arg.name;
-      arg_it = all_arguments.emplace(arg.name, var).first;
+      arg_it = all_arguments.emplace(arg.name, USE_NONE).first;
     }
 
     if(arg.datatype_value != nullptr)
-      arg_it->second.is_datavalue = true;
+      arg_it->second |= USE_DATATYPE;
     if(arg.indiv_value != nullptr)
-      arg_it->second.is_individual = true;
+      arg_it->second |= USE_INDIVIDUAL;
 
-    if(individual_usage)
-      arg_it->second.is_individual = true;
-    else
-      arg_it->second.is_datavalue = true;
+    arg_it->second |= (individual_usage ? USE_INDIVIDUAL : USE_DATATYPE);
   }
 
   void RuleChecker::checkClassAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>>& variables_types)
