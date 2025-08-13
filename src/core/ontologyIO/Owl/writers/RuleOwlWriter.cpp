@@ -192,7 +192,7 @@ namespace ontologenius {
     writeString("<rdf:type rdf:resource=\"http://www.w3.org/2003/11/swrl#BuiltinAtom\"/>\n", level);
 
     // write Builtin type
-    std::string builtin_name = builtin_atom.builtin.builtin_str_;
+    std::string builtin_name = builtin_atom.builtinToString();
     writeString("<" + subfield_builtin + " rdf:resource=\"http://www.w3.org/2003/11/swrlb#" + builtin_name + "\"/>\n", level);
 
     writeRuleBuiltinArguments(builtin_atom.arguments, 0, level);

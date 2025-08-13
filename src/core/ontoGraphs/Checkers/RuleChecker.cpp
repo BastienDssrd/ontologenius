@@ -176,7 +176,7 @@ namespace ontologenius {
           std::string err = check({again_argument.datatype_value->type_}, variables_types[argument.name].second);
           if(err.empty() == false)
           {
-            raiseError(argument, " using builtin " + atom.builtin.builtin_str_ + ", its arguments are disjoint with other constraints (disjointness between " + err + ").");
+            raiseError(argument, " using builtin " + atom.builtinToString() + ", its arguments are disjoint with other constraints (disjointness between " + err + ").");
             return;
           }
         }

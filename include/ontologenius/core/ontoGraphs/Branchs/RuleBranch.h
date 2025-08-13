@@ -79,47 +79,6 @@ namespace ontologenius {
     builtin_unknon
   };
 
-  struct Builtin_t // todo: to move
-  {
-    RuleBuiltinType_e builtin_type_;
-    std::string builtin_str_;
-
-    Builtin_t() : builtin_type_(builtin_unknon) {}
-    Builtin_t(const RuleBuiltinType_e& builtin_type, const std::string& builtin_str) : builtin_type_(builtin_type),
-                                                                                       builtin_str_(builtin_str)
-    {}
-
-    std::string builtinToString() const
-    {
-      std::string builtin_name;
-      switch(this->builtin_type_)
-      {
-      case builtin_greater_than:
-        builtin_name = "greaterThan";
-        break;
-      case builtin_greater_than_or_equal:
-        builtin_name = "greaterThanOrEqual";
-        break;
-      case builtin_less_than:
-        builtin_name = "lessThan";
-        break;
-      case builtin_less_than_or_equal:
-        builtin_name = "lessThanOrEqual";
-        break;
-      case builtin_equal:
-        builtin_name = "equal";
-        break;
-      case builtin_not_equal:
-        builtin_name = "notEqual";
-        break;
-      default:
-        break;
-      }
-
-      return builtin_name;
-    }
-  };
-
   struct RuleTriplet_t
   {
     // empty constructor
@@ -132,8 +91,22 @@ namespace ontologenius {
     AnonymousClassBranch* anonymous_element; // used to store the anonymous class if the class expression is complex
     ObjectPropertyBranch* object_predicate;  // set only if object atom
     DataPropertyBranch* data_predicate;      // set only if data atom
-    Builtin_t builtin;                       // used only for builtin atoms
+    RuleBuiltinType_e builtin;               // used only for builtin atoms
     std::vector<RuleArgument_t> arguments;   // can be variables or not (?c is, pr2 isn't)
+
+    std::string builtinToString() const
+    {
+      switch(builtin)
+      {
+      case builtin_greater_than:          return "greaterThan";
+      case builtin_greater_than_or_equal: return "greaterThanOrEqual";
+      case builtin_less_than:             return "lessThan";
+      case builtin_less_than_or_equal:    return "lessThanOrEqual";
+      case builtin_equal:                 return "equal";
+      case builtin_not_equal:             return "notEqual";
+      default:                            return "unsupported builtin";
+      }
+    }
 
     std::string toString() const
     {

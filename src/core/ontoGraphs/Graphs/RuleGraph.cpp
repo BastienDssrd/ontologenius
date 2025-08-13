@@ -96,8 +96,7 @@ namespace ontologenius {
     switch (rule_atom.type)
     {
     case RuleAtomType_e::rule_atom_builtin:
-      rule_triplet.builtin.builtin_type_ = rule_atom.builtin;
-      rule_triplet.builtin.builtin_str_ = RuleDescriptor_t::builtinToString(rule_atom);
+      rule_triplet.builtin = rule_atom.builtin;
       break;
     case RuleAtomType_e::rule_atom_data:
       if(is_head)

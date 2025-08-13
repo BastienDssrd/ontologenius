@@ -768,7 +768,7 @@ namespace ontologenius {
       subject_ptr = subject.datatype_value;
     else
     {
-      std::cout << "No value for arg1 of the builtin :" << triplet.builtin.builtin_str_ << std::endl;
+      std::cout << "No value for arg1 of the builtin :" << triplet.builtinToString() << std::endl;
       return;
     }
 
@@ -778,24 +778,24 @@ namespace ontologenius {
       object_ptr = object.datatype_value;
     else
     {
-      std::cout << "No value for arg2 of the builtin :" << triplet.builtin.builtin_str_ << std::endl;
+      std::cout << "No value for arg2 of the builtin :" << triplet.builtinToString() << std::endl;
       return;
     }
 
     if((subject_ptr != nullptr) && (object_ptr != nullptr))
     {
       if((subject_ptr->type_->value() == "string") && (object_ptr->type_ == subject_ptr->type_) && // both are strings
-         (resolveStringBuiltinAtom(triplet.builtin.builtin_type_, subject_ptr, object_ptr) == true))
+         (resolveStringBuiltinAtom(triplet.builtin, subject_ptr, object_ptr) == true))
       {
         res.literal = subject_ptr;
-        std::string explanation = triplet.builtin.builtin_str_ + "(" + subject_ptr->value() + "," + object_ptr->value();
+        std::string explanation = triplet.builtinToString() + "(" + subject_ptr->value() + "," + object_ptr->value();
         res.explanations.emplace_back(explanation);
         values.emplace_back(std::move(res));
       }
-      else if(resolveNumericalBuiltinAtom(triplet.builtin.builtin_type_, subject_ptr, object_ptr) == true)
+      else if(resolveNumericalBuiltinAtom(triplet.builtin, subject_ptr, object_ptr) == true)
       {
         res.literal = subject_ptr;
-        std::string explanation = triplet.builtin.builtin_str_ + "(" + subject_ptr->value() + "," + object_ptr->value();
+        std::string explanation = triplet.builtinToString() + "(" + subject_ptr->value() + "," + object_ptr->value();
         res.explanations.emplace_back(explanation);
         values.emplace_back(std::move(res));
       }
