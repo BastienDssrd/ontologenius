@@ -74,16 +74,16 @@ namespace ontologenius {
     // write the atom
     switch(current_atom.atom_type_)
     {
-    case class_atom:
+    case rule_atom_class:
       writeClassAtom(current_atom, level + 3);
       break;
-    case object_atom:
+    case rule_atom_object:
       writeObjectAtom(current_atom, level + 3);
       break;
-    case data_atom:
+    case rule_atom_data:
       writeDataAtom(current_atom, level + 3);
       break;
-    case builtin_atom:
+    case rule_atom_builtin:
       writeBuiltinAtom(current_atom, level + 3);
       break;
     default:

@@ -15,64 +15,84 @@
 
 namespace ontologenius {
 
-  struct Rule_t // temporary structure to store rules
+  struct RuleAtomDescriptor_t
+  {
+    RuleAtomType_e type;
+    RuleBuiltinType_e builtin;
+    std::string resource_value;
+    ClassExpressionDescriptor_t* class_expression;
+
+    RuleAtomDescriptor_t() : type(rule_atom_unknown), builtin(builtin_unknon), class_expression(nullptr) {}
+  };
+
+  struct RuleVariableDescriptor_t
+  {
+    std::string name;
+    size_t index;
+    bool is_instanciated;
+    bool datatype;
+    RuleVariableDescriptor_t() : is_instanciated(false), datatype(false) {}
+  };
+
+  struct RuleDescriptor_t
   {
     std::vector<std::string> variables;
-    std::vector<std::pair<ExpressionMember_t*, std::vector<Variable_t>>> antecedents;
-    std::vector<std::pair<ExpressionMember_t*, std::vector<Variable_t>>> consequents;
+    std::vector<std::pair<RuleAtomDescriptor_t, std::vector<RuleVariableDescriptor_t>>> antecedents;
+    std::vector<std::pair<RuleAtomDescriptor_t, std::vector<RuleVariableDescriptor_t>>> consequents;
     std::string rule_str;
-    std::string rule_comment;
 
-    std::vector<std::pair<int64_t, int64_t>> atom_indexes_;
-
-    std::string toStringRule()
+    std::string toString() const
     {
       return toString(antecedents) + " -> " + toString(consequents);
     }
 
-    std::string toString(std::vector<std::pair<ExpressionMember_t*, std::vector<Variable_t>>>& expression) const
+    static std::string builtinToString(const RuleAtomDescriptor_t& atom)
+    {
+      switch(atom.builtin)
+      {
+      case builtin_greater_than:          return "greaterThan";
+      case builtin_greater_than_or_equal: return "greaterThanOrEqual";
+      case builtin_less_than:             return "lessThan";
+      case builtin_less_than_or_equal:    return "lessThanOrEqual";
+      case builtin_equal:                 return "equal";
+      case builtin_not_equal:             return "notEqual";
+      default:                            return "unsupported builtin";
+      }
+    }
+
+    std::string toString(const std::vector<std::pair<RuleAtomDescriptor_t, std::vector<RuleVariableDescriptor_t>>>& expression) const
     {
       std::string res;
-
-      std::size_t len_head = expression.size();
-      for(size_t element_index = 0; element_index < len_head; element_index++)
+      for(const auto& atom : expression)
       {
-        // get the Atom expression
-        if(expression[element_index].first != nullptr)
+        if(res.empty() == false)
+          res += ", ";
+
+        switch (atom.first.type)
         {
-          if(res.empty() == false)
-            res += ", ";
-
-          if(expression[element_index].first->logical_type_ != logical_none || expression[element_index].first->is_complex)
-            res += "(" + expression[element_index].first->toString() + ")";
-          else
-            res += expression[element_index].first->toString();
-
-          res += "(";
-          // get the associated variables
-          std::size_t len_var = expression[element_index].second.size();
-          for(size_t var_index = 0; var_index < len_var; var_index++)
-          {
-            auto variable = expression[element_index].second[var_index];
-            std::string var_name = variable.var_name;
-            if(variable.is_datavalue)
-            {
-              std::size_t pos = var_name.find('#');
-              if(pos != std::string::npos) // datarange value
-                res += var_name.substr(pos + 1);
-            }
-            else
-            {
-              if(variable.is_individual) // individual name
-                res += var_name;
-              else // variable so we add the ?
-                res += "?" + var_name;
-            }
-            if(var_index < len_var - 1)
-              res += ", ";
-          }
-          res += ")";
+        case RuleAtomType_e::rule_atom_data:
+        case RuleAtomType_e::rule_atom_object:
+          res += atom.first.resource_value;
+          break;
+        case RuleAtomType_e::rule_atom_class:
+          res += (atom.first.class_expression == nullptr) ? atom.first.resource_value : atom.first.class_expression->toString();
+          break;
+        case RuleAtomType_e::rule_atom_builtin:
+          res += builtinToString(atom.first);
+          break;
+        default:
+          break;
         }
+
+        std::string variables_str;
+        for(const auto& variable : atom.second)
+        {
+          if(variables_str.empty() == false)
+            variables_str += ", ";
+
+          variables_str += (variable.is_instanciated ? "" : "?") + variable.name;
+        }
+        res += "(" + variables_str + ")";
       }
       return res;
     }
@@ -107,7 +127,7 @@ namespace ontologenius {
               DataPropertyGraph* data_property_graph, IndividualGraph* individual_graph, AnonymousClassGraph* anonymous_graph);
     ~RuleGraph() override = default;
 
-    RuleBranch* add(Rule_t& rule);
+    RuleBranch* add(const RuleDescriptor_t& rule);
 
     void deepCopy(const RuleGraph& other);
 
@@ -121,14 +141,14 @@ namespace ontologenius {
 
     std::set<std::string> variable_names_; // only used to rewrite the variable fields
 
-    RuleTriplet_t createRuleAtomTriplet(RuleBranch* rule_branch, const std::pair<ExpressionMember_t*, std::vector<Variable_t>>& rule_element, const size_t& elem_id, const bool& is_head);
+    RuleTriplet_t createRuleAtomTriplet(RuleBranch* rule_branch, const std::pair<RuleAtomDescriptor_t, std::vector<RuleVariableDescriptor_t>>& atom, const size_t& elem_id, const bool& is_head);
 
-    RuleArgument_t getRuleArgument(RuleBranch* rule_branch, const Variable_t& variable);
+    RuleArgument_t getRuleArgument(RuleBranch* rule_branch, const RuleVariableDescriptor_t& variable);
     void setVariableIndex(RuleBranch* rule_branch, RuleArgument_t& resource);
 
     // functions for deepcopy
     void cpyBranch(RuleBranch* old_branch, RuleBranch* new_branch);
-    RuleTriplet_t createCopyRuleTriplet(RuleTriplet_t old_triplet, RuleBranch* new_branch);
+    RuleTriplet_t createCopyRuleTriplet(const RuleTriplet_t& old_triplet, RuleBranch* new_branch);
   };
 
 } // namespace ontologenius

@@ -49,16 +49,16 @@ namespace ontologenius {
     {
       switch(atom.atom_type_)
       {
-      case class_atom:
+      case rule_atom_class:
         addInferredClassAtom(atom, solution, rule);
         break;
-      case object_atom:
+      case rule_atom_object:
         addInferredObjectAtom(atom, solution, rule);
         break;
-      case data_atom:
+      case rule_atom_data:
         addInferredDataAtom(atom, solution, rule);
         break;
-      case builtin_atom:
+      case rule_atom_builtin:
         break;
 
       default:
@@ -298,16 +298,16 @@ namespace ontologenius {
   {
     switch(triplet.atom_type_)
     {
-    case class_atom:
+    case rule_atom_class:
       resolveClassAtom(triplet, accu, var_index, values);
       break;
-    case object_atom:
+    case rule_atom_object:
       resolveObjectAtom(triplet, accu, var_index, values);
       break;
-    case data_atom:
+    case rule_atom_data:
       resolveDataAtom(triplet, accu, var_index, values);
       break;
-    case builtin_atom:
+    case rule_atom_builtin:
       resolveBuiltinAtom(triplet, accu, var_index, values);
       break;
     default:
@@ -802,7 +802,7 @@ namespace ontologenius {
     }
   }
 
-  bool ReasonerRule::resolveNumericalBuiltinAtom(BuiltinType_e builtin_type, LiteralNode* subject, LiteralNode* object)
+  bool ReasonerRule::resolveNumericalBuiltinAtom(RuleBuiltinType_e builtin_type, LiteralNode* subject, LiteralNode* object)
   {
     try
     {
@@ -813,17 +813,17 @@ namespace ontologenius {
 
       switch(builtin_type)
       {
-      case greater_than:
+      case builtin_greater_than:
         return subject_cast > object_cast;
-      case greater_than_or_equal:
+      case builtin_greater_than_or_equal:
         return subject_cast >= object_cast;
-      case less_than:
+      case builtin_less_than:
         return subject_cast < object_cast;
-      case less_than_or_equal:
+      case builtin_less_than_or_equal:
         return subject_cast <= object_cast;
-      case equal:
+      case builtin_equal:
         return subject_cast == object_cast;
-      case not_equal:
+      case builtin_not_equal:
         return subject_cast != object_cast;
       default:
         std::cout << "Unsupported builtin type : " << builtin_type << "for numerical arguments" << std::endl;
@@ -837,13 +837,13 @@ namespace ontologenius {
     }
   }
 
-  bool ReasonerRule::resolveStringBuiltinAtom(BuiltinType_e builtin_type, LiteralNode* subject, LiteralNode* object)
+  bool ReasonerRule::resolveStringBuiltinAtom(RuleBuiltinType_e builtin_type, LiteralNode* subject, LiteralNode* object)
   {
     switch(builtin_type)
     {
-    case equal:
+    case builtin_equal:
       return subject == object;
-    case not_equal:
+    case builtin_not_equal:
       return subject != object;
     default:
       std::cout << "Unsupported builtin type : " << builtin_type << "for string arguments" << std::endl;

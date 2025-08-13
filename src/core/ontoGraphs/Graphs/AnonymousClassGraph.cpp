@@ -73,32 +73,6 @@ namespace ontologenius {
     return anonymous_branch;
   }
 
-  AnonymousClassBranch* AnonymousClassGraph::add(const std::string& value, AnonymousClassVectors_t& ano, bool hidden_anonymous)
-  {
-    const std::lock_guard<std::shared_timed_mutex> lock(Graph<AnonymousClassBranch>::mutex_);
-
-    const std::string ano_name = "anonymous_" + value;
-    AnonymousClassBranch* anonymous_branch = new AnonymousClassBranch(ano_name);
-    ClassBranch* class_branch = class_graph_->findOrCreateBranch(value, hidden_anonymous);
-
-    anonymous_branch->class_equiv_ = class_branch;
-    all_branchs_.push_back(anonymous_branch);
-    class_branch->equiv_anonymous_class_ = anonymous_branch;
-
-    for(size_t i = 0; i < ano.equivalence_trees.size(); i++)
-    {
-      AnonymousClassTree* tree = createTree(ano.equivalence_trees[i]);
-      tree->ano_name = ano_name + "_" + std::to_string(i);
-      anonymous_branch->ano_trees_.push_back(tree);
-
-#ifdef DEBUG
-      printTree(tree->root_node, 3, true);
-#endif
-    }
-
-    return anonymous_branch;
-  }
-
   void AnonymousClassGraph::deepCopy(const AnonymousClassGraph& other)
   {
     for(size_t i = 0; i < other.all_branchs_.size(); i++)
@@ -133,16 +107,6 @@ namespace ontologenius {
 
     return node;
   }
-
-  /*
-  ClassExpressionType_e type;
-  std::string resource_value;                     // resource_value should be used as an end node to represent a specific URI (individual, class, datatype)
-  std::string restriction_property;
-  RestrictionConstraintType_e restriction_type;
-  std::string cardinality_value;
-  bool data_usage;
-  std::vector<ClassExpressionDescriptor_t*> sub_expressions;
-  */
 
   AnonymousClassElement* AnonymousClassGraph::createNodeContent(ClassExpressionDescriptor_t* expression_leaf, AnonymousClassTree* related_tree)
   {
@@ -275,144 +239,6 @@ namespace ontologenius {
     }
     else
       ano_element->is_complex = true; // todo: check that child has the data usage info
-  }
-
-  AnonymousClassTree* AnonymousClassGraph::createTree(ExpressionMember_t* member_node)
-  {
-    AnonymousClassTree* tree = new AnonymousClassTree(member_node->toString());
-    size_t depth = 0;
-    tree->root_node_ = createTreeNodes(member_node, depth, tree);
-    tree->depth_ = depth;
-
-    return tree;
-  }
-
-  AnonymousClassElement* AnonymousClassGraph::createTreeNodes(ExpressionMember_t* member_node, size_t& depth, AnonymousClassTree* related_tree)
-  {
-    size_t local_depth = depth + 1;
-
-    AnonymousClassElement* node = createNodeContent(member_node, related_tree);
-
-    for(auto* child : member_node->child_members)
-    {
-      size_t child_depth = depth + 1;
-      node->sub_elements_.push_back(createTreeNodes(child, child_depth, related_tree));
-      local_depth = std::max(child_depth, local_depth);
-    }
-
-    depth = local_depth;
-
-    return node;
-  }
-
-  AnonymousClassElement* AnonymousClassGraph::createNodeContent(ExpressionMember_t* exp, AnonymousClassTree* related_tree)
-  {
-    AnonymousClassElement* ano_element = new AnonymousClassElement();
-    ano_element->is_complex = exp->is_complex;
-    Restriction_t current_rest = exp->rest;
-
-    // ============= Node type =================
-    if(exp->logical_type_ != logical_none)
-    {
-      ano_element->logical_type_ = exp->logical_type_;
-      return ano_element;
-    }
-    else if(exp->oneof == true)
-    {
-      ano_element->oneof = true;
-      return ano_element;
-    }
-
-    // ============  Property ==================
-    if(!current_rest.property.empty())
-    {
-      if(exp->is_data_property)
-      {
-        ano_element->data_property_involved_ = data_property_graph_->findOrCreateBranch(current_rest.property);
-        related_tree->involves_data_property = true;
-      }
-      else
-      {
-        ano_element->object_property_involved_ = object_property_graph_->findOrCreateBranch(current_rest.property);
-        related_tree->involves_object_property = true;
-      }
-    }
-
-    // ==============  Cardinality Type & Number =============
-    if(current_rest.card.cardinality_type == "some")
-      ano_element->card_.card_type_ = cardinality_some;
-    else if(current_rest.card.cardinality_type == "only")
-      ano_element->card_.card_type_ = cardinality_only;
-    else if(current_rest.card.cardinality_type == "value")
-      ano_element->card_.card_type_ = cardinality_value;
-    else if(current_rest.card.cardinality_type == "exactly")
-    {
-      ano_element->card_.card_type_ = cardinality_exactly;
-      ano_element->card_.card_number_ = std::stoi(current_rest.card.cardinality_number);
-    }
-    else if(current_rest.card.cardinality_type == "min")
-    {
-      ano_element->card_.card_type_ = cardinality_min;
-      ano_element->card_.card_number_ = std::stoi(current_rest.card.cardinality_number);
-    }
-    else if(current_rest.card.cardinality_type == "max")
-    {
-      ano_element->card_.card_type_ = cardinality_max;
-      ano_element->card_.card_number_ = std::stoi(current_rest.card.cardinality_number);
-    }
-
-    // ===============  Cardinality range  (value, some, only )  ===================
-    const std::string card_range = current_rest.card.cardinality_range;
-    if(!card_range.empty())
-    {
-      if(exp->is_data_property) // data property
-      {
-        if(ano_element->card_.card_type_ == cardinality_value)
-          ano_element->card_.card_value_range_ = literal_graph_->findOrCreate(card_range);
-        else
-        {
-          const std::string type_value = card_range.substr(card_range.find('#') + 1, -1);
-          ano_element->card_.card_type_range_ = literal_graph_->findOrCreateType(type_value);
-        }
-        related_tree->involves_data_property = true;
-      }
-      else // object property
-      {
-        if(ano_element->card_.card_type_ == cardinality_value) // indiv
-        {
-          ano_element->individual_involved_ = individual_graph_->findOrCreateBranch(card_range);
-          related_tree->involves_individual = true;
-        }
-        else
-        { // class
-          ano_element->class_involved_ = class_graph_->findOrCreateBranch(card_range);
-          related_tree->involves_class = true;
-        }
-      }
-    }
-
-    // ===============  Restriction range  (min, max, exactly )===================
-    const std::string rest_range = current_rest.restriction_range;
-    if(!rest_range.empty())
-    {
-      if(isIn("http://www.w3.org/", rest_range)) // literal node for complex data restriction (ClassX Eq to data_prop some (not(literal)))
-      {
-        const std::string type = split(rest_range, "#").back();
-        ano_element->card_.card_type_range_ = literal_graph_->findOrCreateType(type);
-      }
-      else if(exp->mother != nullptr && exp->mother->oneof) // individual node for oneOf (ClassX Eq to oneOf(indiv))
-      {
-        ano_element->individual_involved_ = individual_graph_->findOrCreateBranch(rest_range);
-        related_tree->involves_individual = true;
-      }
-      else
-      {
-        ano_element->class_involved_ = class_graph_->findOrCreateBranch(rest_range); // class node for class only restriction (ClassX Eq to ClassY)
-        related_tree->involves_class = true;
-      }
-    }
-
-    return ano_element;
   }
 
   void AnonymousClassGraph::cpyBranch(AnonymousClassBranch* old_branch, AnonymousClassBranch* new_branch)

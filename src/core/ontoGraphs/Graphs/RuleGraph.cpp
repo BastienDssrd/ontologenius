@@ -57,7 +57,7 @@ namespace ontologenius {
     }
   }
 
-  RuleBranch* RuleGraph::add(Rule_t& rule)
+  RuleBranch* RuleGraph::add(const RuleDescriptor_t& rule)
   {
     const std::lock_guard<std::shared_timed_mutex> lock(Graph<RuleBranch>::mutex_);
 
@@ -67,99 +67,91 @@ namespace ontologenius {
 
     size_t elem_id = 0;
 
-    for(auto& atom_antec : rule.antecedents)
+    for(const auto& atom : rule.antecedents)
     {
-      if(atom_antec.first != nullptr)
-      {
-        rule_branch->atom_initial_order_.push_back(rule_branch->rule_body_.size());
-        rule_branch->rule_body_.push_back(createRuleAtomTriplet(rule_branch, atom_antec, elem_id, true));
-      }
+      rule_branch->atom_initial_order_.push_back(rule_branch->rule_body_.size());
+      rule_branch->rule_body_.push_back(createRuleAtomTriplet(rule_branch, atom, elem_id, true));
       elem_id++;
     }
-    for(auto& atom_conseq : rule.consequents)
+
+    for(const auto& atom : rule.consequents)
     {
-      if(atom_conseq.first != nullptr)
-        rule_branch->rule_head_.push_back(createRuleAtomTriplet(rule_branch, atom_conseq, elem_id, false));
+      rule_branch->rule_head_.push_back(createRuleAtomTriplet(rule_branch, atom, elem_id, false));
       elem_id++;
     }
 
     return rule_branch;
   }
 
-  RuleTriplet_t RuleGraph::createRuleAtomTriplet(RuleBranch* rule_branch, const std::pair<ExpressionMember_t*, std::vector<Variable_t>>& rule_element, const size_t& elem_id, const bool& is_head)
+  RuleTriplet_t RuleGraph::createRuleAtomTriplet(RuleBranch* rule_branch, const std::pair<RuleAtomDescriptor_t, std::vector<RuleVariableDescriptor_t>>& atom, const size_t& elem_id, const bool& is_head)
   {
     RuleTriplet_t rule_triplet;
 
-    auto* rule_atom = rule_element.first;
-    const auto& rule_variable = rule_element.second;
+    const auto& rule_atom = atom.first;
 
-    for(const auto& var : rule_variable)
-      rule_triplet.arguments.push_back(getRuleArgument(rule_branch, var));
+    for(const auto& variable : atom.second)
+      rule_triplet.arguments.push_back(getRuleArgument(rule_branch, variable));
 
-    if(rule_atom->builtin_.builtin_type_ != builtin_none)
+    rule_triplet.atom_type_ = rule_atom.type;
+    switch (rule_atom.type)
     {
-      rule_triplet.builtin = rule_atom->builtin_;
-      rule_triplet.atom_type_ = AtomType_e::builtin_atom;
-    }
-    else if((rule_atom->is_data_property) && (rule_atom->logical_type_ == logical_none) && (!rule_atom->is_complex))
-    {
+    case RuleAtomType_e::rule_atom_builtin:
+      rule_triplet.builtin.builtin_type_ = rule_atom.builtin;
+      rule_triplet.builtin.builtin_str_ = RuleDescriptor_t::builtinToString(rule_atom);
+      break;
+    case RuleAtomType_e::rule_atom_data:
       if(is_head)
         rule_branch->involves_data_property = true;
 
-      rule_triplet.data_predicate = data_property_graph_->findOrCreateBranch(rule_atom->rest.property);
-      rule_triplet.atom_type_ = AtomType_e::data_atom;
-    }
-    else if((rule_atom->logical_type_ == logical_none) && (!rule_atom->is_complex) && (rule_atom->rest.restriction_range.empty()))
-    {
+      rule_triplet.data_predicate = data_property_graph_->findOrCreateBranch(rule_atom.resource_value);
+      break;
+    case RuleAtomType_e::rule_atom_object:
       if(is_head)
         rule_branch->involves_object_property = true;
 
-      rule_triplet.object_predicate = object_property_graph_->findOrCreateBranch(rule_atom->rest.property);
-      rule_triplet.atom_type_ = AtomType_e::object_atom;
-    }
-    else
-    {
+      rule_triplet.object_predicate = object_property_graph_->findOrCreateBranch(rule_atom.resource_value);
+      break;
+    case RuleAtomType_e::rule_atom_class:
       if(is_head)
         rule_branch->involves_class = true;
-
-      rule_triplet.atom_type_ = AtomType_e::class_atom;
-
-      if(rule_atom->logical_type_ != logical_none || rule_atom->oneof == true || rule_atom->is_complex == true || !rule_atom->rest.property.empty())
+      if(rule_atom.class_expression != nullptr)
       {
-        std::string equivalent_class = rule_branch->value() + "_" + std::to_string(elem_id);
-        AnonymousClassVectors_t anonymous_vector;
-        anonymous_vector.class_equiv = equivalent_class;
-        anonymous_vector.equivalence_trees = {rule_atom};
-        rule_triplet.anonymous_element = anonymous_graph_->add(equivalent_class, anonymous_vector, true);     // returns the newly created ano branch
+        EquivalentClassDescriptor_t class_descriptor;
+        class_descriptor.class_name = rule_branch->value() + "_" + std::to_string(elem_id);
+        class_descriptor.expression_members.push_back(rule_atom.class_expression);
+        rule_triplet.anonymous_element = anonymous_graph_->add(class_descriptor, true);     // returns the newly created ano branch
         rule_triplet.class_predicate = rule_triplet.anonymous_element->class_equiv_;
       }
       else
-        rule_triplet.class_predicate = class_graph_->findOrCreateBranch(rule_atom->rest.restriction_range);      
+        rule_triplet.class_predicate = class_graph_->findOrCreateBranch(rule_atom.resource_value); 
+      break;
+    default:
+      break;
     }
 
     return rule_triplet;
   }
 
-  RuleArgument_t RuleGraph::getRuleArgument(RuleBranch* rule_branch, const Variable_t& variable)
+  RuleArgument_t RuleGraph::getRuleArgument(RuleBranch* rule_branch, const RuleVariableDescriptor_t& variable)
   {
-    if(variable.is_individual == true) // individual
+    if(variable.is_instanciated == false)
     {
-      IndividualBranch* involved_indiv = individual_graph_->findOrCreateBranch(variable.var_name);
-      RuleArgument_t resource(involved_indiv);
-      setVariableIndex(rule_branch, resource); // Todo, should be removed, but removing it raise an error in ReasonerRule
+      RuleArgument_t resource(variable.name);
+      setVariableIndex(rule_branch, resource);
       return resource;
     }
-    else if(variable.is_datavalue == true) // literal
+    else if(variable.datatype)
     {
-      LiteralNode* involved_datatype = literal_graph_->findOrCreate(variable.var_name);
+      LiteralNode* involved_datatype = literal_graph_->findOrCreate(variable.name);
       RuleArgument_t resource(involved_datatype);
       setVariableIndex(rule_branch, resource); // Todo, should be removed, but removing it raise an error in ReasonerRule
       return resource;
     }
-    else // variable
+    else
     {
-      RuleArgument_t resource(variable.var_name);
-      setVariableIndex(rule_branch, resource);
+      IndividualBranch* involved_indiv = individual_graph_->findOrCreateBranch(variable.name);
+      RuleArgument_t resource(involved_indiv);
+      setVariableIndex(rule_branch, resource); // Todo, should be removed, but removing it raise an error in ReasonerRule
       return resource;
     }
   }
@@ -204,7 +196,7 @@ namespace ontologenius {
     new_branch->atom_initial_order_ = old_branch->atom_initial_order_;
   }
 
-  RuleTriplet_t RuleGraph::createCopyRuleTriplet(RuleTriplet_t old_triplet, RuleBranch* new_branch)
+  RuleTriplet_t RuleGraph::createCopyRuleTriplet(const RuleTriplet_t& old_triplet, RuleBranch* new_branch)
   {
     RuleTriplet_t new_triplet;
     new_triplet.atom_type_ = old_triplet.atom_type_;

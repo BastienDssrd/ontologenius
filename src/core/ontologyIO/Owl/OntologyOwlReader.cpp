@@ -339,7 +339,7 @@ namespace ontologenius {
 
   void OntologyOwlReader::readSwrlRule(tinyxml2::XMLElement* elem)
   {
-    Rule_t rule = readRuleDescription(elem);
+    RuleDescriptor_t rule = readRuleDescription(elem);
     if(!rule.rule_str.empty()) // check if the str expression is not empty, to make sure that the rule exists
     {
       rule_graph_->add(rule);

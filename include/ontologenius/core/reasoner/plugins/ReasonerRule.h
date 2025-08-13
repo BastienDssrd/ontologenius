@@ -104,8 +104,8 @@ namespace ontologenius {
     void resolveObjectAtom(RuleTriplet_t& triplet, std::vector<index_t>& accu, int64_t& var_index, std::vector<IndivResult_t>& values);
     void resolveDataAtom(RuleTriplet_t& triplet, std::vector<index_t>& accu, int64_t& var_index, std::vector<IndivResult_t>& values);
     void resolveBuiltinAtom(RuleTriplet_t& triplet, std::vector<index_t>& accu, int64_t& var_index, std::vector<IndivResult_t>& values);
-    bool resolveNumericalBuiltinAtom(BuiltinType_e builtin_type, LiteralNode* subject, LiteralNode* object);
-    bool resolveStringBuiltinAtom(BuiltinType_e builtin_type, LiteralNode* subject, LiteralNode* object);
+    bool resolveNumericalBuiltinAtom(RuleBuiltinType_e builtin_type, LiteralNode* subject, LiteralNode* object);
+    bool resolveStringBuiltinAtom(RuleBuiltinType_e builtin_type, LiteralNode* subject, LiteralNode* object);
 
     void getType(ClassBranch* class_selector, std::vector<IndivResult_t>& res, const IndivResult_t& prev = IndivResult_t(), ClassBranch* main_class_predicate = nullptr);
     IndivResult_t isA(IndividualBranch* indiv, ClassBranch* class_selector);

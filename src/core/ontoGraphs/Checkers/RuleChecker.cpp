@@ -60,21 +60,21 @@ namespace ontologenius {
   {
     switch(atom.atom_type_)
     {
-    case class_atom:
+    case rule_atom_class:
       checkClassAtom(atom, variables_types);
       setArgument(atom.arguments.at(0), all_arguments, true);
       break;
-    case object_atom:
+    case rule_atom_object:
       checkObjectPropertyAtom(atom, variables_types);
       setArgument(atom.arguments.at(0), all_arguments, true);
       setArgument(atom.arguments.at(1), all_arguments, true);
       break;
-    case data_atom:
+    case rule_atom_data:
       checkDataPropertyAtom(atom, variables_types);
       setArgument(atom.arguments.at(0), all_arguments, true);
       setArgument(atom.arguments.at(1), all_arguments, false);
       break;
-    case builtin_atom:
+    case rule_atom_builtin:
       checkBuiltinAtom(atom, variables_types);
       for(const auto& arg : atom.arguments)
         setArgument(arg, all_arguments, false);

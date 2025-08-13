@@ -53,58 +53,6 @@ namespace ontologenius {
     logical_none
   };
 
-  enum BuiltinType_e
-  {
-    builtin_none,
-    greater_than,
-    greater_than_or_equal,
-    less_than,
-    less_than_or_equal,
-    equal,
-    not_equal
-  };
-
-  struct Builtin_t // todo: to move
-  {
-    BuiltinType_e builtin_type_;
-    std::string builtin_str_;
-
-    Builtin_t() : builtin_type_(builtin_none) {}
-    Builtin_t(const BuiltinType_e& builtin_type, const std::string& builtin_str) : builtin_type_(builtin_type),
-                                                                                   builtin_str_(builtin_str)
-    {}
-
-    std::string builtinToString() const
-    {
-      std::string builtin_name;
-      switch(this->builtin_type_)
-      {
-      case greater_than:
-        builtin_name = "greaterThan";
-        break;
-      case greater_than_or_equal:
-        builtin_name = "greaterThanOrEqual";
-        break;
-      case less_than:
-        builtin_name = "lessThan";
-        break;
-      case less_than_or_equal:
-        builtin_name = "lessThanOrEqual";
-        break;
-      case equal:
-        builtin_name = "equal";
-        break;
-      case not_equal:
-        builtin_name = "notEqual";
-        break;
-      default:
-        break;
-      }
-
-      return builtin_name;
-    }
-  };
-
   struct CardinalityElement_t
   {
     CardType_e card_type_ = cardinality_none;

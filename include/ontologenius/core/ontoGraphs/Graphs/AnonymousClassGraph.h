@@ -121,115 +121,6 @@ namespace ontologenius {
     }*/
   };
 
-  struct Cardinality_t
-  {
-    std::string cardinality_type;
-    std::string cardinality_number;
-    std::string cardinality_range;
-
-    std::string toString() const
-    {
-      std::string res;
-      if(cardinality_type.empty() == false)
-        res += " " + cardinality_type + " ";
-      if(cardinality_number.empty() == false)
-        res += cardinality_number + " ";
-      if(cardinality_range.empty() == false)
-        res += cardinality_range;
-      return res;
-    }
-  };
-
-  struct Restriction_t
-  {
-    Cardinality_t card;
-    std::string property;
-    std::string restriction_range;
-
-    std::string toString() const
-    {
-      std::string res;
-
-      if(!property.empty())
-        res += property;
-
-      res += card.toString();
-
-      if(!restriction_range.empty())
-        res += restriction_range;
-
-      return res;
-    }
-  };
-
-  struct ExpressionMember_t
-  {
-    LogicalNodeType_e logical_type_;
-    bool oneof;
-    bool is_complex;
-    bool is_data_property;
-
-    // for SWRL rule use only
-    Builtin_t builtin_;
-
-    Restriction_t rest; // Restriction (e.g hasComponent some Camera)
-    std::vector<ExpressionMember_t*> child_members;
-    ExpressionMember_t* mother;
-    std::string ano_name;
-
-    ExpressionMember_t() : logical_type_(logical_none), oneof(false),
-                           is_complex(false), is_data_property(false),
-                           mother(nullptr) {}
-
-    std::string toString() const
-    {
-      std::string str_equivalence;
-
-      if(builtin_.builtin_type_ != builtin_none)
-        str_equivalence = builtin_.builtinToString();
-      else if(child_members.empty())
-        str_equivalence = rest.toString();
-      else if(logical_type_ == logical_not)
-        str_equivalence = "not (" + child_members.front()->toString() + ")";
-      else
-      {
-        std::string inner;
-        for(auto* child : child_members)
-        {
-          if(inner.empty() == false)
-          {
-            if(logical_type_ == logical_and)
-              inner += " and ";
-            else if(logical_type_ == logical_or)
-              inner += " or ";
-            else if(oneof == true)
-              inner += ", ";
-          }
-          if(oneof == true)
-            inner += child->toString();
-          else
-            inner += "(" + child->toString() + ")";
-        }
-
-        if(oneof == true)
-          str_equivalence = "oneOf (" + inner + ")";
-        else if(is_complex)
-          str_equivalence = rest.toString() + inner;
-        else
-          str_equivalence = inner;
-      }
-
-      return str_equivalence;
-    }
-  };
-
-  struct AnonymousClassVectors_t // TODO is it really used ?
-  {
-    std::string class_equiv;
-    std::vector<ExpressionMember_t*> equivalence_trees;
-    std::vector<std::string> str_equivalences;
-  };
-
   // for friend
   class ObjectPropertyGraph;
   class DataPropertyGraph;
@@ -257,7 +148,6 @@ namespace ontologenius {
     ~AnonymousClassGraph() override = default;
 
     AnonymousClassBranch* add(EquivalentClassDescriptor_t& equivalence_descriptor, bool hidden_anonymous = false);
-    AnonymousClassBranch* add(const std::string& value, AnonymousClassVectors_t& ano_class, bool hidden_anonymous = false);
     void deepCopy(const AnonymousClassGraph& other);
 
   private:
@@ -272,10 +162,6 @@ namespace ontologenius {
     AnonymousClassElement* createNodeContent(ClassExpressionDescriptor_t* expression_leaf, AnonymousClassTree* related_tree);
 
     void setCardRange(AnonymousClassElement* ano_element, ClassExpressionDescriptor_t* expression_leaf, AnonymousClassTree* related_tree); // todo remove, temp
-
-    AnonymousClassTree* createTree(ExpressionMember_t* member_node);
-    AnonymousClassElement* createTreeNodes(ExpressionMember_t* member_node, size_t& depth, AnonymousClassTree* related_tree);
-    AnonymousClassElement* createNodeContent(ExpressionMember_t* exp_leaf, AnonymousClassTree* related_tree);
 
     void cpyBranch(AnonymousClassBranch* old_branch, AnonymousClassBranch* new_branch);
     AnonymousClassTree* copyTree(AnonymousClassTree* old_tree);

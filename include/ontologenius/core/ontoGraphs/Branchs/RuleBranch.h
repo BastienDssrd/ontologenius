@@ -59,22 +59,74 @@ namespace ontologenius {
     }
   };
 
-  enum AtomType_e
+  enum RuleAtomType_e
   {
-    default_atom,
-    class_atom,
-    object_atom,
-    data_atom,
-    builtin_atom
+    rule_atom_class,
+    rule_atom_object,
+    rule_atom_data,
+    rule_atom_builtin,
+    rule_atom_unknown
+  };
+
+  enum RuleBuiltinType_e
+  {
+    builtin_greater_than,
+    builtin_greater_than_or_equal,
+    builtin_less_than,
+    builtin_less_than_or_equal,
+    builtin_equal,
+    builtin_not_equal,
+    builtin_unknon
+  };
+
+  struct Builtin_t // todo: to move
+  {
+    RuleBuiltinType_e builtin_type_;
+    std::string builtin_str_;
+
+    Builtin_t() : builtin_type_(builtin_unknon) {}
+    Builtin_t(const RuleBuiltinType_e& builtin_type, const std::string& builtin_str) : builtin_type_(builtin_type),
+                                                                                       builtin_str_(builtin_str)
+    {}
+
+    std::string builtinToString() const
+    {
+      std::string builtin_name;
+      switch(this->builtin_type_)
+      {
+      case builtin_greater_than:
+        builtin_name = "greaterThan";
+        break;
+      case builtin_greater_than_or_equal:
+        builtin_name = "greaterThanOrEqual";
+        break;
+      case builtin_less_than:
+        builtin_name = "lessThan";
+        break;
+      case builtin_less_than_or_equal:
+        builtin_name = "lessThanOrEqual";
+        break;
+      case builtin_equal:
+        builtin_name = "equal";
+        break;
+      case builtin_not_equal:
+        builtin_name = "notEqual";
+        break;
+      default:
+        break;
+      }
+
+      return builtin_name;
+    }
   };
 
   struct RuleTriplet_t
   {
     // empty constructor
-    RuleTriplet_t() : atom_type_(default_atom), class_predicate(nullptr), anonymous_element(nullptr), object_predicate(nullptr), data_predicate(nullptr)
+    RuleTriplet_t() : atom_type_(rule_atom_unknown), class_predicate(nullptr), anonymous_element(nullptr), object_predicate(nullptr), data_predicate(nullptr)
     {}
 
-    AtomType_e atom_type_;
+    RuleAtomType_e atom_type_;
 
     ClassBranch* class_predicate;            // set only if class atom
     AnonymousClassBranch* anonymous_element; // used to store the anonymous class if the class expression is complex
@@ -89,16 +141,16 @@ namespace ontologenius {
 
       switch(atom_type_)
       {
-      case class_atom:
+      case rule_atom_class:
         res = class_predicate->value() + "(" + arguments.at(0).toString() + ")";
         break;
-      case object_atom:
+      case rule_atom_object:
         res = object_predicate->value() + "(" + arguments.at(0).toString() + ", " + arguments.at(1).toString() + ")";
         break;
-      case data_atom:
+      case rule_atom_data:
         res = data_predicate->value() + "(" + arguments.at(0).toString() + ", " + arguments.at(1).toString() + ")";
         break;
-      case builtin_atom:
+      case rule_atom_builtin:
         /* code */
         break;
       default:
@@ -110,12 +162,11 @@ namespace ontologenius {
 
   struct Variable_t
   {
-    Variable_t() : is_individual(false), is_datavalue(false), is_builtin_value(false), var_index(-1) {}
+    Variable_t() : is_individual(false), is_datavalue(false), var_index(-1) {}
 
     std::string var_name;
     bool is_individual;  // for indiv
     bool is_datavalue;     // for literal
-    bool is_builtin_value; // for builtin data // todo: why never used ?
     int64_t var_index;
 
     std::string toString() const { return var_name; }
