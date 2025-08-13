@@ -5,15 +5,15 @@
 
 #include "ontologenius/core/ontoGraphs/Branchs/Branch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/PropertyBranch.h"
-#include "ontologenius/core/ontologyIO/Owl/writers/NodeOwlWriter.h"
+#include "ontologenius/core/ontologyIO/Owl/writers/GraphOwlWriter.h"
 
 namespace ontologenius {
 
   template<typename T>
-  class PropertiesOwlWriter : public NodeOwlWriter
+  class PropertiesOwlWriter : public GraphOwlWriter
   {
   public:
-    PropertiesOwlWriter() = default;
+    PropertiesOwlWriter(const std::string& ns, const std::string& key) : GraphOwlWriter(ns, key) {}
     ~PropertiesOwlWriter() = default;
 
   protected:

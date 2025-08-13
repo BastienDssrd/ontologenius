@@ -10,10 +10,9 @@
 namespace ontologenius {
 
   DataPropertiesOwlWriter::DataPropertiesOwlWriter(DataPropertyGraph* property_graph,
-                                                   const std::string& ns) : property_graph_(property_graph)
-  {
-    ns_ = ns;
-  }
+                                                   const std::string& ns) : PropertiesOwlWriter(ns, "owl:DatatypeProperty"),
+                                                                            property_graph_(property_graph)
+  {}
 
   void DataPropertiesOwlWriter::write(FILE* file)
   {
@@ -30,61 +29,28 @@ namespace ontologenius {
 
   void DataPropertiesOwlWriter::writeProperty(DataPropertyBranch* branch)
   {
-    std::string tmp = "    <!-- " + ns_ + "#" + branch->value() + " -->\n\n\
-    <owl:DatatypeProperty rdf:about=\"" +
-                      ns_ + "#" + branch->value() + "\">\n";
-    writeString(tmp);
+    writeBranchStart(branch->value());
 
-    writeSubPropertyOf(branch);
+    for(auto& mother : branch->mothers_)
+      writeSingleResource("rdfs:subPropertyOf", mother);
+
     writeDisjointWith(branch);
     writeProperties(branch);
     writeRange(branch);
-    writeDomain(branch);
+
+    for(auto& domain : branch->domains_)
+      writeSingleResource("rdfs:domain", domain);
 
     writeDictionary(branch);
     writeMutedDictionary(branch);
 
-    tmp = "    </owl:DatatypeProperty>\n\n\n\n";
-    writeString(tmp);
-  }
-
-  void DataPropertiesOwlWriter::writeSubPropertyOf(DataPropertyBranch* branch)
-  {
-    for(auto& mother : branch->mothers_)
-      if(mother.inferred == false)
-      {
-        const std::string tmp = "        <rdfs:subPropertyOf" +
-                                getProba(mother) +
-                                " rdf:resource=\"" + ns_ + "#" +
-                                mother.elem->value() + "\"/>\n";
-        writeString(tmp);
-      }
+    writeBranchEnd();
   }
 
   void DataPropertiesOwlWriter::writeRange(DataPropertyBranch* branch)
   {
     for(auto& range : branch->ranges_)
-    {
-      const std::string tmp = "        <rdfs:range rdf:resource=\"" +
-                              range->getNamespace() +
-                              "#" +
-                              range->value() +
-                              +"\"/>\n";
-      writeString(tmp);
-    }
-  }
-
-  void DataPropertiesOwlWriter::writeDomain(DataPropertyBranch* branch)
-  {
-    for(auto& domain : branch->domains_)
-      if(domain.inferred == false)
-      {
-        const std::string tmp = "        <rdfs:domain" +
-                                getProba(domain) +
-                                " rdf:resource=\"" + ns_ + "#" +
-                                domain.elem->value() + "\"/>\n";
-        writeString(tmp);
-      }
+      writeString("<rdfs:range rdf:resource=\"" + range->getNamespace() +  "#" + range->value() + +"\"/>\n", 2);
   }
 
 } // namespace ontologenius

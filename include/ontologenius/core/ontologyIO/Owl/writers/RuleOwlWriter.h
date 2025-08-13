@@ -9,7 +9,7 @@
 #include "ontologenius/core/ontoGraphs/Branchs/ClassBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/RuleBranch.h"
 #include "ontologenius/core/ontoGraphs/Graphs/RuleGraph.h"
-#include "ontologenius/core/ontologyIO/Owl/writers/NodeOwlWriter.h"
+#include "ontologenius/core/ontologyIO/Owl/writers/GraphOwlWriter.h"
 
 namespace ontologenius {
 
@@ -17,7 +17,7 @@ namespace ontologenius {
   class RuleBranch;
   class AnonymousClassElement;
 
-  class RuleOwlWriter : private NodeOwlWriter
+  class RuleOwlWriter : private GraphOwlWriter
   {
   public:
     RuleOwlWriter(RuleGraph* rule_graph, const std::string& ns);

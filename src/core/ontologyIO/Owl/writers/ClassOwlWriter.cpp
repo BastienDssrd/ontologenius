@@ -19,10 +19,9 @@
 
 namespace ontologenius {
 
-  ClassOwlWriter::ClassOwlWriter(ClassGraph* class_graph, const std::string& ns) : class_graph_(class_graph)
-  {
-    ns_ = ns;
-  }
+  ClassOwlWriter::ClassOwlWriter(ClassGraph* class_graph, const std::string& ns) : GraphOwlWriter(ns, "owl:Class"),
+                                                                                   class_graph_(class_graph)
+  {}
 
   void ClassOwlWriter::write(FILE* file)
   {
@@ -52,10 +51,7 @@ namespace ontologenius {
 
   void ClassOwlWriter::writeClass(ClassBranch* branch)
   {
-    std::string tmp = "    <!-- " + ns_ + "#" + branch->value() + " -->\n\n\
-    <owl:Class rdf:about=\"" +
-                      ns_ + "#" + branch->value() + "\">\n";
-    writeString(tmp);
+    writeBranchStart(branch->value());
 
     writeEquivalentClass(branch);
     writeSubClassOf(branch);
@@ -68,8 +64,7 @@ namespace ontologenius {
     writeDictionary(branch);
     writeMutedDictionary(branch);
 
-    tmp = "    </owl:Class>\n\n\n\n";
-    writeString(tmp);
+    writeBranchEnd();
   }
 
   void ClassOwlWriter::writeEquivalentClass(ClassBranch* branch)
@@ -114,17 +109,10 @@ namespace ontologenius {
 
   void ClassOwlWriter::writeRestriction(AnonymousClassElement* ano_elem, size_t level)
   {
-    std::string tmp, field, subfield;
+    const std::string field = "owl:Restriction";
 
-    field = "owl:Restriction";
-    subfield = "owl:onProperty";
-
-    tmp = "<" + field + ">\n";
-    writeString(tmp, level);
-
-    // Property
-    tmp = "<" + subfield + " " + getResource(ano_elem, "rdf:resource", true) + "/>\n";
-    writeString(tmp, level + 1);
+    writeString("<" + field + ">\n", level);
+    writeString("<owl:onProperty " + getResource(ano_elem, "rdf:resource", true) + "/>\n", level + 1);
 
     // Cardinality
     if(ano_elem->card_.card_type_ == cardinality_max ||
@@ -143,18 +131,14 @@ namespace ontologenius {
         writeCardinalityRange(ano_elem, level + 1, false);
     }
 
-    tmp = "</" + field + ">\n";
-    writeString(tmp, level);
+    writeString("</" + field + ">\n", level);
   }
 
   void ClassOwlWriter::writeClassExpression(AnonymousClassElement* ano_elem, size_t level)
   {
-    std::string tmp, field;
+    const std::string field = "owl:Class";
 
-    field = "owl:Class";
-
-    tmp = "<" + field + ">\n";
-    writeString(tmp, level);
+    writeString("<" + field + ">\n", level);
 
     if(ano_elem->logical_type_ == logical_or)
       writeUnion(ano_elem, level + 1);
@@ -165,18 +149,14 @@ namespace ontologenius {
     else if(ano_elem->oneof == true)
       writeOneOf(ano_elem, level + 1);
 
-    tmp = "</" + field + ">\n";
-    writeString(tmp, level);
+    writeString("</" + field + ">\n", level);
   }
 
   void ClassOwlWriter::writeDatatypeExpression(AnonymousClassElement* ano_elem, size_t level)
   {
-    std::string tmp, field;
+    const std::string field = "rdfs:Datatype";
 
-    field = "rdfs:Datatype";
-
-    tmp = "<" + field + ">\n";
-    writeString(tmp, level);
+    writeString("<" + field + ">\n", level);
 
     if(ano_elem->logical_type_ == logical_or)
       writeUnion(ano_elem, level + 1, true);
@@ -185,113 +165,79 @@ namespace ontologenius {
     else if(ano_elem->logical_type_ == logical_not)
       writeDataComplement(ano_elem, level + 1);
 
-    tmp = "</" + field + ">\n";
-    writeString(tmp, level);
+    writeString("</" + field + ">\n", level);
   }
 
   void ClassOwlWriter::writeIntersection(AnonymousClassElement* ano_elem, size_t level, bool is_data_prop)
   {
-    std::string tmp, field;
-    field = "owl:intersectionOf";
+    const std::string field = "owl:intersectionOf"; 
 
-    tmp = "<" + field + " " + "rdf:parseType=\"Collection\">\n";
-    writeString(tmp, level);
+    writeString("<" + field + " " + "rdf:parseType=\"Collection\">\n", level);
 
     for(auto* child : ano_elem->sub_elements_)
       writeComplexDescription(child, level + 1, is_data_prop);
 
-    tmp = "</" + field + ">\n";
-    writeString(tmp, level);
+    writeString("</" + field + ">\n", level);
   }
 
   void ClassOwlWriter::writeUnion(AnonymousClassElement* ano_elem, size_t level, bool is_data_prop)
   {
-    std::string tmp;
     const std::string field = "owl:unionOf";
 
-    tmp = "<" + field + " " + "rdf:parseType=\"Collection\">\n";
-    writeString(tmp, level);
+    writeString("<" + field + " " + "rdf:parseType=\"Collection\">\n", level);
 
     for(auto* child : ano_elem->sub_elements_)
       writeComplexDescription(child, level + 1, is_data_prop);
 
-    tmp = "</" + field + ">\n";
-    writeString(tmp, level);
+    writeString("</" + field + ">\n", level);
   }
 
   void ClassOwlWriter::writeOneOf(AnonymousClassElement* ano_elem, size_t level)
   {
-    std::string tmp;
     const std::string field = "owl:oneOf";
 
-    tmp = "<" + field + " " + "rdf:parseType=\"Collection\">\n";
-    writeString(tmp, level);
+    writeString("<" + field + " " + "rdf:parseType=\"Collection\">\n", level);
 
     for(auto* child : ano_elem->sub_elements_)
-    {
-      tmp = "<rdf:Description " + getResource(child, "rdf:about") + "/>\n";
-      writeString(tmp, level + 1);
-    }
+      writeString("<rdf:Description " + getResource(child, "rdf:about") + "/>\n", level + 1);
 
-    tmp = "</" + field + ">\n";
-    writeString(tmp, level);
+    writeString("</" + field + ">\n", level);
   }
 
   void ClassOwlWriter::writeComplement(AnonymousClassElement* ano_elem, size_t level)
   {
-    std::string tmp;
     const std::string field = "owl:complementOf";
 
     if(ano_elem->sub_elements_.front()->class_involved_ != nullptr && ano_elem->object_property_involved_ == nullptr)
-    {
-      tmp = "<" + field + " " + getResource(ano_elem->sub_elements_.front()) + "/>\n";
-      writeString(tmp, level);
-    }
+      writeString("<" + field + " " + getResource(ano_elem->sub_elements_.front()) + "/>\n", level);
     else
     {
-      tmp = "<" + field + ">\n";
-      writeString(tmp, level);
-
+      writeString("<" + field + ">\n", level);
       writeComplexDescription(ano_elem->sub_elements_.front(), level + 1);
-
-      tmp = "</" + field + ">\n";
-      writeString(tmp, level);
+      writeString("</" + field + ">\n", level);
     }
   }
 
   void ClassOwlWriter::writeDataComplement(AnonymousClassElement* ano_elem, size_t level)
   {
-    std::string tmp;
     const std::string field = "owl:datatypeComplementOf";
 
     if(ano_elem->sub_elements_.front()->card_.card_value_range_ != nullptr)
-    {
-      tmp = "<" + field + " " + getResource(ano_elem->sub_elements_.front()) + "/>\n";
-      writeString(tmp, level);
-    }
+      writeString("<" + field + " " + getResource(ano_elem->sub_elements_.front()) + "/>\n", level);
     else
     {
-      tmp = "<" + field + ">\n";
-      writeString(tmp, level);
-
+      writeString("<" + field + ">\n", level);
       writeDatatypeExpression(ano_elem->sub_elements_.front(), level + 1);
-
-      tmp = "</" + field + ">\n";
-      writeString(tmp, level);
+      writeString("</" + field + ">\n", level);
     }
   }
 
   void ClassOwlWriter::writeComplexDescription(AnonymousClassElement* ano_elem, size_t level, bool is_data_prop)
   {
-    std::string tmp;
-
     if(ano_elem->sub_elements_.empty())
     {
       if(ano_elem->object_property_involved_ == nullptr && ano_elem->data_property_involved_ == nullptr)
-      {
-        tmp = "<rdf:Description " + getResource(ano_elem, "rdf:about") + "/>\n";
-        writeString(tmp, level);
-      }
+        writeString("<rdf:Description " + getResource(ano_elem, "rdf:about") + "/>\n", level);
       else
         writeRestriction(ano_elem, level);
     }
@@ -308,7 +254,7 @@ namespace ontologenius {
 
   void ClassOwlWriter::writeCardinalityValue(AnonymousClassElement* ano_elem, size_t level)
   {
-    std::string tmp, field;
+    std::string field;
 
     switch(ano_elem->card_.card_type_)
     {
@@ -331,9 +277,7 @@ namespace ontologenius {
       break;
     }
 
-    tmp = "<" + field + " rdf:datatype=\"http://www.w3.org/2001/XMLSchema#nonNegativeInteger\">" +
-          std::to_string(ano_elem->card_.card_number_) + "</" + field + ">\n";
-    writeString(tmp, level);
+    writeString("<" + field + " rdf:datatype=\"http://www.w3.org/2001/XMLSchema#nonNegativeInteger\">" + std::to_string(ano_elem->card_.card_number_) + "</" + field + ">\n", level);
 
     writeCardinality(ano_elem, level);
   }
@@ -348,12 +292,11 @@ namespace ontologenius {
       field = "owl:hasValue";
       if(is_data_prop)
       {
-        tmp += "<" + field + " rdf:datatype=\"";
-        tmp += ano_elem->card_.card_value_range_->type_->getNamespace() + "#" + ano_elem->card_.card_value_range_->type_->value() + "\">" + ano_elem->card_.card_value_range_->data();
+        tmp += "<" + field + " rdf" + getRdfDatatype(ano_elem->card_.card_value_range_->type_) + ">" + ano_elem->card_.card_value_range_->data();
         tmp += "</" + field + ">\n";
       }
       else
-        tmp += "<" + field + " rdf:resource=\"" + ns_ + "#" + ano_elem->individual_involved_->value() + "\"/>\n";
+        tmp += "<" + field + " " + getRdfResource(ano_elem->individual_involved_->value()) + "/>\n";
       writeString(tmp, level);
       return;
     case cardinality_only:
@@ -371,67 +314,46 @@ namespace ontologenius {
     }
 
     if(ano_elem->is_complex == false)
-    {
-      tmp = "<" + field + " " + getResource(ano_elem) + "/>\n";
-      writeString(tmp, level);
-    }
+      writeString("<" + field + " " + getResource(ano_elem) + "/>\n", level);
     else
     {
-      tmp = "<" + field + ">\n";
-      writeString(tmp, level);
+      writeString("<" + field + ">\n", level);
 
       if(is_data_prop == true)
         writeDatatypeExpression(ano_elem->sub_elements_.front(), level + 1);
       else
         writeComplexDescription(ano_elem->sub_elements_.front(), level + 1);
 
-      tmp = "</" + field + ">\n";
-      writeString(tmp, level);
+      writeString("</" + field + ">\n", level);
     }
   }
 
   void ClassOwlWriter::writeCardinality(AnonymousClassElement* ano_element, size_t level)
   {
-    std::string tmp, field;
-
     if(ano_element->data_property_involved_ == nullptr)
     {
-      field = "owl:onClass";
+      const std::string field = "owl:onClass";
 
       if(ano_element->class_involved_ != nullptr)
-      {
-        tmp = "<" + field + " " + getResource(ano_element) + "/>\n";
-        writeString(tmp, level);
-      }
+        writeString("<" + field + " " + getResource(ano_element) + "/>\n", level);
       else
       {
-        tmp = "<" + field + ">\n";
-        writeString(tmp, level);
-
+        writeString("<" + field + ">\n", level);
         writeClassExpression(ano_element->sub_elements_.front(), level + 1);
-
-        tmp = "</" + field + ">\n";
-        writeString(tmp, level);
+        writeString("</" + field + ">\n", level);
       }
     }
     else
     {
-      field = "owl:onDataRange";
+      const std::string field = "owl:onDataRange";
 
       if(ano_element->card_.card_value_range_ != nullptr)
-      {
-        tmp = "<" + field + " " + getResource(ano_element) + "/>\n";
-        writeString(tmp, level);
-      }
+        writeString("<" + field + " " + getResource(ano_element) + "/>\n", level);
       else
       {
-        tmp = "<" + field + ">\n";
-        writeString(tmp, level);
-
+        writeString("<" + field + ">\n", level);
         writeDatatypeExpression(ano_element->sub_elements_.front(), level + 1);
-
-        tmp = "</" + field + ">\n";
-        writeString(tmp, level);
+        writeString("</" + field + ">\n", level);
       }
     }
   }
@@ -462,29 +384,14 @@ namespace ontologenius {
   void ClassOwlWriter::writeSubClassOf(ClassBranch* branch)
   {
     for(auto& mother : branch->mothers_)
-      if(mother.inferred == false)
-      {
-        const std::string proba = (mother < 1.0) ? " onto:probability=\"" + std::to_string(mother.probability) + "\"" : "";
-        const std::string tmp = "        <rdfs:subClassOf" +
-                                proba +
-                                " rdf:resource=\"" + ns_ + "#" +
-                                mother.elem->value() + "\"/>\n";
-        writeString(tmp);
-      }
+      writeSingleResource("rdfs:subClassOf", mother);
   }
 
   void ClassOwlWriter::writeDisjointWith(ClassBranch* branch)
   {
     if(branch->disjoints_.size() < 2)
       for(auto& disjoint : branch->disjoints_)
-        if(disjoint.inferred == false)
-        {
-          const std::string tmp = "        <owl:disjointWith" +
-                                  getProba(disjoint) +
-                                  " rdf:resource=\"" + ns_ + "#" +
-                                  disjoint.elem->value() + "\"/>\n";
-          writeString(tmp);
-        }
+        writeSingleResource("owl:disjointWith", disjoint);
   }
 
   void ClassOwlWriter::writeDisjointWith(std::vector<ClassBranch*>& classes)
@@ -497,10 +404,8 @@ namespace ontologenius {
     std::set<std::set<ClassBranch*>> disjoints_vects;
 
     for(auto& classe : classes)
-    {
       if(classe->disjoints_.size() > 1)
         getDisjointsSets(classe, disjoints_vects);
-    }
 
     for(const auto& disjoints_set : disjoints_vects)
     {
@@ -575,16 +480,7 @@ namespace ontologenius {
   {
     for(const ClassObjectRelationElement& relation : branch->object_relations_)
       if(relation.inferred == false)
-      {
-        const std::string proba = (relation < 1.0) ? " onto:probability=\"" + std::to_string(relation.probability) + "\"" : "";
-        const std::string tmp = "        <" +
-                                relation.first->value() +
-                                proba +
-                                " rdf:resource=\"" + ns_ + "#" +
-                                relation.second->value() +
-                                "\"/>\n";
-        writeString(tmp);
-      }
+        writeString("<" + relation.first->value() + getProba(relation) + " " + getRdfResource(relation.second->value()) + "/>\n", 2);
   }
 
   void ClassOwlWriter::writeDataProperties(ClassBranch* branch)
@@ -592,20 +488,9 @@ namespace ontologenius {
     for(const ClassDataRelationElement& relation : branch->data_relations_)
       if(relation.inferred == false)
       {
-        const std::string proba = (relation < 1.0) ? " onto:probability=\"" + std::to_string(relation.probability) + "\"" : "";
-        const std::string tmp = "        <" +
-                                relation.first->value() +
-                                proba +
-                                " rdf:datatype=\"" +
-                                relation.second->type_->getNamespace() +
-                                "#" +
-                                relation.second->type_->value() +
-                                "\">" +
-                                relation.second->data() +
-                                "</" +
-                                relation.first->value() +
-                                ">\n";
-        writeString(tmp);
+        const std::string tmp = "<" + relation.first->value() + getProba(relation) + " " + getRdfDatatype(relation.second->type_) + ">" + 
+                                relation.second->data() + "</" + relation.first->value() + ">\n";
+        writeString(tmp, 2);
       }
   }
 

@@ -15,11 +15,10 @@ namespace ontologenius {
 
   AnnotationOwlWriter::AnnotationOwlWriter(ObjectPropertyGraph* object_property_graph,
                                            DataPropertyGraph* data_property_graph,
-                                           const std::string& ns) : object_property_graph_(object_property_graph),
+                                           const std::string& ns) : GraphOwlWriter(ns, "owl:AnnotationProperty"),
+                                                                    object_property_graph_(object_property_graph),
                                                                     data_property_graph_(data_property_graph)
-  {
-    ns_ = ns;
-  }
+  {}
 
   void AnnotationOwlWriter::write(FILE* file)
   {
@@ -48,97 +47,47 @@ namespace ontologenius {
 
   void AnnotationOwlWriter::writeAnnotation(ObjectPropertyBranch* branch)
   {
-    std::string tmp = "    <!-- " + ns_ + "#" + branch->value() + " -->\n\n\
-    <owl:AnnotationProperty rdf:about=\"" +
-                      ns_ + "#" + branch->value() + "\">\n";
-    writeString(tmp);
+    writeBranchStart(branch->value());
 
-    writeSubPropertyOf(branch);
-    writeRange(branch->ranges_);
-    writeDomain(branch->domains_);
+    for(auto& mother : branch->mothers_)
+      writeSingleResource("rdfs:subPropertyOf", mother);
 
-    tmp = "    </owl:AnnotationProperty>\n\n\n\n";
-    writeString(tmp);
+    for(auto range : branch->ranges_)
+      writeSingleResource("rdfs:range", range);
+
+    for(auto domain : branch->domains_)
+      writeSingleResource("rdfs:domain", domain);
+
+    writeBranchEnd();
   }
 
   void AnnotationOwlWriter::writeAnnotation(DataPropertyBranch* branch)
   {
-    std::string tmp = "    <!-- " + ns_ + "#" + branch->value() + " -->\n\n\
-    <owl:AnnotationProperty rdf:about=\"" +
-                      ns_ + "#" + branch->value() + "\">\n";
-    writeString(tmp);
+    writeBranchStart(branch->value());
 
-    writeSubPropertyOf(branch);
+    for(auto& mother : branch->mothers_)
+      writeString("<rdfs:subPropertyOf" + getProba(mother) + " " + getRdfResource(mother.elem->value()) + "/>\n", 2);
+
     writeRange(branch->ranges_);
-    writeDomain(branch->domains_);
 
-    tmp = "    </owl:AnnotationProperty>\n\n\n\n";
-    writeString(tmp);
+    for(auto domain : branch->domains_)
+      writeSingleResource("rdfs:domain", domain);
+
+    writeBranchEnd();
   }
 
-  void AnnotationOwlWriter::writeSubPropertyOf(ObjectPropertyBranch* branch)
-  {
-    for(auto& mother : branch->mothers_)
-      if(mother.inferred == false)
-      {
-        const std::string tmp = "        <rdfs:subPropertyOf" +
-                                getProba(mother) +
-                                " rdf:resource=\"" + ns_ + "#" +
-                                mother.elem->value() + "\"/>\n";
-        writeString(tmp);
-      }
-  }
-
-  void AnnotationOwlWriter::writeSubPropertyOf(DataPropertyBranch* branch)
-  {
-    for(auto& mother : branch->mothers_)
-      if(mother.inferred == false)
-      {
-        const std::string tmp = "        <rdfs:subPropertyOf" +
-                                getProba(mother) +
-                                " rdf:resource=\"" + ns_ + "#" +
-                                mother.elem->value() + "\"/>\n";
-        writeString(tmp);
-      }
-  }
 
   void AnnotationOwlWriter::writeRange(const std::vector<LiteralType*>& ranges)
   {
     for(const auto& range : ranges)
     {
-      const std::string tmp = "        <rdfs:range rdf:resource=\"" +
+      const std::string tmp = "<rdfs:range rdf:resource=\"" +
                               range->getNamespace() +
                               "#" +
                               range->value() +
                               +"\"/>\n";
-      writeString(tmp);
+      writeString(tmp, 2);
     }
-  }
-
-  void AnnotationOwlWriter::writeRange(const std::vector<ClassElement>& ranges)
-  {
-    for(auto range : ranges)
-      if(range.inferred == false)
-      {
-        const std::string tmp = "        <rdfs:range" +
-                                getProba(range) +
-                                " rdf:resource=\"" + ns_ + "#" +
-                                range.elem->value() + "\"/>\n";
-        writeString(tmp);
-      }
-  }
-
-  void AnnotationOwlWriter::writeDomain(const std::vector<ClassElement>& domains)
-  {
-    for(auto domain : domains)
-      if(domain.inferred == false)
-      {
-        const std::string tmp = "        <rdfs:domain" +
-                                getProba(domain) +
-                                " rdf:resource=\"" + ns_ + "#" +
-                                domain.elem->value() + "\"/>\n";
-        writeString(tmp);
-      }
   }
 
 } // namespace ontologenius

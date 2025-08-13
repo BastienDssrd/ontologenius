@@ -10,10 +10,9 @@
 namespace ontologenius {
 
   ObjectPropertiesOwlWriter::ObjectPropertiesOwlWriter(ObjectPropertyGraph* property_graph,
-                                                       const std::string& ns) : property_graph_(property_graph)
-  {
-    ns_ = ns;
-  }
+                                                       const std::string& ns) : PropertiesOwlWriter(ns, "owl:ObjectProperty"),
+                                                                                property_graph_(property_graph)
+  {}
 
   void ObjectPropertiesOwlWriter::write(FILE* file)
   {
@@ -30,76 +29,30 @@ namespace ontologenius {
 
   void ObjectPropertiesOwlWriter::writeProperty(ObjectPropertyBranch* branch)
   {
-    std::string tmp = "    <!-- " + ns_ + "#" + branch->value() + " -->\n\n\
-    <owl:ObjectProperty rdf:about=\"" +
-                      ns_ + "#" + branch->value() + "\">\n";
-    writeString(tmp);
+    writeBranchStart(branch->value());
 
-    writeSubPropertyOf(branch);
+    for(auto& mother : branch->mothers_)
+      writeSingleResource("rdfs:subPropertyOf", mother);
+
     writeDisjointWith(branch);
-    writeInverseOf(branch);
+
+    for(auto& inverse : branch->inverses_)
+      writeSingleResource("owl:inverseOf", inverse);
+
     writeProperties(branch);
-    writeRange(branch);
-    writeDomain(branch);
+
+    for(auto& range : branch->ranges_)
+      writeSingleResource("rdfs:range", range);
+
+    for(auto& domain : branch->domains_)
+      writeSingleResource("rdfs:domain", domain);
+
     writeChain(branch);
 
     writeDictionary(branch);
     writeMutedDictionary(branch);
 
-    tmp = "    </owl:ObjectProperty>\n\n\n\n";
-    writeString(tmp);
-  }
-
-  void ObjectPropertiesOwlWriter::writeSubPropertyOf(ObjectPropertyBranch* branch)
-  {
-    for(auto& mother : branch->mothers_)
-      if(mother.inferred == false)
-      {
-        const std::string tmp = "        <rdfs:subPropertyOf" +
-                                getProba(mother) +
-                                " rdf:resource=\"" + ns_ + "#" +
-                                mother.elem->value() + "\"/>\n";
-        writeString(tmp);
-      }
-  }
-
-  void ObjectPropertiesOwlWriter::writeInverseOf(ObjectPropertyBranch* branch)
-  {
-    for(auto& inverse : branch->inverses_)
-      if(inverse.inferred == false)
-      {
-        const std::string tmp = "        <owl:inverseOf" +
-                                getProba(inverse) +
-                                " rdf:resource=\"" + ns_ + "#" +
-                                inverse.elem->value() + "\"/>\n";
-        writeString(tmp);
-      }
-  }
-
-  void ObjectPropertiesOwlWriter::writeRange(ObjectPropertyBranch* branch)
-  {
-    for(auto& range : branch->ranges_)
-      if(range.inferred == false)
-      {
-        const std::string tmp = "        <rdfs:range" +
-                                getProba(range) +
-                                " rdf:resource=\"" + ns_ + "#" +
-                                range.elem->value() + "\"/>\n";
-        writeString(tmp);
-      }
-  }
-
-  void ObjectPropertiesOwlWriter::writeDomain(ObjectPropertyBranch* branch)
-  {
-    for(auto& domain : branch->domains_)
-      if(domain.inferred == false)
-      {
-        const std::string tmp = "        <rdfs:domain" +
-                                getProba(domain) +
-                                " rdf:resource=\"" + ns_ + "#" +
-                                domain.elem->value() + "\"/>\n";
-        writeString(tmp);
-      }
+    writeBranchEnd();
   }
 
   void ObjectPropertiesOwlWriter::writeChain(ObjectPropertyBranch* branch)

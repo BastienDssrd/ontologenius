@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include "ontologenius/core/ontologyIO/Owl/writers/NodeOwlWriter.h"
+#include "ontologenius/core/ontologyIO/Owl/writers/GraphOwlWriter.h"
 
 namespace ontologenius {
 
@@ -15,7 +15,7 @@ namespace ontologenius {
   class ClassBranch;
   class AnonymousClassElement;
 
-  class ClassOwlWriter : private NodeOwlWriter
+  class ClassOwlWriter : private GraphOwlWriter
   {
   public:
     ClassOwlWriter(ClassGraph* class_graph, const std::string& ns);

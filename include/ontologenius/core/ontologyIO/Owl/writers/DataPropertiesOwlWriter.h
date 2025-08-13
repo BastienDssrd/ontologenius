@@ -23,9 +23,7 @@ namespace ontologenius {
     DataPropertyGraph* property_graph_;
 
     void writeProperty(DataPropertyBranch* branch);
-    void writeSubPropertyOf(DataPropertyBranch* branch);
     void writeRange(DataPropertyBranch* branch);
-    void writeDomain(DataPropertyBranch* branch);
   };
 
 } // namespace ontologenius

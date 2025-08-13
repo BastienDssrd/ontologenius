@@ -5,14 +5,14 @@
 #include <string>
 #include <vector>
 
-#include "ontologenius/core/ontologyIO/Owl/writers/NodeOwlWriter.h"
+#include "ontologenius/core/ontologyIO/Owl/writers/GraphOwlWriter.h"
 
 namespace ontologenius {
 
   class IndividualGraph;
   class IndividualBranch;
 
-  class IndividualOwlWriter : public NodeOwlWriter
+  class IndividualOwlWriter : public GraphOwlWriter
   {
   public:
     IndividualOwlWriter(IndividualGraph* individual_graph, const std::string& ns);
