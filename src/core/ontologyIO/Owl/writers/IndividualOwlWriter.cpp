@@ -13,33 +13,26 @@
 namespace ontologenius {
 
   IndividualOwlWriter::IndividualOwlWriter(IndividualGraph* individual_graph,
-                                           const std::string& ns) : GraphOwlWriter(ns, "owl:NamedIndividual"),
+                                           FILE* file,
+                                           const std::string& ns) : GraphOwlWriter(file, ns, "owl:NamedIndividual"),
                                                                     individual_graph_(individual_graph)
   {}
 
-  void IndividualOwlWriter::write(FILE* file)
+  void IndividualOwlWriter::write()
   {
-    file_ = file;
-
     const std::shared_lock<std::shared_timed_mutex> lock(individual_graph_->mutex_);
 
     const std::vector<IndividualBranch*> individuals = individual_graph_->get();
     for(auto* individual : individuals)
       writeIndividual(individual);
-
-    file_ = nullptr;
   }
 
-  void IndividualOwlWriter::writeGeneralAxioms(FILE* file)
+  void IndividualOwlWriter::writeGeneralAxioms()
   {
-    file_ = file;
-
     const std::shared_lock<std::shared_timed_mutex> lock(individual_graph_->mutex_);
 
     std::vector<IndividualBranch*> individuals = individual_graph_->get();
     writeDistincts(individuals);
-
-    file_ = nullptr;
   }
 
   void IndividualOwlWriter::writeIndividual(IndividualBranch* branch)

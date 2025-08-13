@@ -19,34 +19,28 @@
 
 namespace ontologenius {
 
-  ClassOwlWriter::ClassOwlWriter(ClassGraph* class_graph, const std::string& ns) : GraphOwlWriter(ns, "owl:Class"),
-                                                                                   class_graph_(class_graph)
+  ClassOwlWriter::ClassOwlWriter(ClassGraph* class_graph,
+                                 FILE* file,
+                                 const std::string& ns) : GraphOwlWriter(file, ns, "owl:Class"),
+                                                          class_graph_(class_graph)
   {}
 
-  void ClassOwlWriter::write(FILE* file)
+  void ClassOwlWriter::write()
   {
-    file_ = file;
-
     const std::shared_lock<std::shared_timed_mutex> lock(class_graph_->mutex_);
 
     const std::vector<ClassBranch*> classes = class_graph_->get();
 
     for(auto* classe : classes)
       writeClass(classe);
-
-    file_ = nullptr;
   }
 
-  void ClassOwlWriter::writeGeneralAxioms(FILE* file)
+  void ClassOwlWriter::writeGeneralAxioms()
   {
-    file_ = file;
-
     const std::shared_lock<std::shared_timed_mutex> lock(class_graph_->mutex_);
 
     std::vector<ClassBranch*> classes = class_graph_->get();
     writeDisjointWith(classes);
-
-    file_ = nullptr;
   }
 
   void ClassOwlWriter::writeClass(ClassBranch* branch)

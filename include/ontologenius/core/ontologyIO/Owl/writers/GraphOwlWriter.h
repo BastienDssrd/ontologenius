@@ -14,9 +14,11 @@ namespace ontologenius {
   class GraphOwlWriter
   {
   public:
-    GraphOwlWriter(const std::string& ns, const std::string& key) : file_(nullptr),
-                                                                    ns_(ns),
-                                                                    key_(key) {}
+    GraphOwlWriter(FILE* file,
+                  const std::string& ns,
+                  const std::string& key) : file_(file),
+                                            ns_(ns),
+                                            key_(key) {}
     ~GraphOwlWriter() = default;
 
     FILE* file_;

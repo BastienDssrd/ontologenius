@@ -15,9 +15,10 @@ namespace ontologenius {
   public:
     AnnotationOwlWriter(ObjectPropertyGraph* object_property_graph,
                         DataPropertyGraph* data_property_graph,
+                        FILE* file,
                         const std::string& ns);
 
-    void write(FILE* file);
+    void write();
 
   private:
     ObjectPropertyGraph* object_property_graph_;

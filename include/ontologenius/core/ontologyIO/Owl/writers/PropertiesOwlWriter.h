@@ -13,7 +13,7 @@ namespace ontologenius {
   class PropertiesOwlWriter : public GraphOwlWriter
   {
   public:
-    PropertiesOwlWriter(const std::string& ns, const std::string& key) : GraphOwlWriter(ns, key) {}
+    PropertiesOwlWriter(FILE* file, const std::string& ns, const std::string& key) : GraphOwlWriter(file, ns, key) {}
     ~PropertiesOwlWriter() = default;
 
   protected:
@@ -38,24 +38,20 @@ namespace ontologenius {
   template<typename T>
   void PropertiesOwlWriter<T>::writeProperties(PropertyBranch<T>* branch)
   {
-    std::string tmp;
     if(branch->properties_.functional_property_ == true)
-      tmp += "        <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#FunctionalProperty\"/>\n\r";
+      writeString("<rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#FunctionalProperty\"/>\n\r",2);
     if(branch->properties_.inverse_functional_property_ == true)
-      tmp += "        <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#InverseFunctionalProperty\"/>\n\r";
+      writeString("<rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#InverseFunctionalProperty\"/>\n\r",2);
     if(branch->properties_.transitive_property_ == true)
-      tmp += "        <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#TransitiveProperty\"/>\n\r";
+      writeString("<rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#TransitiveProperty\"/>\n\r",2);
     if(branch->properties_.symetric_property_ == true)
-      tmp += "        <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#SymmetricProperty\"/>\n\r";
+      writeString("<rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#SymmetricProperty\"/>\n\r",2);
     if(branch->properties_.antisymetric_property_ == true)
-      tmp += "        <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#AsymmetricProperty\"/>\n\r";
+      writeString("<rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#AsymmetricProperty\"/>\n\r",2);
     if(branch->properties_.reflexive_property_ == true)
-      tmp += "        <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#ReflexiveProperty\"/>\n\r";
+      writeString("<rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#ReflexiveProperty\"/>\n\r",2);
     if(branch->properties_.irreflexive_property_ == true)
-      tmp += "        <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#IrreflexiveProperty\"/>\n\r";
-
-    if(tmp.empty() == false)
-      writeString(tmp);
+      writeString("<rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#IrreflexiveProperty\"/>\n\r",2);
   }
 
 } // namespace ontologenius

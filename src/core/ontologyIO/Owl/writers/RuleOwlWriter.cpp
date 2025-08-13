@@ -14,14 +14,14 @@
 
 namespace ontologenius {
 
-  RuleOwlWriter::RuleOwlWriter(RuleGraph* rule_graph, const std::string& ns) : GraphOwlWriter(ns, ""),
-                                                                               rule_graph_(rule_graph)
+  RuleOwlWriter::RuleOwlWriter(RuleGraph* rule_graph,
+                               FILE* file,
+                               const std::string& ns) : GraphOwlWriter(file, ns, ""),
+                                                        rule_graph_(rule_graph)
   {}
 
-  void RuleOwlWriter::write(FILE* file)
+  void RuleOwlWriter::write()
   {
-    file_ = file;
-
     const std::shared_lock<std::shared_timed_mutex> lock(rule_graph_->mutex_);
 
     const std::vector<RuleBranch*> rules = rule_graph_->get();
@@ -33,8 +33,6 @@ namespace ontologenius {
     // write the rules
     for(auto* rule : rules)
       writeRule(rule);
-
-    file_ = nullptr;
   }
 
   void RuleOwlWriter::writeRule(RuleBranch* branch)

@@ -64,32 +64,32 @@ namespace ontologenius {
     writeStart();
 
     writeBanner("Annotations Properties");
-    AnnotationOwlWriter annotations(object_property_graph_, data_property_graph_, ns_);
-    annotations.write(file_);
+    AnnotationOwlWriter annotations(object_property_graph_, data_property_graph_, file_, ns_);
+    annotations.write();
 
     writeBanner("Classes");
-    ClassOwlWriter classes(class_graph_, ns_);
-    classes.write(file_);
+    ClassOwlWriter classes(class_graph_,file_,  ns_);
+    classes.write();
 
     writeBanner("Object Properties");
-    ObjectPropertiesOwlWriter object_properties(object_property_graph_, ns_);
-    object_properties.write(file_);
+    ObjectPropertiesOwlWriter object_properties(object_property_graph_, file_, ns_);
+    object_properties.write();
 
     writeBanner("Data properties");
-    DataPropertiesOwlWriter data_properties(data_property_graph_, ns_);
-    data_properties.write(file_);
+    DataPropertiesOwlWriter data_properties(data_property_graph_, file_, ns_);
+    data_properties.write();
 
     writeBanner("Individuals");
-    IndividualOwlWriter individuals(individual_graph_, ns_);
-    individuals.write(file_);
+    IndividualOwlWriter individuals(individual_graph_, file_, ns_);
+    individuals.write();
 
     writeBanner("General axioms");
-    classes.writeGeneralAxioms(file_);
-    individuals.writeGeneralAxioms(file_);
+    classes.writeGeneralAxioms();
+    individuals.writeGeneralAxioms();
 
     writeBanner("Rules");
-    RuleOwlWriter rules(rule_graph_, ns_);
-    rules.write(file_);
+    RuleOwlWriter rules(rule_graph_, file_, ns_);
+    rules.write();
 
     writeEnd();
 

@@ -10,21 +10,18 @@
 namespace ontologenius {
 
   DataPropertiesOwlWriter::DataPropertiesOwlWriter(DataPropertyGraph* property_graph,
-                                                   const std::string& ns) : PropertiesOwlWriter(ns, "owl:DatatypeProperty"),
+                                                   FILE* file,
+                                                   const std::string& ns) : PropertiesOwlWriter(file, ns, "owl:DatatypeProperty"),
                                                                             property_graph_(property_graph)
   {}
 
-  void DataPropertiesOwlWriter::write(FILE* file)
+  void DataPropertiesOwlWriter::write()
   {
-    file_ = file;
-
     const std::shared_lock<std::shared_timed_mutex> lock(property_graph_->mutex_);
 
     const std::vector<DataPropertyBranch*> properties = property_graph_->get();
     for(auto* property : properties)
       writeProperty(property);
-
-    file_ = nullptr;
   }
 
   void DataPropertiesOwlWriter::writeProperty(DataPropertyBranch* branch)

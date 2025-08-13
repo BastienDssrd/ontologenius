@@ -20,10 +20,10 @@ namespace ontologenius {
   class RuleOwlWriter : private GraphOwlWriter
   {
   public:
-    RuleOwlWriter(RuleGraph* rule_graph, const std::string& ns);
+    RuleOwlWriter(RuleGraph* rule_graph, FILE* file, const std::string& ns);
     ~RuleOwlWriter() = default;
 
-    void write(FILE* file);
+    void write();
 
   private:
     RuleGraph* rule_graph_;

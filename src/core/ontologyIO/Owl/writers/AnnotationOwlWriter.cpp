@@ -15,15 +15,14 @@ namespace ontologenius {
 
   AnnotationOwlWriter::AnnotationOwlWriter(ObjectPropertyGraph* object_property_graph,
                                            DataPropertyGraph* data_property_graph,
-                                           const std::string& ns) : GraphOwlWriter(ns, "owl:AnnotationProperty"),
+                                           FILE* file,
+                                           const std::string& ns) : GraphOwlWriter(file, ns, "owl:AnnotationProperty"),
                                                                     object_property_graph_(object_property_graph),
                                                                     data_property_graph_(data_property_graph)
   {}
 
-  void AnnotationOwlWriter::write(FILE* file)
+  void AnnotationOwlWriter::write()
   {
-    file_ = file;
-
     {
       const std::shared_lock<std::shared_timed_mutex> lock(object_property_graph_->mutex_);
 
@@ -41,8 +40,6 @@ namespace ontologenius {
         if(property->annotation_usage_)
           writeAnnotation(property);
     }
-
-    file_ = nullptr;
   }
 
   void AnnotationOwlWriter::writeAnnotation(ObjectPropertyBranch* branch)
