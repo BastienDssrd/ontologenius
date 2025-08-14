@@ -165,18 +165,16 @@ namespace ontologenius {
         }
       }
 
+      ano_element->card_.card_type_ = expression_leaf->restriction_type;
       switch (expression_leaf->restriction_type)
       {
       case RestrictionConstraintType_e::restriction_all_values_from:
-        ano_element->card_.card_type_ = cardinality_only;
         setCardRange(ano_element, expression_leaf, related_tree);
         break;
       case RestrictionConstraintType_e::restriction_some_values_from:
-        ano_element->card_.card_type_ = cardinality_some;
         setCardRange(ano_element, expression_leaf, related_tree);
         break;
       case RestrictionConstraintType_e::restriction_has_value:
-        ano_element->card_.card_type_ = cardinality_value;
         if(expression_leaf->resource_value.empty() == false)
         {
           if(expression_leaf->data_usage == true)
@@ -189,17 +187,14 @@ namespace ontologenius {
         }
         break;
       case RestrictionConstraintType_e::restriction_max_cardinality:
-        ano_element->card_.card_type_ = cardinality_max;
         ano_element->card_.card_number_ = std::stoi(ClassExpressionDescriptor_t::splitData(expression_leaf->cardinality_value).second);
         setCardRange(ano_element, expression_leaf, related_tree); // todo: remove complex flag if no child
         break;
       case RestrictionConstraintType_e::restriction_min_cardinality:
-        ano_element->card_.card_type_ = cardinality_min;
         ano_element->card_.card_number_ = std::stoi(ClassExpressionDescriptor_t::splitData(expression_leaf->cardinality_value).second);
         setCardRange(ano_element, expression_leaf, related_tree); // todo: remove complex flag if no child
         break;
       case RestrictionConstraintType_e::restriction_cardinality:
-        ano_element->card_.card_type_ = cardinality_exactly;
         ano_element->card_.card_number_ = std::stoi(ClassExpressionDescriptor_t::splitData(expression_leaf->cardinality_value).second);
         setCardRange(ano_element, expression_leaf, related_tree); // todo: remove complex flag if no child
         break;
@@ -331,6 +326,7 @@ namespace ontologenius {
     return new_node;
   }
 
+  // todo: change
   void AnonymousClassGraph::printTree(AnonymousClassElement* ano_elem, size_t level, bool root) const
   {
     const std::string space(level * 4, ' ');
@@ -352,7 +348,7 @@ namespace ontologenius {
       tmp += ano_elem->object_property_involved_->value();
       tmp += " " + cardinalityToString(ano_elem->card_.card_type_);
 
-      if(ano_elem->card_.card_type_ == ontologenius::CardType_e::cardinality_value)
+      if(ano_elem->card_.card_type_ == RestrictionConstraintType_e::restriction_has_value)
         tmp += " " + ano_elem->individual_involved_->value();
       else
       {
@@ -395,24 +391,23 @@ namespace ontologenius {
     }
   }
 
-  std::string AnonymousClassGraph::cardinalityToString(CardType_e value) const
+  // todo: change
+  std::string AnonymousClassGraph::cardinalityToString(RestrictionConstraintType_e value) const
   {
     switch(value)
     {
-    case CardType_e::cardinality_some:
+    case RestrictionConstraintType_e::restriction_some_values_from:
       return "some";
-    case CardType_e::cardinality_only:
+    case RestrictionConstraintType_e::restriction_all_values_from:
       return "only";
-    case CardType_e::cardinality_min:
+    case RestrictionConstraintType_e::restriction_min_cardinality:
       return "min";
-    case CardType_e::cardinality_max:
+    case RestrictionConstraintType_e::restriction_max_cardinality:
       return "max";
-    case CardType_e::cardinality_exactly:
+    case RestrictionConstraintType_e::restriction_cardinality:
       return "exactly";
-    case CardType_e::cardinality_value:
+    case RestrictionConstraintType_e::restriction_has_value:
       return "value";
-    case CardType_e::cardinality_error:
-      return "error";
     default:
       return "";
     }

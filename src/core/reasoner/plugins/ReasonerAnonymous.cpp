@@ -563,29 +563,29 @@ namespace ontologenius {
   {
     switch(ano_elem->card_.card_type_)
     {
-    case CardType_e::cardinality_some:
+    case RestrictionConstraintType_e::restriction_some_values_from:
       return checkSomeCard(indiv, ano_elem, used);
-    case CardType_e::cardinality_min:
+    case RestrictionConstraintType_e::restriction_min_cardinality:
       if(standard_mode_ == true)
         return false;
       else
         return checkMinCard(indiv, ano_elem, used);
-    case CardType_e::cardinality_max:
+    case RestrictionConstraintType_e::restriction_max_cardinality:
       if(standard_mode_ == true)
         return false;
       else
         return checkMaxCard(indiv, ano_elem, used);
-    case CardType_e::cardinality_exactly:
+    case RestrictionConstraintType_e::restriction_cardinality:
       if(standard_mode_ == true)
         return false;
       else
         return checkExactlyCard(indiv, ano_elem, used);
-    case CardType_e::cardinality_only:
+    case RestrictionConstraintType_e::restriction_all_values_from:
       if(standard_mode_ == true)
         return false;
       else
         return checkOnlyCard(indiv, ano_elem, used);
-    case CardType_e::cardinality_value:
+    case RestrictionConstraintType_e::restriction_has_value:
       return checkValueCard(indiv, ano_elem, used);
     default:
       Display::error("Cardinality type outside of [min, max, exactly, only, value, some]");

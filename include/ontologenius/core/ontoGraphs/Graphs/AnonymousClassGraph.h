@@ -169,7 +169,7 @@ namespace ontologenius {
     AnonymousClassElement* copyNodeContent(AnonymousClassElement* old_node, AnonymousClassTree* related_tree);
 
     void printTree(AnonymousClassElement* ano_elem, size_t level, bool root) const;
-    std::string cardinalityToString(CardType_e value) const; 
+    std::string cardinalityToString(RestrictionConstraintType_e value) const; 
   };
 
 } // namespace ontologenius

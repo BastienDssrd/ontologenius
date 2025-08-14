@@ -33,18 +33,6 @@ namespace ontologenius {
     class_expression_unknown
   };
 
-  enum CardType_e
-  {
-    cardinality_none,
-    cardinality_some,
-    cardinality_only,
-    cardinality_min,
-    cardinality_max,
-    cardinality_exactly,
-    cardinality_value,
-    cardinality_error
-  };
-
   enum LogicalNodeType_e
   {
     logical_and,
@@ -55,7 +43,7 @@ namespace ontologenius {
 
   struct CardinalityElement_t
   {
-    CardType_e card_type_ = cardinality_none;
+    RestrictionConstraintType_e card_type_ = restriction_unknown;
     size_t card_number_ = 0;
     LiteralNode* card_value_range_ = nullptr;
     LiteralType* card_type_range_ = nullptr;
@@ -64,17 +52,17 @@ namespace ontologenius {
     {
       switch(card_type_)
       {
-      case cardinality_some:
+      case restriction_some_values_from:
         return "some";
-      case cardinality_only:
+      case restriction_all_values_from:
         return "only";
-      case cardinality_value:
+      case restriction_has_value:
         return "value";
-      case cardinality_min:
+      case restriction_min_cardinality:
         return "min " + std::to_string(card_number_);
-      case cardinality_max:
+      case restriction_max_cardinality:
         return "max " + std::to_string(card_number_);
-      case cardinality_exactly:
+      case restriction_cardinality:
         return "exactly " + std::to_string(card_number_);
       default:
         return "";

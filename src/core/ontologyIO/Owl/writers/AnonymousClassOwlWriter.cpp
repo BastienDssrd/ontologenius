@@ -28,15 +28,15 @@ namespace ontologenius {
     writeString("<owl:onProperty " + getResource(ano_elem, "rdf:resource", true) + "/>\n", level + 1);
 
     // Cardinality
-    if(ano_elem->card_.card_type_ == cardinality_max ||
-       ano_elem->card_.card_type_ == cardinality_min ||
-       ano_elem->card_.card_type_ == cardinality_exactly)
+    if(ano_elem->card_.card_type_ == restriction_max_cardinality ||
+       ano_elem->card_.card_type_ == restriction_min_cardinality ||
+       ano_elem->card_.card_type_ == restriction_cardinality)
     {
       writeCardinalityValue(ano_elem, level + 1);
     }
-    else if(ano_elem->card_.card_type_ == cardinality_only ||
-            ano_elem->card_.card_type_ == cardinality_some ||
-            ano_elem->card_.card_type_ == cardinality_value)
+    else if(ano_elem->card_.card_type_ == restriction_all_values_from ||
+            ano_elem->card_.card_type_ == restriction_some_values_from ||
+            ano_elem->card_.card_type_ == restriction_has_value)
     {
       if(ano_elem->data_property_involved_ != nullptr)
         writeCardinalityRange(ano_elem, level + 1, true);
@@ -154,7 +154,7 @@ namespace ontologenius {
       else
         writeRestriction(ano_elem, level);
     }
-    else if(ano_elem->card_.card_type_ == cardinality_none)
+    else if(ano_elem->card_.card_type_ == restriction_unknown)
     {
       if(is_data_prop)
         writeDatatypeExpression(ano_elem, level);
@@ -171,19 +171,16 @@ namespace ontologenius {
 
     switch(ano_elem->card_.card_type_)
     {
-    case cardinality_none:
+    case restriction_unknown:
       break;
-    case cardinality_exactly:
+    case restriction_cardinality:
       field = "owl:qualifiedCardinality";
       break;
-    case cardinality_min:
+    case restriction_min_cardinality:
       field = "owl:minQualifiedCardinality";
       break;
-    case cardinality_max:
+    case restriction_max_cardinality:
       field = "owl:maxQualifiedCardinality";
-      break;
-    case cardinality_error:
-      Display::error("cardinality type error");
       break;
     default:
       Display::error("cardinality type " + std::to_string(ano_elem->card_.card_type_) + " not supported by this function");
@@ -201,7 +198,7 @@ namespace ontologenius {
 
     switch(ano_elem->card_.card_type_)
     {
-    case cardinality_value:
+    case restriction_has_value:
       field = "owl:hasValue";
       if(is_data_prop)
       {
@@ -212,14 +209,11 @@ namespace ontologenius {
         tmp += "<" + field + " " + getRdfResource(ano_elem->individual_involved_->value()) + "/>\n";
       writeString(tmp, level);
       return;
-    case cardinality_only:
+    case restriction_all_values_from:
       field = "owl:allValuesFrom";
       break;
-    case cardinality_some:
+    case restriction_some_values_from:
       field = "owl:someValuesFrom";
-      break;
-    case cardinality_error:
-      Display::error("cardinality type error");
       break;
     default:
       Display::error("cardinality type " + std::to_string(ano_elem->card_.card_type_) + " not supported by this function");
