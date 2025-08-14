@@ -120,9 +120,9 @@ namespace ontologenius {
       if(expression_leaf->data_usage)
       {
         if(expression_leaf->is_instanciated)
-          ano_element->card_.card_value_range_ = literal_graph_->findOrCreate(expression_leaf->resource_value);
+          ano_element->literal_involved_ = literal_graph_->findOrCreate(expression_leaf->resource_value);
         else
-          ano_element->card_.card_type_range_ = literal_graph_->findOrCreateType(expression_leaf->resource_value);
+          ano_element->datatype_involved_ = literal_graph_->findOrCreateType(expression_leaf->resource_value);
       }
       else
       {
@@ -165,7 +165,7 @@ namespace ontologenius {
         }
       }
 
-      ano_element->card_.card_type_ = expression_leaf->restriction_type;
+      ano_element->restriction_type_ = expression_leaf->restriction_type;
       switch (expression_leaf->restriction_type)
       {
       case RestrictionConstraintType_e::restriction_all_values_from:
@@ -178,7 +178,7 @@ namespace ontologenius {
         if(expression_leaf->resource_value.empty() == false)
         {
           if(expression_leaf->data_usage == true)
-            ano_element->card_.card_value_range_ = literal_graph_->findOrCreate(expression_leaf->resource_value);
+            ano_element->literal_involved_ = literal_graph_->findOrCreate(expression_leaf->resource_value);
           else
           {
             ano_element->individual_involved_ = individual_graph_->findOrCreateBranch(expression_leaf->resource_value);
@@ -187,15 +187,15 @@ namespace ontologenius {
         }
         break;
       case RestrictionConstraintType_e::restriction_max_cardinality:
-        ano_element->card_.card_number_ = std::stoi(ClassExpressionDescriptor_t::splitData(expression_leaf->cardinality_value).second);
+        ano_element->cardinality_value_ = std::stoi(ClassExpressionDescriptor_t::splitData(expression_leaf->cardinality_value).second);
         setCardRange(ano_element, expression_leaf, related_tree); // todo: remove complex flag if no child
         break;
       case RestrictionConstraintType_e::restriction_min_cardinality:
-        ano_element->card_.card_number_ = std::stoi(ClassExpressionDescriptor_t::splitData(expression_leaf->cardinality_value).second);
+        ano_element->cardinality_value_ = std::stoi(ClassExpressionDescriptor_t::splitData(expression_leaf->cardinality_value).second);
         setCardRange(ano_element, expression_leaf, related_tree); // todo: remove complex flag if no child
         break;
       case RestrictionConstraintType_e::restriction_cardinality:
-        ano_element->card_.card_number_ = std::stoi(ClassExpressionDescriptor_t::splitData(expression_leaf->cardinality_value).second);
+        ano_element->cardinality_value_ = std::stoi(ClassExpressionDescriptor_t::splitData(expression_leaf->cardinality_value).second);
         setCardRange(ano_element, expression_leaf, related_tree); // todo: remove complex flag if no child
         break;
       
@@ -225,7 +225,7 @@ namespace ontologenius {
     if(expression_leaf->resource_value.empty() == false)
     {
       if(expression_leaf->data_usage == true)
-        ano_element->card_.card_type_range_ = literal_graph_->findOrCreateType(expression_leaf->resource_value);
+        ano_element->datatype_involved_ = literal_graph_->findOrCreateType(expression_leaf->resource_value);
       else
       {
         ano_element->class_involved_ = class_graph_->findOrCreateBranch(expression_leaf->resource_value);
@@ -297,8 +297,8 @@ namespace ontologenius {
     }
 
     // ============= Cardinality =================
-    new_node->card_.card_number_ = old_node->card_.card_number_;
-    new_node->card_.card_type_ = old_node->card_.card_type_;
+    new_node->cardinality_value_ = old_node->cardinality_value_;
+    new_node->restriction_type_ = old_node->restriction_type_;
 
     // ============= Expression members =================
     if(old_node->object_property_involved_ != nullptr)
@@ -346,14 +346,14 @@ namespace ontologenius {
     else if(ano_elem->object_property_involved_ != nullptr)
     {
       tmp += ano_elem->object_property_involved_->value();
-      tmp += " " + cardinalityToString(ano_elem->card_.card_type_);
+      tmp += " " + cardinalityToString(ano_elem->restriction_type_);
 
-      if(ano_elem->card_.card_type_ == RestrictionConstraintType_e::restriction_has_value)
+      if(ano_elem->restriction_type_ == RestrictionConstraintType_e::restriction_has_value)
         tmp += " " + ano_elem->individual_involved_->value();
       else
       {
-        if(ano_elem->card_.card_number_ != 0)
-          tmp += " " + std::to_string(ano_elem->card_.card_number_);
+        if(ano_elem->cardinality_value_ != 0)
+          tmp += " " + std::to_string(ano_elem->cardinality_value_);
         if(ano_elem->class_involved_ != nullptr)
           tmp += " " + ano_elem->class_involved_->value();
       }
@@ -361,11 +361,11 @@ namespace ontologenius {
     else if(ano_elem->data_property_involved_ != nullptr)
     {
       tmp += ano_elem->data_property_involved_->value();
-      tmp += " " + cardinalityToString(ano_elem->card_.card_type_);
-      if(ano_elem->card_.card_number_ != 0)
-        tmp += " " + std::to_string(ano_elem->card_.card_number_);
-      if(ano_elem->card_.card_value_range_ != nullptr)
-        tmp += " " + ano_elem->card_.card_value_range_->value();
+      tmp += " " + cardinalityToString(ano_elem->restriction_type_);
+      if(ano_elem->cardinality_value_ != 0)
+        tmp += " " + std::to_string(ano_elem->cardinality_value_);
+      if(ano_elem->literal_involved_ != nullptr)
+        tmp += " " + ano_elem->literal_involved_->value();
     }
     else
     {
@@ -373,8 +373,8 @@ namespace ontologenius {
         tmp += ano_elem->class_involved_->value();
       else if(ano_elem->individual_involved_ != nullptr)
         tmp += ano_elem->individual_involved_->value();
-      else if(ano_elem->card_.card_value_range_ != nullptr)
-        tmp += ano_elem->card_.card_value_range_->type_->value();
+      else if(ano_elem->literal_involved_ != nullptr)
+        tmp += ano_elem->literal_involved_->type_->value();
     }
 
     std::cout << tmp << std::endl;

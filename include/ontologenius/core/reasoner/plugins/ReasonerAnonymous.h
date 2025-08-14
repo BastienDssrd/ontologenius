@@ -94,7 +94,7 @@ namespace ontologenius {
             {
               explanation = relations[i].first->value() + "|" + relations[i].second->value();
               indexes.emplace_back(explanation, i);
-              if(indexes.size() >= ano_elem->card_.card_number_)
+              if(indexes.size() >= ano_elem->cardinality_value_)
                 return indexes;
             }
           }
@@ -105,7 +105,7 @@ namespace ontologenius {
               explanation = relations[i].first->value() + "|" + relations[i].second->value();
               indexes.emplace_back(explanation, i);
 
-              if(indexes.size() >= ano_elem->card_.card_number_)
+              if(indexes.size() >= ano_elem->cardinality_value_)
                 return indexes;
             }
           }
@@ -132,7 +132,7 @@ namespace ontologenius {
               explanation = relations[i].first->value() + "|" + relations[i].second->value();
               indexes.emplace_back(explanation, i);
 
-              if(indexes.size() > ano_elem->card_.card_number_)
+              if(indexes.size() > ano_elem->cardinality_value_)
               {
                 used.clear();
                 return {};
@@ -146,7 +146,7 @@ namespace ontologenius {
               explanation = relations[i].first->value() + "|" + relations[i].second->value();
               indexes.emplace_back(explanation, i);
 
-              if(indexes.size() > ano_elem->card_.card_number_)
+              if(indexes.size() > ano_elem->cardinality_value_)
               {
                 used.clear();
                 return {};
@@ -187,7 +187,7 @@ namespace ontologenius {
         }
       }
 
-      if(indexes.size() == ano_elem->card_.card_number_)
+      if(indexes.size() == ano_elem->cardinality_value_)
         return indexes;
       else
       {

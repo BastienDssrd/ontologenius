@@ -41,35 +41,6 @@ namespace ontologenius {
     logical_none
   };
 
-  struct CardinalityElement_t
-  {
-    RestrictionConstraintType_e card_type_ = restriction_unknown;
-    size_t card_number_ = 0;
-    LiteralNode* card_value_range_ = nullptr;
-    LiteralType* card_type_range_ = nullptr;
-
-    std::string toString() const
-    {
-      switch(card_type_)
-      {
-      case restriction_some_values_from:
-        return "some";
-      case restriction_all_values_from:
-        return "only";
-      case restriction_has_value:
-        return "value";
-      case restriction_min_cardinality:
-        return "min " + std::to_string(card_number_);
-      case restriction_max_cardinality:
-        return "max " + std::to_string(card_number_);
-      case restriction_cardinality:
-        return "exactly " + std::to_string(card_number_);
-      default:
-        return "";
-      }
-    }
-  };
-
   class AnonymousClassTree;
 
   class AnonymousClassElement
@@ -88,8 +59,11 @@ namespace ontologenius {
     ObjectPropertyBranch* object_property_involved_;
     DataPropertyBranch* data_property_involved_;
     IndividualBranch* individual_involved_;
+    LiteralNode* literal_involved_;
+    LiteralType* datatype_involved_;
 
-    CardinalityElement_t card_;
+    RestrictionConstraintType_e restriction_type_;
+    size_t cardinality_value_;
 
     std::vector<AnonymousClassElement*> sub_elements_;
   };

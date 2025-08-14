@@ -124,7 +124,7 @@ namespace ontologenius {
       for(auto* sub_elem : ano_elem->sub_elements_)
       {
         if(sub_elem->logical_type_ == logical_none)
-          types.insert(sub_elem->card_.card_type_range_->value());
+          types.insert(sub_elem->datatype_involved_->value());
         else
         {
           auto tmp = resolveTreeDataTypes(sub_elem);
@@ -298,7 +298,7 @@ namespace ontologenius {
         printError("In equivalence of class " + current_ano_ + ": error between range of property " +
                    ano_elem->object_property_involved_->value() + " " + err);
     }
-    else if(ano_elem->card_.card_type_ == restriction_has_value)
+    else if(ano_elem->restriction_type_ == restriction_has_value)
     {
       auto errs = checkClassesVectorDisjointness(ano_elem->object_property_involved_->ranges_, ano_elem->individual_involved_->is_a_.relations);
       for(const auto& err : errs)

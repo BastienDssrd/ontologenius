@@ -28,15 +28,15 @@ namespace ontologenius {
     writeString("<owl:onProperty " + getResource(ano_elem, "rdf:resource", true) + "/>\n", level + 1);
 
     // Cardinality
-    if(ano_elem->card_.card_type_ == restriction_max_cardinality ||
-       ano_elem->card_.card_type_ == restriction_min_cardinality ||
-       ano_elem->card_.card_type_ == restriction_cardinality)
+    if(ano_elem->restriction_type_ == restriction_max_cardinality ||
+       ano_elem->restriction_type_ == restriction_min_cardinality ||
+       ano_elem->restriction_type_ == restriction_cardinality)
     {
       writeCardinalityValue(ano_elem, level + 1);
     }
-    else if(ano_elem->card_.card_type_ == restriction_all_values_from ||
-            ano_elem->card_.card_type_ == restriction_some_values_from ||
-            ano_elem->card_.card_type_ == restriction_has_value)
+    else if(ano_elem->restriction_type_ == restriction_all_values_from ||
+            ano_elem->restriction_type_ == restriction_some_values_from ||
+            ano_elem->restriction_type_ == restriction_has_value)
     {
       if(ano_elem->data_property_involved_ != nullptr)
         writeCardinalityRange(ano_elem, level + 1, true);
@@ -135,7 +135,7 @@ namespace ontologenius {
   {
     const std::string field = "owl:datatypeComplementOf";
 
-    if(ano_elem->sub_elements_.front()->card_.card_value_range_ != nullptr)
+    if(ano_elem->sub_elements_.front()->literal_involved_ != nullptr)
       writeString("<" + field + " " + getResource(ano_elem->sub_elements_.front()) + "/>\n", level);
     else
     {
@@ -154,7 +154,7 @@ namespace ontologenius {
       else
         writeRestriction(ano_elem, level);
     }
-    else if(ano_elem->card_.card_type_ == restriction_unknown)
+    else if(ano_elem->restriction_type_ == restriction_unknown)
     {
       if(is_data_prop)
         writeDatatypeExpression(ano_elem, level);
@@ -169,7 +169,7 @@ namespace ontologenius {
   {
     std::string field;
 
-    switch(ano_elem->card_.card_type_)
+    switch(ano_elem->restriction_type_)
     {
     case restriction_unknown:
       break;
@@ -183,11 +183,11 @@ namespace ontologenius {
       field = "owl:maxQualifiedCardinality";
       break;
     default:
-      Display::error("cardinality type " + std::to_string(ano_elem->card_.card_type_) + " not supported by this function");
+      Display::error("cardinality type " + std::to_string(ano_elem->restriction_type_) + " not supported by this function");
       break;
     }
 
-    writeString("<" + field + " rdf:datatype=\"http://www.w3.org/2001/XMLSchema#nonNegativeInteger\">" + std::to_string(ano_elem->card_.card_number_) + "</" + field + ">\n", level);
+    writeString("<" + field + " rdf:datatype=\"http://www.w3.org/2001/XMLSchema#nonNegativeInteger\">" + std::to_string(ano_elem->cardinality_value_) + "</" + field + ">\n", level);
 
     writeCardinality(ano_elem, level);
   }
@@ -196,13 +196,13 @@ namespace ontologenius {
   {
     std::string tmp, field;
 
-    switch(ano_elem->card_.card_type_)
+    switch(ano_elem->restriction_type_)
     {
     case restriction_has_value:
       field = "owl:hasValue";
       if(is_data_prop)
       {
-        tmp += "<" + field + " rdf" + getRdfDatatype(ano_elem->card_.card_value_range_->type_) + ">" + ano_elem->card_.card_value_range_->data();
+        tmp += "<" + field + " rdf" + getRdfDatatype(ano_elem->literal_involved_->type_) + ">" + ano_elem->literal_involved_->data();
         tmp += "</" + field + ">\n";
       }
       else
@@ -216,7 +216,7 @@ namespace ontologenius {
       field = "owl:someValuesFrom";
       break;
     default:
-      Display::error("cardinality type " + std::to_string(ano_elem->card_.card_type_) + " not supported by this function");
+      Display::error("cardinality type " + std::to_string(ano_elem->restriction_type_) + " not supported by this function");
       break;
     }
 
@@ -254,7 +254,7 @@ namespace ontologenius {
     {
       const std::string field = "owl:onDataRange";
 
-      if(ano_element->card_.card_value_range_ != nullptr)
+      if(ano_element->literal_involved_ != nullptr)
         writeString("<" + field + " " + getResource(ano_element) + "/>\n", level);
       else
       {
@@ -279,8 +279,8 @@ namespace ontologenius {
     else if(ano_elem->class_involved_ != nullptr)
       return attribute_name + "=\"" + ns_ + "#" + ano_elem->class_involved_->value() + "\"";
 
-    else if(ano_elem->card_.card_type_range_ != nullptr)
-      return attribute_name + "=\"" + ano_elem->card_.card_type_range_->getNamespace() + "#" + ano_elem->card_.card_type_range_->value() + "\"";
+    else if(ano_elem->datatype_involved_ != nullptr)
+      return attribute_name + "=\"" + ano_elem->datatype_involved_->getNamespace() + "#" + ano_elem->datatype_involved_->value() + "\"";
 
     else if(ano_elem->individual_involved_ != nullptr)
       return attribute_name + "=\"" + ns_ + "#" + ano_elem->individual_involved_->value() + "\"";
