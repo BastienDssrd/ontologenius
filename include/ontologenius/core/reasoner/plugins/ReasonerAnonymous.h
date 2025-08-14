@@ -82,7 +82,6 @@ namespace ontologenius {
     std::vector<std::pair<std::string, size_t>> checkMinCard(const std::vector<T>& relations, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
     {
       std::vector<std::pair<std::string, size_t>> indexes;
-      std::string explanation;
 
       for(size_t i = 0; i < relations.size(); i++)
       {
@@ -92,8 +91,7 @@ namespace ontologenius {
           {
             if(resolveTree(relations[i].second, ano_elem->sub_elements_.front(), used))
             {
-              explanation = relations[i].first->value() + "|" + relations[i].second->value();
-              indexes.emplace_back(explanation, i);
+              indexes.emplace_back(relations[i].first->value() + "|" + relations[i].second->value(), i);
               if(indexes.size() >= ano_elem->cardinality_value_)
                 return indexes;
             }
@@ -102,8 +100,7 @@ namespace ontologenius {
           {
             if(checkTypeRestriction(relations[i].second, ano_elem, used))
             {
-              explanation = relations[i].first->value() + "|" + relations[i].second->value();
-              indexes.emplace_back(explanation, i);
+              indexes.emplace_back(relations[i].first->value() + "|" + relations[i].second->value(), i);
 
               if(indexes.size() >= ano_elem->cardinality_value_)
                 return indexes;
@@ -119,7 +116,6 @@ namespace ontologenius {
     std::vector<std::pair<std::string, size_t>> checkMaxCard(const std::vector<T>& relations, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
     {
       std::vector<std::pair<std::string, size_t>> indexes;
-      std::string explanation;
 
       for(size_t i = 0; i < relations.size(); i++)
       {
@@ -129,8 +125,7 @@ namespace ontologenius {
           {
             if(resolveTree(relations[i].second, ano_elem->sub_elements_.front(), used))
             {
-              explanation = relations[i].first->value() + "|" + relations[i].second->value();
-              indexes.emplace_back(explanation, i);
+              indexes.emplace_back(relations[i].first->value() + "|" + relations[i].second->value(), i);
 
               if(indexes.size() > ano_elem->cardinality_value_)
               {
@@ -143,8 +138,7 @@ namespace ontologenius {
           {
             if(checkTypeRestriction(relations[i].second, ano_elem, used))
             {
-              explanation = relations[i].first->value() + "|" + relations[i].second->value();
-              indexes.emplace_back(explanation, i);
+              indexes.emplace_back(relations[i].first->value() + "|" + relations[i].second->value(), i);
 
               if(indexes.size() > ano_elem->cardinality_value_)
               {
@@ -162,7 +156,6 @@ namespace ontologenius {
     std::vector<std::pair<std::string, size_t>> checkExactlyCard(const std::vector<T>& relations, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
     {
       std::vector<std::pair<std::string, size_t>> indexes;
-      std::string explanation;
 
       for(size_t i = 0; i < relations.size(); i++)
       {
@@ -171,19 +164,10 @@ namespace ontologenius {
           if(ano_elem->sub_elements_.empty() == false)
           {
             if(resolveTree(relations[i].second, ano_elem->sub_elements_.front(), used))
-            {
-              explanation = relations[i].first->value() + "|" + relations[i].second->value();
-              indexes.emplace_back(explanation, i);
-            }
+              indexes.emplace_back(relations[i].first->value() + "|" + relations[i].second->value(), i);
           }
-          else
-          {
-            if(checkTypeRestriction(relations[i].second, ano_elem, used))
-            {
-              explanation = relations[i].first->value() + "|" + relations[i].second->value();
-              indexes.emplace_back(explanation, i);
-            }
-          }
+          else if(checkTypeRestriction(relations[i].second, ano_elem, used))
+            indexes.emplace_back(relations[i].first->value() + "|" + relations[i].second->value(), i);
         }
       }
 
@@ -200,7 +184,6 @@ namespace ontologenius {
     std::vector<std::pair<std::string, size_t>> checkOnlyCard(const std::vector<T>& relations, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
     {
       std::vector<std::pair<std::string, size_t>> indexes;
-      std::string explanation;
       // need to ensure that there is at least one ?
       for(size_t i = 0; i < relations.size(); i++)
       {
@@ -214,10 +197,7 @@ namespace ontologenius {
               return {};
             }
             else
-            {
-              explanation = relations[i].first->value() + "|" + relations[i].second->value();
-              indexes.emplace_back(explanation, i);
-            }
+              indexes.emplace_back(relations[i].first->value() + "|" + relations[i].second->value(), i);
           }
           else
           {
@@ -227,10 +207,7 @@ namespace ontologenius {
               return {};
             }
             else
-            {
-              explanation = relations[i].first->value() + "|" + relations[i].second->value();
-              indexes.emplace_back(explanation, i);
-            }
+              indexes.emplace_back(relations[i].first->value() + "|" + relations[i].second->value(), i);
           }
         }
       }
@@ -241,8 +218,6 @@ namespace ontologenius {
     template<typename T>
     std::pair<std::string, int> checkSomeCard(const std::vector<T>& relations, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
     {
-      std::string explanation;
-
       for(size_t i = 0; i < relations.size(); i++)
       {
         if(testBranchInheritance(ano_elem, relations[i].first, used))
@@ -250,19 +225,10 @@ namespace ontologenius {
           if(ano_elem->sub_elements_.empty() == false)
           {
             if(resolveTree(relations[i].second, ano_elem->sub_elements_.front(), used) == true)
-            {
-              explanation = relations[i].first->value() + "|" + relations[i].second->value();
-              return std::make_pair(explanation, i);
-            }
+              return std::make_pair(relations[i].first->value() + "|" + relations[i].second->value(), i);
           }
-          else
-          {
-            if(checkTypeRestriction(relations[i].second, ano_elem, used) == true)
-            {
-              explanation = relations[i].first->value() + "|" + relations[i].second->value();
-              return std::make_pair(explanation, i);
-            }
-          }
+          else if(checkTypeRestriction(relations[i].second, ano_elem, used) == true)
+              return std::make_pair(relations[i].first->value() + "|" + relations[i].second->value(), i);
         }
       }
       return std::make_pair("", -1);
@@ -271,19 +237,11 @@ namespace ontologenius {
     template<typename T>
     std::pair<std::string, int> checkValueCard(const std::vector<T>& relations, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
     {
-      std::string explanation;
-
       for(size_t i = 0; i < relations.size(); i++)
-      {
         if(testBranchInheritance(ano_elem, relations[i].first, used))
-        {
           if(checkValue(relations[i].second, ano_elem, used))
-          {
-            explanation = relations[i].first->value() + "|" + relations[i].second->value();
-            return std::make_pair(explanation, i);
-          }
-        }
-      }
+            return std::make_pair(relations[i].first->value() + "|" + relations[i].second->value(), i);
+      
       return std::make_pair("", -1);
     }
 
@@ -333,7 +291,7 @@ namespace ontologenius {
         {
           if(existInInheritance(branch->mothers_[i].elem, selector, used))
           {
-            // explanation = branch->value() + "|isA|" + branch->mothers_[i].elem->value();
+            // explanation = branch->value() + "|isA|" + branch->mothers_[i].elem->value(); // todo: why is this commenented ?
             used.emplace_back(explanation, branch->mothers_.has_induced_inheritance_relations[i]);
             return true;
           }

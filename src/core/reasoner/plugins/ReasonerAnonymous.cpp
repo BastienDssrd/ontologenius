@@ -196,7 +196,6 @@ namespace ontologenius {
 
   bool ReasonerAnonymous::checkValue(IndividualBranch* indiv_from, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
   {
-    std::string explanation;
     auto* indiv_range = ano_elem->individual_involved_;
     const size_t same_size = indiv_from->same_as_.size();
 
@@ -204,8 +203,8 @@ namespace ontologenius {
     {
       if(indiv_from->same_as_[j].elem->get() == indiv_range->get())
       {
-        explanation = indiv_from->value() + "|sameAs|" + indiv_range->value();
-        used.emplace_back(explanation, indiv_from->same_as_.has_induced_inheritance_relations[j]);
+        used.emplace_back(indiv_from->value() + "|sameAs|" + indiv_range->value(),
+                          indiv_from->same_as_.has_induced_inheritance_relations[j]);
         return true;
       }
     }
@@ -428,8 +427,6 @@ namespace ontologenius {
 
   bool ReasonerAnonymous::checkRestriction(IndividualBranch* indiv, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
   {
-    std::string explanation;
-
     if(ano_elem->object_property_involved_ != nullptr || ano_elem->data_property_involved_ != nullptr)
     {
       if(indiv->same_as_.empty() == false)
@@ -441,8 +438,8 @@ namespace ontologenius {
           {
             if(checkCard(indiv->same_as_[i].elem, ano_elem, used))
             {
-              explanation = indiv->value() + "|sameAs|" + indiv->same_as_[i].elem->value();
-              used.emplace_back(explanation, indiv->same_as_.has_induced_inheritance_relations[i]);
+              used.emplace_back(indiv->value() + "|sameAs|" + indiv->same_as_[i].elem->value(),
+                                indiv->same_as_.has_induced_inheritance_relations[i]);
               return true;
             }
           }
@@ -456,6 +453,7 @@ namespace ontologenius {
     else if(ano_elem->oneof)
     {
       std::string one_of;
+      std::string explanation;
       for(auto* elem : ano_elem->sub_elements_)
       {
         if(one_of.empty() == false)
@@ -478,8 +476,6 @@ namespace ontologenius {
 
   bool ReasonerAnonymous::checkTypeRestriction(IndividualBranch* indiv, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
   {
-    std::string explanation;
-
     if(indiv->same_as_.empty() == false)
     {
       const size_t same_size = indiv->same_as_.size();
@@ -492,11 +488,11 @@ namespace ontologenius {
           {
             if(existInInheritance(indiv->same_as_[i].elem->is_a_[j].elem, ano_elem->class_involved_->get(), used))
             {
-              explanation = indiv->same_as_[i].elem->value() + "|isA|" + ano_elem->class_involved_->value();
-              used.emplace_back(explanation, indiv->same_as_[i].elem->is_a_.has_induced_inheritance_relations[j]);
+              used.emplace_back(indiv->same_as_[i].elem->value() + "|isA|" + ano_elem->class_involved_->value(),
+                                indiv->same_as_[i].elem->is_a_.has_induced_inheritance_relations[j]);
 
-              explanation = indiv->value() + "|sameAs|" + indiv->same_as_[i].elem->value();
-              used.emplace_back(explanation, indiv->same_as_.has_induced_inheritance_relations[i]);
+              used.emplace_back(indiv->value() + "|sameAs|" + indiv->same_as_[i].elem->value(),
+                                indiv->same_as_.has_induced_inheritance_relations[i]);
               return true;
             }
           }
@@ -510,8 +506,8 @@ namespace ontologenius {
       {
         if(existInInheritance(indiv->is_a_[i].elem, ano_elem->class_involved_->get(), used))
         {
-          explanation = indiv->value() + "|isA|" + ano_elem->class_involved_->value();
-          used.emplace_back(explanation, indiv->is_a_.has_induced_inheritance_relations[i]);
+          used.emplace_back(indiv->value() + "|isA|" + ano_elem->class_involved_->value(),
+                            indiv->is_a_.has_induced_inheritance_relations[i]);
           return true;
         }
       }
@@ -537,8 +533,6 @@ namespace ontologenius {
 
   bool ReasonerAnonymous::checkIndividualRestriction(IndividualBranch* indiv, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
   {
-    std::string explanation;
-
     if(indiv->same_as_.empty() == false)
     {
       const size_t same_size = indiv->same_as_.size();
@@ -548,8 +542,8 @@ namespace ontologenius {
         {
           if(indiv->same_as_[i].elem->get() == ano_elem->individual_involved_->get())
           {
-            explanation = indiv->value() + "|sameAs|" + ano_elem->individual_involved_->value();
-            used.emplace_back(explanation, indiv->same_as_.has_induced_inheritance_relations[i]);
+            used.emplace_back(indiv->value() + "|sameAs|" + ano_elem->individual_involved_->value(),
+                              indiv->same_as_.has_induced_inheritance_relations[i]);
             return true;
           }
         }
@@ -734,7 +728,6 @@ namespace ontologenius {
   bool ReasonerAnonymous::checkValueCard(IndividualBranch* indiv, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
   {
     std::pair<std::string, int> index;
-    std::string explanation;
 
     if(ano_elem->object_property_involved_ != nullptr)
     {
