@@ -28,9 +28,7 @@ namespace ontologenius {
                                                                 anonymous_graph_(anonymous_graph),
                                                                 rule_graph_(rule_graph),
                                                                 file_(nullptr)
-  {
-    (void)anonymous_graph_;
-  }
+  {}
 
   OntologyOwlWriter::OntologyOwlWriter(Ontology& onto) : class_graph_(&onto.class_graph_),
                                                          object_property_graph_(&onto.object_property_graph_),
@@ -39,9 +37,7 @@ namespace ontologenius {
                                                          anonymous_graph_(&onto.anonymous_graph_),
                                                          rule_graph_(&onto.rule_graph_),
                                                          file_(nullptr)
-  {
-    (void)anonymous_graph_;
-  }
+  {}
 
   void OntologyOwlWriter::write(const std::string& file_name)
   {
