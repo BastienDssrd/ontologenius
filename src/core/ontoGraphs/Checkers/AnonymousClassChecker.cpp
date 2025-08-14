@@ -113,7 +113,7 @@ namespace ontologenius {
     return errs;
   }
 
-  std::vector<std::string> AnonymousClassChecker::resolveTreeDataTypes(AnonymousClassElement* ano_elem)
+  std::vector<std::string> AnonymousClassChecker::resolveTreeDataTypes(ClassExpression* ano_elem)
   {
     std::vector<std::string> errs;
     std::unordered_set<std::string> types;
@@ -149,7 +149,7 @@ namespace ontologenius {
     return errs;
   }
 
-  std::vector<std::string> AnonymousClassChecker::resolveTree(AnonymousClassElement* ano_elem, const std::vector<ClassElement>& ranges)
+  std::vector<std::string> AnonymousClassChecker::resolveTree(ClassExpression* ano_elem, const std::vector<ClassElement>& ranges)
   {
     std::vector<std::string> errs;
     if(ano_elem->logical_type_ == logical_none && ano_elem->oneof == false)
@@ -186,7 +186,7 @@ namespace ontologenius {
     return errs;
   }
 
-  std::vector<std::string> AnonymousClassChecker::checkExpressionDisjointess(AnonymousClassElement* ano_elem, const std::vector<ClassElement>& ranges)
+  std::vector<std::string> AnonymousClassChecker::checkExpressionDisjointess(ClassExpression* ano_elem, const std::vector<ClassElement>& ranges)
   {
     std::vector<std::string> errs;
     // object or data property restriction
@@ -205,7 +205,7 @@ namespace ontologenius {
     return errs;
   }
 
-  std::vector<std::string> AnonymousClassChecker::checkPropertyDisjointness(AnonymousClassElement* ano_elem, const std::vector<ClassElement>& ranges)
+  std::vector<std::string> AnonymousClassChecker::checkPropertyDisjointness(ClassExpression* ano_elem, const std::vector<ClassElement>& ranges)
   {
     std::vector<std::string> errs;
     if(ano_elem->object_property_involved_ != nullptr)
@@ -223,7 +223,7 @@ namespace ontologenius {
     return errs;
   }
 
-  std::pair<std::string, bool> getDomainOrigin(AnonymousClassElement* ano_elem, size_t index)
+  std::pair<std::string, bool> getDomainOrigin(ClassExpression* ano_elem, size_t index)
   {
     size_t cpt = 0;
     for(auto* sub_elem : ano_elem->sub_elements_)
@@ -254,7 +254,7 @@ namespace ontologenius {
   }
 
   // check for dijsunctions between elements in a AND node (Property -> domains_ , Class -> isA, ) ((obj->domains_) and (B->isA))
-  void AnonymousClassChecker::checkIntersectionDomainsDisjointess(AnonymousClassElement* ano_elem)
+  void AnonymousClassChecker::checkIntersectionDomainsDisjointess(ClassExpression* ano_elem)
   {
     std::vector<std::vector<ClassElement>> all_domains;
 
@@ -289,9 +289,9 @@ namespace ontologenius {
       }
   }
 
-  void AnonymousClassChecker::checkObjectPropertyRangeDisjointness(AnonymousClassElement* ano_elem)
+  void AnonymousClassChecker::checkObjectPropertyRangeDisjointness(ClassExpression* ano_elem)
   {
-    if(ano_elem->is_complex == true)
+    if(ano_elem->sub_elements_.empty() == false)
     {
       auto errs = resolveTree(ano_elem->sub_elements_.front(), ano_elem->object_property_involved_->ranges_);
       for(const auto& err : errs)
@@ -317,9 +317,9 @@ namespace ontologenius {
     }
   }
 
-  void AnonymousClassChecker::checkDataPropertyRangeDisjointness(AnonymousClassElement* ano_elem)
+  void AnonymousClassChecker::checkDataPropertyRangeDisjointness(ClassExpression* ano_elem)
   {
-    if(ano_elem->is_complex == true)
+    if(ano_elem->sub_elements_.empty() == false)
     {
       auto errs = resolveTreeDataTypes(ano_elem->sub_elements_.front());
       for(auto& err : errs)

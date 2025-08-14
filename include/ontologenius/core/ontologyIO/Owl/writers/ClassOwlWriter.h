@@ -13,7 +13,7 @@ namespace ontologenius {
 
   class ClassGraph;
   class ClassBranch;
-  class AnonymousClassElement;
+  class ClassExpression;
 
   class ClassOwlWriter : private AnonymousClassOwlWriter
   {

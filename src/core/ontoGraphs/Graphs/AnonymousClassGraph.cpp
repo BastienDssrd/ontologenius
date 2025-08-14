@@ -90,11 +90,11 @@ namespace ontologenius {
     return tree;
   }
 
-  AnonymousClassElement* AnonymousClassGraph::createTreeNodes(ClassExpressionDescriptor_t* class_expression_descriptor, size_t& depth, AnonymousClassTree* related_tree)
+  ClassExpression* AnonymousClassGraph::createTreeNodes(ClassExpressionDescriptor_t* class_expression_descriptor, size_t& depth, AnonymousClassTree* related_tree)
   {
     size_t local_depth = depth + 1;
 
-    AnonymousClassElement* node = createNodeContent(class_expression_descriptor, related_tree);
+    ClassExpression* node = createNodeContent(class_expression_descriptor, related_tree);
 
     for(auto* child : class_expression_descriptor->sub_expressions)
     {
@@ -108,9 +108,9 @@ namespace ontologenius {
     return node;
   }
 
-  AnonymousClassElement* AnonymousClassGraph::createNodeContent(ClassExpressionDescriptor_t* expression_leaf, AnonymousClassTree* related_tree)
+  ClassExpression* AnonymousClassGraph::createNodeContent(ClassExpressionDescriptor_t* expression_leaf, AnonymousClassTree* related_tree)
   {
-    AnonymousClassElement* ano_element = new AnonymousClassElement();
+    ClassExpression* ano_element = new ClassExpression();
     ano_element->logical_type_ = LogicalNodeType_e::logical_none;
 
     switch (expression_leaf->type)
@@ -220,7 +220,7 @@ namespace ontologenius {
     return ano_element;
   }
 
-  void AnonymousClassGraph::setCardRange(AnonymousClassElement* ano_element, ClassExpressionDescriptor_t* expression_leaf, AnonymousClassTree* related_tree)
+  void AnonymousClassGraph::setCardRange(ClassExpression* ano_element, ClassExpressionDescriptor_t* expression_leaf, AnonymousClassTree* related_tree)
   {
     if(expression_leaf->resource_value.empty() == false)
     {
@@ -232,8 +232,6 @@ namespace ontologenius {
         related_tree->involves_class = true;
       }
     }
-    else
-      ano_element->is_complex = true; // todo: check that child has the data usage info
   }
 
   void AnonymousClassGraph::cpyBranch(AnonymousClassBranch* old_branch, AnonymousClassBranch* new_branch)
@@ -269,9 +267,9 @@ namespace ontologenius {
     return tree;
   }
 
-  AnonymousClassElement* AnonymousClassGraph::copyTreeNodes(AnonymousClassElement* old_node, AnonymousClassTree* related_tree)
+  ClassExpression* AnonymousClassGraph::copyTreeNodes(ClassExpression* old_node, AnonymousClassTree* related_tree)
   {
-    AnonymousClassElement* node = copyNodeContent(old_node, related_tree);
+    ClassExpression* node = copyNodeContent(old_node, related_tree);
 
     for(auto* child : old_node->sub_elements_)
       node->sub_elements_.push_back(copyTreeNodes(child, related_tree));
@@ -279,10 +277,9 @@ namespace ontologenius {
     return node;
   }
 
-  AnonymousClassElement* AnonymousClassGraph::copyNodeContent(AnonymousClassElement* old_node, AnonymousClassTree* related_tree)
+  ClassExpression* AnonymousClassGraph::copyNodeContent(ClassExpression* old_node, AnonymousClassTree* related_tree)
   {
-    AnonymousClassElement* new_node = new AnonymousClassElement();
-    new_node->is_complex = old_node->is_complex;
+    ClassExpression* new_node = new ClassExpression();
 
     // ============= Node type =================
     if(old_node->logical_type_ != logical_none)
@@ -327,7 +324,7 @@ namespace ontologenius {
   }
 
   // todo: change
-  void AnonymousClassGraph::printTree(AnonymousClassElement* ano_elem, size_t level, bool root) const
+  void AnonymousClassGraph::printTree(ClassExpression* ano_elem, size_t level, bool root) const
   {
     const std::string space(level * 4, ' ');
     std::string tmp;

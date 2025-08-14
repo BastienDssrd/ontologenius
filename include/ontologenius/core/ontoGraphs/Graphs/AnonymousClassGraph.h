@@ -158,17 +158,17 @@ namespace ontologenius {
     IndividualGraph* individual_graph_;
 
     AnonymousClassTree* createTree(ClassExpressionDescriptor_t* class_expression_descriptor);
-    AnonymousClassElement* createTreeNodes(ClassExpressionDescriptor_t* class_expression_descriptor, size_t& depth, AnonymousClassTree* related_tree);
-    AnonymousClassElement* createNodeContent(ClassExpressionDescriptor_t* expression_leaf, AnonymousClassTree* related_tree);
+    ClassExpression* createTreeNodes(ClassExpressionDescriptor_t* class_expression_descriptor, size_t& depth, AnonymousClassTree* related_tree);
+    ClassExpression* createNodeContent(ClassExpressionDescriptor_t* expression_leaf, AnonymousClassTree* related_tree);
 
-    void setCardRange(AnonymousClassElement* ano_element, ClassExpressionDescriptor_t* expression_leaf, AnonymousClassTree* related_tree); // todo remove, temp
+    void setCardRange(ClassExpression* ano_element, ClassExpressionDescriptor_t* expression_leaf, AnonymousClassTree* related_tree); // todo remove, temp
 
     void cpyBranch(AnonymousClassBranch* old_branch, AnonymousClassBranch* new_branch);
     AnonymousClassTree* copyTree(AnonymousClassTree* old_tree);
-    AnonymousClassElement* copyTreeNodes(AnonymousClassElement* old_node, AnonymousClassTree* related_tree);
-    AnonymousClassElement* copyNodeContent(AnonymousClassElement* old_node, AnonymousClassTree* related_tree);
+    ClassExpression* copyTreeNodes(ClassExpression* old_node, AnonymousClassTree* related_tree);
+    ClassExpression* copyNodeContent(ClassExpression* old_node, AnonymousClassTree* related_tree);
 
-    void printTree(AnonymousClassElement* ano_elem, size_t level, bool root) const;
+    void printTree(ClassExpression* ano_elem, size_t level, bool root) const;
     std::string cardinalityToString(RestrictionConstraintType_e value) const; 
   };
 

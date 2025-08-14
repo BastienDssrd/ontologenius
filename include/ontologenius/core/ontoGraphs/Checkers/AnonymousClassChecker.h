@@ -28,16 +28,16 @@ namespace ontologenius {
     AnonymousClassGraph* ano_class_graph_;
     std::string current_ano_;
 
-    std::vector<std::string> resolveTree(AnonymousClassElement* ano_elem, const std::vector<ClassElement>& ranges);
-    std::vector<std::string> resolveTreeDataTypes(AnonymousClassElement* ano_elem); // Err
+    std::vector<std::string> resolveTree(ClassExpression* ano_elem, const std::vector<ClassElement>& ranges);
+    std::vector<std::string> resolveTreeDataTypes(ClassExpression* ano_elem); // Err
 
-    std::vector<std::string> checkPropertyDisjointness(AnonymousClassElement* ano_elem, const std::vector<ClassElement>& ranges);
-    void checkIntersectionDomainsDisjointess(AnonymousClassElement* ano_elem);
-    std::vector<std::string> checkRangeDomainDisjointness(AnonymousClassElement* ano_elem, const std::vector<ClassElement>& ranges);
+    std::vector<std::string> checkPropertyDisjointness(ClassExpression* ano_elem, const std::vector<ClassElement>& ranges);
+    void checkIntersectionDomainsDisjointess(ClassExpression* ano_elem);
+    std::vector<std::string> checkRangeDomainDisjointness(ClassExpression* ano_elem, const std::vector<ClassElement>& ranges);
 
-    std::vector<std::string> checkExpressionDisjointess(AnonymousClassElement* ano_elem, const std::vector<ClassElement>& ranges);
-    void checkObjectPropertyRangeDisjointness(AnonymousClassElement* ano_elem);
-    void checkDataPropertyRangeDisjointness(AnonymousClassElement* ano_elem);
+    std::vector<std::string> checkExpressionDisjointess(ClassExpression* ano_elem, const std::vector<ClassElement>& ranges);
+    void checkObjectPropertyRangeDisjointness(ClassExpression* ano_elem);
+    void checkDataPropertyRangeDisjointness(ClassExpression* ano_elem);
 
     std::string checkClassesDisjointness(ClassBranch* class_left, ClassBranch* class_right); // Err
     std::vector<std::string> checkClassesVectorDisjointness(const std::vector<ClassElement>& classes_left, const std::vector<ClassElement>& class_right);

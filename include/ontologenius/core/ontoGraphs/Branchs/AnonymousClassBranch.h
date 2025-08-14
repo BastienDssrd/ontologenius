@@ -43,16 +43,15 @@ namespace ontologenius {
 
   class AnonymousClassTree;
 
-  class AnonymousClassElement
+  class ClassExpression
   {
   public:
-    AnonymousClassElement() : logical_type_(logical_none), oneof(false), is_complex(false),
+    ClassExpression() : logical_type_(logical_none), oneof(false),
                               class_involved_(nullptr), object_property_involved_(nullptr), data_property_involved_(nullptr), individual_involved_(nullptr)
     {}
 
     LogicalNodeType_e logical_type_;
     bool oneof; // true = OneOf element
-    bool is_complex;
 
     // pointers to the concepts used in the equivalence relation
     ClassBranch* class_involved_;
@@ -65,7 +64,7 @@ namespace ontologenius {
     RestrictionConstraintType_e restriction_type_;
     size_t cardinality_value_;
 
-    std::vector<AnonymousClassElement*> sub_elements_;
+    std::vector<ClassExpression*> sub_elements_;
   };
 
   class AnonymousClassTree : public InferenceRuleNode
@@ -81,10 +80,10 @@ namespace ontologenius {
     bool involves_data_property;
     bool involves_individual;
 
-    AnonymousClassElement* root_node_;
+    ClassExpression* root_node_;
     size_t depth_;
 
-    std::string ano_name;
+    std::string ano_name; // todo: check usage
 
     std::string involvesToString() const
     {
