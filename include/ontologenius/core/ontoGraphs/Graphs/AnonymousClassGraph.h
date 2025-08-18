@@ -168,8 +168,7 @@ namespace ontologenius {
     ClassExpression* copyTreeNodes(ClassExpression* old_node);
     ClassExpression* copyNodeContent(ClassExpression* old_node);
 
-    void printTree(ClassExpression* ano_elem, size_t level, bool root) const;
-    std::string cardinalityToString(RestrictionConstraintType_e value) const; 
+    void printTree(ClassExpression* expression, size_t level);
   };
 
 } // namespace ontologenius

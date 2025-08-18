@@ -59,18 +59,18 @@ namespace ontologenius {
   {
     std::string ns = ns_;
     std::string value;
-    if(ano_elem->individual_involved_)
+    if(ano_elem->individual_involved_ != nullptr)
       value = ano_elem->individual_involved_->value();
-    else if(ano_elem->class_involved_)
+    else if(ano_elem->class_involved_ != nullptr)
       value = ano_elem->class_involved_->value();
-    else if(ano_elem->datatype_involved_)
+    else if(ano_elem->datatype_involved_ != nullptr)
     {
       ns = ano_elem->datatype_involved_->getNamespace();
       value = ano_elem->datatype_involved_->value();
     }
-    else if(ano_elem->data_property_involved_)
+    else if(ano_elem->data_property_involved_ != nullptr)
       value = ano_elem->data_property_involved_->value();
-    else if(ano_elem->object_property_involved_)
+    else if(ano_elem->object_property_involved_ != nullptr)
       value = ano_elem->object_property_involved_->value();
     else
       std::cout << "trying to write rdf resource of unplanned type" << std::endl;
@@ -145,7 +145,7 @@ namespace ontologenius {
     writeString("<" + field + " rdf:datatype=\"http://www.w3.org/2001/XMLSchema#nonNegativeInteger\">" + std::to_string(ano_elem->cardinality_value_) + "</" + field + ">\n", level);
 
     if(qualified)
-      writeQualifier(ano_elem, level);
+      writeQualifier(ano_elem->sub_elements_.front(), level);
   }
 
   void AnonymousClassOwlWriter::writeQualifier(ClassExpression* ano_element, size_t level)
@@ -204,8 +204,8 @@ namespace ontologenius {
       break;
     }
 
-    if(ano_elem->sub_elements_.empty())
-      writeRdfResource(ano_elem, field, level);
+    if(ano_elem->sub_elements_.front()->type_ == ClassExpressionType_e::class_expression_identifier)
+      writeRdfResource(ano_elem->sub_elements_.front(), field, level);
     else
     {
       writeString("<" + field + ">\n", level);

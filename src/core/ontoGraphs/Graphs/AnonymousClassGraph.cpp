@@ -164,13 +164,16 @@ namespace ontologenius {
       case RestrictionConstraintType_e::restriction_has_value:
         if(expression_leaf->resource_value.empty() == false)
         {
+          auto* sub_expression = new ClassExpression();
+          sub_expression->type_ = ClassExpressionType_e::class_expression_identifier;
           if(expression_leaf->data_usage == true)
-            ano_element->literal_involved_ = literal_graph_->findOrCreate(expression_leaf->resource_value);
+            sub_expression->literal_involved_ = literal_graph_->findOrCreate(expression_leaf->resource_value);
           else
           {
-            ano_element->individual_involved_ = individual_graph_->findOrCreateBranch(expression_leaf->resource_value);
+            sub_expression->individual_involved_ = individual_graph_->findOrCreateBranch(expression_leaf->resource_value);
             related_tree->involves_individual = true;
           }
+          ano_element->sub_elements_.emplace_back(sub_expression);
         }
         break;
       case RestrictionConstraintType_e::restriction_max_cardinality:
@@ -200,13 +203,16 @@ namespace ontologenius {
   {
     if(expression_leaf->resource_value.empty() == false)
     {
+      auto* sub_expression = new ClassExpression();
+      sub_expression->type_ = ClassExpressionType_e::class_expression_identifier;
       if(expression_leaf->data_usage == true)
-        ano_element->datatype_involved_ = literal_graph_->findOrCreateType(expression_leaf->resource_value);
+        sub_expression->datatype_involved_ = literal_graph_->findOrCreateType(expression_leaf->resource_value);
       else
       {
-        ano_element->class_involved_ = class_graph_->findOrCreateBranch(expression_leaf->resource_value);
+        sub_expression->class_involved_ = class_graph_->findOrCreateBranch(expression_leaf->resource_value);
         related_tree->involves_class = true;
       }
+      ano_element->sub_elements_.emplace_back(sub_expression);
     }
   }
 
@@ -286,26 +292,33 @@ namespace ontologenius {
     return new_node;
   }
 
-  // todo: change
-  std::string AnonymousClassGraph::cardinalityToString(RestrictionConstraintType_e value) const
+  void AnonymousClassGraph::printTree(ClassExpression* expression, size_t level)
   {
-    switch(value)
-    {
-    case RestrictionConstraintType_e::restriction_some_values_from:
-      return "some";
-    case RestrictionConstraintType_e::restriction_all_values_from:
-      return "only";
-    case RestrictionConstraintType_e::restriction_min_cardinality:
-      return "min";
-    case RestrictionConstraintType_e::restriction_max_cardinality:
-      return "max";
-    case RestrictionConstraintType_e::restriction_cardinality:
-      return "exactly";
-    case RestrictionConstraintType_e::restriction_has_value:
-      return "value";
-    default:
-      return "";
-    }
+    std::string spaces("  ", level);
+    std::string value;
+    if(expression->data_property_involved_ != nullptr)
+      value += "data_prop(" + expression->data_property_involved_->value() + ") ";
+    if(expression->object_property_involved_ != nullptr)
+      value += "obj_prop(" + expression->object_property_involved_->value() + ") ";
+
+    if(expression->restriction_type_ != RestrictionConstraintType_e::restriction_unknown)
+      value += "rest(" + std::to_string(expression->restriction_type_) + ") ";
+
+    if(expression->cardinality_value_ != 0)
+      value += "card(" + std::to_string(expression->cardinality_value_) + ") ";
+
+    if(expression->class_involved_ != nullptr)
+      value += "class(" + expression->class_involved_->value() + ") ";
+    if(expression->individual_involved_ != nullptr)
+      value += "indiv(" + expression->individual_involved_->value() + ") ";
+    if(expression->literal_involved_ != nullptr)
+      value += "literal(" + expression->literal_involved_->value() + ") ";
+    if(expression->datatype_involved_ != nullptr)
+      value += "datatype(" + expression->datatype_involved_->value() + ") ";
+
+    std::cout << spaces << "-" << level << " " << value << std::endl;
+    for(auto& sub : expression->sub_elements_)
+      printTree(sub, level + 1);
   }
 
 } // namespace ontologenius
