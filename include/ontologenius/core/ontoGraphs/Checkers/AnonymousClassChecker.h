@@ -2,6 +2,7 @@
 #define ONTOLOGENIUS_ANONYMOUSCLASSCHECKER_H
 
 #include <vector>
+#include <unordered_set>
 
 #include "ontologenius/core/ontoGraphs/Branchs/AnonymousClassBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/ClassBranch.h"
@@ -27,6 +28,12 @@ namespace ontologenius {
   private:
     AnonymousClassGraph* ano_class_graph_;
     std::string current_ano_;
+
+    std::vector<std::string> resolveTreeDisjoint(ClassExpression* ano_elem, const std::unordered_set<ClassBranch*>& disjoints);
+
+    std::vector<std::string> checkIdentifier(ClassExpression* ano_elem, const std::unordered_set<ClassBranch*>& disjoints);
+    std::vector<std::string> checkOneOf(ClassExpression* ano_elem, const std::unordered_set<ClassBranch*>& disjoints);
+    std::vector<std::string> checkRestriction(ClassExpression* ano_elem, const std::unordered_set<ClassBranch*>& disjoints);
 
     std::vector<std::string> resolveTree(ClassExpression* ano_elem, const std::vector<ClassElement>& ranges);
     std::vector<std::string> resolveTreeDataTypes(ClassExpression* ano_elem); // Err
