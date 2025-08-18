@@ -113,7 +113,7 @@ namespace ontologenius {
     {
       writeString("<" + field_name + ">\n", level);
       auto* root_node = class_atom.anonymous_element->ano_trees_.front()->root_node_;
-      writeAnonymousClassExpression(root_node, level + 1);
+      writeClassExpression(root_node, level + 1);
       writeString("</" + field_name + ">\n", level);
     }
 

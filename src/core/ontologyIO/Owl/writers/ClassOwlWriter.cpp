@@ -85,7 +85,7 @@ namespace ontologenius {
         else // Collection of expressions
         {
           writeString("<" + field + ">\n", level);
-          writeAnonymousClassExpression(tree_root_node, level + 1);
+          writeClassExpression(tree_root_node, level + 1);
           writeString("</" + field + ">\n", level);
         }
       }
