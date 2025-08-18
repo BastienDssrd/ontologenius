@@ -40,11 +40,11 @@ namespace ontologenius {
   {
     std::string ns = ns_;
     std::string value;
-    if(ano_elem->individual_involved_)
+    if(ano_elem->individual_involved_ != nullptr)
       value = ano_elem->individual_involved_->value();
-    else if(ano_elem->class_involved_)
+    else if(ano_elem->class_involved_ != nullptr)
       value = ano_elem->class_involved_->value();
-    else if(ano_elem->datatype_involved_)
+    else if(ano_elem->datatype_involved_ != nullptr)
     {
       ns = ano_elem->datatype_involved_->getNamespace();
       value = ano_elem->datatype_involved_->value();
