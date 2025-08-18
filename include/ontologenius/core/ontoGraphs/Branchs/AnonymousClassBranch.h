@@ -33,25 +33,19 @@ namespace ontologenius {
     class_expression_unknown
   };
 
-  enum LogicalNodeType_e
-  {
-    logical_and,
-    logical_or,
-    logical_not,
-    logical_none
-  };
-
   class AnonymousClassTree;
 
   class ClassExpression
   {
   public:
-    ClassExpression() : logical_type_(logical_none), oneof(false),
-                              class_involved_(nullptr), object_property_involved_(nullptr), data_property_involved_(nullptr), individual_involved_(nullptr)
+    ClassExpression() : type_(class_expression_unknown),
+                        class_involved_(nullptr), object_property_involved_(nullptr), 
+                        data_property_involved_(nullptr), individual_involved_(nullptr),
+                        literal_involved_(nullptr), datatype_involved_(nullptr),
+                        restriction_type_(restriction_unknown), cardinality_value_(0)
     {}
 
-    LogicalNodeType_e logical_type_;
-    bool oneof; // true = OneOf element
+    ClassExpressionType_e type_;
 
     // pointers to the concepts used in the equivalence relation
     ClassBranch* class_involved_;
