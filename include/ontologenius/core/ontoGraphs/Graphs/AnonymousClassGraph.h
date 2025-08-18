@@ -165,8 +165,8 @@ namespace ontologenius {
 
     void cpyBranch(AnonymousClassBranch* old_branch, AnonymousClassBranch* new_branch);
     AnonymousClassTree* copyTree(AnonymousClassTree* old_tree);
-    ClassExpression* copyTreeNodes(ClassExpression* old_node, AnonymousClassTree* related_tree);
-    ClassExpression* copyNodeContent(ClassExpression* old_node, AnonymousClassTree* related_tree);
+    ClassExpression* copyTreeNodes(ClassExpression* old_node);
+    ClassExpression* copyNodeContent(ClassExpression* old_node);
 
     void printTree(ClassExpression* ano_elem, size_t level, bool root) const;
     std::string cardinalityToString(RestrictionConstraintType_e value) const; 

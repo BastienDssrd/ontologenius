@@ -19,8 +19,6 @@
 #include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
 #include "ontologenius/utils/String.h"
 
-// #define DEBUG
-
 namespace ontologenius {
 
   AnonymousClassGraph::AnonymousClassGraph(LiteralGraph* literal_graph,
@@ -64,10 +62,6 @@ namespace ontologenius {
       AnonymousClassTree* tree = createTree(equivalence_descriptor.expression_members[i]);
       tree->ano_name = ano_name + "_" + std::to_string(i);
       anonymous_branch->ano_trees_.push_back(tree);
-
-#ifdef DEBUG
-      printTree(tree->root_node, 3, true);
-#endif
     }
 
     return anonymous_branch;
@@ -111,12 +105,11 @@ namespace ontologenius {
   ClassExpression* AnonymousClassGraph::createNodeContent(ClassExpressionDescriptor_t* expression_leaf, AnonymousClassTree* related_tree)
   {
     ClassExpression* ano_element = new ClassExpression();
-    ano_element->logical_type_ = LogicalNodeType_e::logical_none;
+    ano_element->type_ = expression_leaf->type;
 
     switch (expression_leaf->type)
     {
     case ClassExpressionType_e::class_expression_identifier:
-      //std::cout << "-->" << expression_leaf->resource_value << " => data=" << expression_leaf->data_usage << " instance=" << expression_leaf->is_instanciated << std::endl;
       if(expression_leaf->data_usage)
       {
         if(expression_leaf->is_instanciated)
@@ -124,22 +117,16 @@ namespace ontologenius {
         else
           ano_element->datatype_involved_ = literal_graph_->findOrCreateType(expression_leaf->resource_value);
       }
+      else if(expression_leaf->is_instanciated)
+      {
+        ano_element->individual_involved_ = individual_graph_->findOrCreateBranch(expression_leaf->resource_value);
+        related_tree->involves_individual = true;
+      }
       else
       {
-        if(expression_leaf->is_instanciated)
-        {
-          ano_element->individual_involved_ = individual_graph_->findOrCreateBranch(expression_leaf->resource_value);
-          related_tree->involves_individual = true;
-        }
-        else
-        {
-          ano_element->class_involved_ = class_graph_->findOrCreateBranch(expression_leaf->resource_value);
-          related_tree->involves_class = true;
-        }
+        ano_element->class_involved_ = class_graph_->findOrCreateBranch(expression_leaf->resource_value);
+        related_tree->involves_class = true;
       }
-      break;
-    case ClassExpressionType_e::class_expression_one_of:
-      ano_element->oneof = true;
       break;
     case ClassExpressionType_e::class_expression_restriction:
       if(expression_leaf->data_usage == true)
@@ -188,31 +175,20 @@ namespace ontologenius {
         break;
       case RestrictionConstraintType_e::restriction_max_cardinality:
         ano_element->cardinality_value_ = std::stoi(ClassExpressionDescriptor_t::splitData(expression_leaf->cardinality_value).second);
-        setCardRange(ano_element, expression_leaf, related_tree); // todo: remove complex flag if no child
+        setCardRange(ano_element, expression_leaf, related_tree);
         break;
       case RestrictionConstraintType_e::restriction_min_cardinality:
         ano_element->cardinality_value_ = std::stoi(ClassExpressionDescriptor_t::splitData(expression_leaf->cardinality_value).second);
-        setCardRange(ano_element, expression_leaf, related_tree); // todo: remove complex flag if no child
+        setCardRange(ano_element, expression_leaf, related_tree);
         break;
       case RestrictionConstraintType_e::restriction_cardinality:
         ano_element->cardinality_value_ = std::stoi(ClassExpressionDescriptor_t::splitData(expression_leaf->cardinality_value).second);
-        setCardRange(ano_element, expression_leaf, related_tree); // todo: remove complex flag if no child
+        setCardRange(ano_element, expression_leaf, related_tree);
         break;
-      
       default:
         break;
       }
       break;
-    case ClassExpressionType_e::class_expression_intersection_of:
-      ano_element->logical_type_ = LogicalNodeType_e::logical_and;
-      break;
-    case ClassExpressionType_e::class_expression_union_of:
-      ano_element->logical_type_ = LogicalNodeType_e::logical_or;
-      break;
-    case ClassExpressionType_e::class_expression_complement_of:
-      ano_element->logical_type_ = LogicalNodeType_e::logical_not;
-      break;
-    
     default:
       break;
     }
@@ -261,131 +237,53 @@ namespace ontologenius {
   AnonymousClassTree* AnonymousClassGraph::copyTree(AnonymousClassTree* old_tree)
   {
     AnonymousClassTree* tree = new AnonymousClassTree(old_tree->getRule());
-    tree->root_node_ = copyTreeNodes(old_tree->root_node_, tree);
+    tree->root_node_ = copyTreeNodes(old_tree->root_node_);
     tree->depth_ = old_tree->depth_;
     tree->ano_name = old_tree->ano_name;
+
+    tree->involves_class = old_tree->involves_class;
+    tree->involves_data_property = old_tree->involves_data_property;
+    tree->involves_individual = old_tree->involves_individual;
+    tree->involves_object_property = old_tree->involves_object_property;
+
     return tree;
   }
 
-  ClassExpression* AnonymousClassGraph::copyTreeNodes(ClassExpression* old_node, AnonymousClassTree* related_tree)
+  ClassExpression* AnonymousClassGraph::copyTreeNodes(ClassExpression* old_node)
   {
-    ClassExpression* node = copyNodeContent(old_node, related_tree);
+    ClassExpression* node = copyNodeContent(old_node);
 
     for(auto* child : old_node->sub_elements_)
-      node->sub_elements_.push_back(copyTreeNodes(child, related_tree));
+      node->sub_elements_.push_back(copyTreeNodes(child));
 
     return node;
   }
 
-  ClassExpression* AnonymousClassGraph::copyNodeContent(ClassExpression* old_node, AnonymousClassTree* related_tree)
+  ClassExpression* AnonymousClassGraph::copyNodeContent(ClassExpression* old_node)
   {
     ClassExpression* new_node = new ClassExpression();
 
-    // ============= Node type =================
-    if(old_node->logical_type_ != logical_none)
-    {
-      new_node->logical_type_ = old_node->logical_type_;
-      return new_node;
-    }
-    else if(old_node->oneof == true)
-    {
-      new_node->oneof = true;
-      return new_node;
-    }
+    new_node->type_ = old_node->type_;
 
-    // ============= Cardinality =================
-    new_node->cardinality_value_ = old_node->cardinality_value_;
-    new_node->restriction_type_ = old_node->restriction_type_;
+    if(new_node->literal_involved_ != nullptr)
+      new_node->literal_involved_ = literal_graph_->find(old_node->literal_involved_->value());
 
-    // ============= Expression members =================
+    if(new_node->datatype_involved_ != nullptr)
+      new_node->datatype_involved_ = literal_graph_->findOrCreateType(old_node->datatype_involved_->value());
+
     if(old_node->object_property_involved_ != nullptr)
-    {
       new_node->object_property_involved_ = object_property_graph_->container_.find(old_node->object_property_involved_->value());
-      related_tree->involves_object_property = true;
-    }
-    else if(old_node->data_property_involved_ != nullptr)
-    {
+
+    if(old_node->data_property_involved_ != nullptr)
       new_node->data_property_involved_ = data_property_graph_->container_.find(old_node->data_property_involved_->value());
-      related_tree->involves_object_property = true;
-    }
 
     if(old_node->individual_involved_ != nullptr)
-    {
       new_node->individual_involved_ = individual_graph_->container_.find(old_node->individual_involved_->value());
-      related_tree->involves_individual = true;
-    }
-    else if(old_node->class_involved_ != nullptr)
-    {
+    
+    if(old_node->class_involved_ != nullptr)
       new_node->class_involved_ = class_graph_->container_.find(old_node->class_involved_->value());
-      related_tree->involves_class = true;
-    }
 
     return new_node;
-  }
-
-  // todo: change
-  void AnonymousClassGraph::printTree(ClassExpression* ano_elem, size_t level, bool root) const
-  {
-    const std::string space(level * 4, ' ');
-    std::string tmp;
-
-    if(root)
-      std::cout << space;
-
-    if(ano_elem->logical_type_ == LogicalNodeType_e::logical_and)
-      tmp += "and";
-    else if(ano_elem->logical_type_ == LogicalNodeType_e::logical_or)
-      tmp += "or";
-    else if(ano_elem->logical_type_ == LogicalNodeType_e::logical_not)
-      tmp += "not";
-    else if(ano_elem->oneof)
-      tmp += "oneOf";
-    else if(ano_elem->object_property_involved_ != nullptr)
-    {
-      tmp += ano_elem->object_property_involved_->value();
-      tmp += " " + cardinalityToString(ano_elem->restriction_type_);
-
-      if(ano_elem->restriction_type_ == RestrictionConstraintType_e::restriction_has_value)
-        tmp += " " + ano_elem->individual_involved_->value();
-      else
-      {
-        if(ano_elem->cardinality_value_ != 0)
-          tmp += " " + std::to_string(ano_elem->cardinality_value_);
-        if(ano_elem->class_involved_ != nullptr)
-          tmp += " " + ano_elem->class_involved_->value();
-      }
-    }
-    else if(ano_elem->data_property_involved_ != nullptr)
-    {
-      tmp += ano_elem->data_property_involved_->value();
-      tmp += " " + cardinalityToString(ano_elem->restriction_type_);
-      if(ano_elem->cardinality_value_ != 0)
-        tmp += " " + std::to_string(ano_elem->cardinality_value_);
-      if(ano_elem->literal_involved_ != nullptr)
-        tmp += " " + ano_elem->literal_involved_->value();
-    }
-    else
-    {
-      if(ano_elem->class_involved_ != nullptr)
-        tmp += ano_elem->class_involved_->value();
-      else if(ano_elem->individual_involved_ != nullptr)
-        tmp += ano_elem->individual_involved_->value();
-      else if(ano_elem->literal_involved_ != nullptr)
-        tmp += ano_elem->literal_involved_->type_->value();
-    }
-
-    std::cout << tmp << std::endl;
-
-    for(auto* sub_elem : ano_elem->sub_elements_)
-    {
-      for(int i = 0; i < int(level); i++)
-        std::cout << "│   ";
-      if(sub_elem == ano_elem->sub_elements_.back())
-        std::cout << "└── ";
-      else
-        std::cout << "├── ";
-      printTree(sub_elem, level + 1, false);
-    }
   }
 
   // todo: change
