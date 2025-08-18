@@ -85,11 +85,7 @@ namespace ontologenius {
                    (anonymous_tree->involves_data_property && indiv->data_relations_.isUpdated()) ||
                    (anonymous_tree->involves_individual && indiv->same_as_.isUpdated()))))
               {
-                bool tree_first_layer_result = true;
-                bool current_tree_result = false;
-
-                if(is_already_a == false)
-                  tree_first_layer_result = resolveFirstLayer(indiv, anonymous_tree->root_node_);
+                bool tree_first_layer_result = is_already_a ? true : resolveFirstLayer(indiv, anonymous_tree->root_node_);
                 has_active_equiv = has_active_equiv || tree_first_layer_result;
 
                 if(tree_first_layer_result == true)
@@ -97,27 +93,27 @@ namespace ontologenius {
                   indiv->flags_[equiv_flag] = {};
                   used.clear();
                   used.reserve(anonymous_tree->depth_);
-                  current_tree_result = resolveTree(indiv, anonymous_tree->root_node_, used);
-                  trees_evaluation_result = trees_evaluation_result || current_tree_result;
+                  bool equivalence_found = resolveTree(indiv, anonymous_tree->root_node_, used);
+                  trees_evaluation_result = trees_evaluation_result || equivalence_found;
+
+                  if(equivalence_found)
+                  {
+                    if(is_already_a == false) // the indiv is checked to still be of the same class so we can break out of the loop
+                    {
+                      addInferredInheritance(indiv, anonymous_branch, anonymous_tree, used);
+                      nb_update++;
+                      if(anonymous_branch->class_equiv_->isHidden() == false)
+                      {
+                        explanations_.emplace_back("[ADD]" + indiv->value() + "|isA|" + anonymous_branch->class_equiv_->value(),
+                                                  "[ADD]" + indiv->is_a_.back().getExplanation());
+                      }
+                    }
+                    // once we get a valid equivalence for a class, we break out of the loop
+                    break;
+                  }
                 }
                 else
                   indiv->flags_.erase(equiv_flag);
-
-                if(has_active_equiv && current_tree_result)
-                {
-                  if(is_already_a == false) // the indiv is checked to still be of the same class so we can break out of the loop
-                  {
-                    addInferredInheritance(indiv, anonymous_branch, anonymous_tree, used);
-                    nb_update++;
-                    if(anonymous_branch->class_equiv_->isHidden() == false)
-                    {
-                      explanations_.emplace_back("[ADD]" + indiv->value() + "|isA|" + anonymous_branch->class_equiv_->value(),
-                                                 "[ADD]" + indiv->is_a_.back().getExplanation());
-                    }
-                  }
-                  // once we get a valid equivalence for a class, we break out of the loop
-                  break;
-                }
               }
             }
           }
@@ -194,157 +190,35 @@ namespace ontologenius {
       return false;
   }
 
-  bool ReasonerAnonymous::checkValue(IndividualBranch* indiv_from, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
-  {
-    auto* indiv_range = ano_elem->individual_involved_;
-    const size_t same_size = indiv_from->same_as_.size();
-
-    for(size_t j = 0; j < same_size; j++)
-    {
-      if(indiv_from->same_as_[j].elem->get() == indiv_range->get())
-      {
-        used.emplace_back(indiv_from->value() + "|sameAs|" + indiv_range->value(),
-                          indiv_from->same_as_.has_induced_inheritance_relations[j]);
-        return true;
-      }
-    }
-
-    if(indiv_from->get() == indiv_range->get())
-      return true;
-
-    return false;
-  }
-
-  bool ReasonerAnonymous::checkValue(LiteralNode* literal_from, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
-  {
-    (void)used;
-    return (literal_from->get() == ano_elem->literal_involved_->get());
-  }
+  /* First layer test */
 
   bool ReasonerAnonymous::resolveFirstLayer(IndividualBranch* indiv, ClassExpression* ano_elem)
   {
-    if(ano_elem->logical_type_ == logical_and)
-      for(auto* elem : ano_elem->sub_elements_)
-        return resolveFirstLayer(indiv, elem);
-    else if(ano_elem->logical_type_ == logical_or)
+    if(ano_elem->type_ == ClassExpressionType_e::class_expression_intersection_of)
+    {
+      if(ano_elem->sub_elements_.empty() == false)
+        return resolveFirstLayer(indiv, ano_elem->sub_elements_.front());
+    }
+    else if(ano_elem->type_ == ClassExpressionType_e::class_expression_union_of)
     {
       for(auto* elem : ano_elem->sub_elements_)
         if(resolveFirstLayer(indiv, elem) == true)
           return true;
       return false;
     }
-    else if(ano_elem->logical_type_ == logical_not)
+    else if(ano_elem->type_ == ClassExpressionType_e::class_expression_complement_of)
     {
       if(standard_mode_ == true)                                                         // OWA
         return resolveDisjunctionTreeFirstLayer(indiv, ano_elem->sub_elements_.front()); // need to make a version without the 'used' vector
       else                                                                               // CWA
         return !resolveFirstLayer(indiv, ano_elem->sub_elements_.front());
     }
-    else
+    else if(ano_elem->type_ == ClassExpressionType_e::class_expression_one_of)
+      return checkOneOfFirstLayer(indiv, ano_elem);
+    else if(ano_elem->type_ == ClassExpressionType_e::class_expression_restriction)
       return checkRestrictionFirstLayer(indiv, ano_elem);
-    return false;
-  }
-
-  bool ReasonerAnonymous::resolveTree(LiteralNode* literal, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
-  {
-    if(ano_elem->logical_type_ == logical_and)
-    {
-      for(auto* elem : ano_elem->sub_elements_)
-      {
-        if(resolveTree(literal, elem, used) == false)
-        {
-          used.clear();
-          return false;
-        }
-      }
-      return true;
-    }
-    else if(ano_elem->logical_type_ == logical_or)
-    {
-      for(auto* elem : ano_elem->sub_elements_)
-      {
-        if(resolveTree(literal, elem, used))
-          return true;
-      }
-      used.clear();
-      return false;
-    }
-    else if(ano_elem->logical_type_ == logical_not)
-      return !resolveTree(literal, ano_elem->sub_elements_.front(), used);
-    else
-      return checkTypeRestriction(literal, ano_elem, used);
-
-    used.clear();
-    return false;
-  }
-
-  bool ReasonerAnonymous::resolveTree(IndividualBranch* indiv, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
-  {
-    if(ano_elem->logical_type_ == logical_and)
-    {
-      for(auto* elem : ano_elem->sub_elements_)
-      {
-        if(resolveTree(indiv, elem, used) == false)
-        {
-          used.clear();
-          return false;
-        }
-      }
-      return true;
-    }
-    else if(ano_elem->logical_type_ == logical_or)
-    {
-      for(auto* elem : ano_elem->sub_elements_)
-      {
-        if(resolveTree(indiv, elem, used))
-          return true;
-      }
-      used.clear();
-      return false;
-    }
-    else if(ano_elem->logical_type_ == logical_not)
-    {
-      // do smth with used (maybe pass a tmp_used)
-      if(standard_mode_ == true)
-        return resolveDisjunctionTree(indiv, ano_elem->sub_elements_.front(), used);
-      else
-        return !resolveTree(indiv, ano_elem->sub_elements_.front(), used); // CWA
-    }
-    else
-      return checkRestriction(indiv, ano_elem, used);
-
-    return false;
-  }
-
-  bool ReasonerAnonymous::resolveDisjunctionTree(IndividualBranch* indiv, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
-  {
-    // works for class and class expression on object property range, not for data property
-    // do we need to take into account the used, since disjointness isn't dynamic
-    // check the disjunctions between the indiv and the class elements in the ano_elem tree (not( Lidar and Sonar))
-    if(ano_elem->logical_type_ == logical_and)
-    {
-      for(auto* elem : ano_elem->sub_elements_)
-      {
-        if(resolveDisjunctionTree(indiv, elem, used) == false) // if false, one of the classes is not disjunctive, and thus the eq is not verif
-        {
-          used.clear();
-          return false;
-        }
-      }
-      return true;
-    }
-    else if(ano_elem->logical_type_ == logical_or)
-    {
-      for(auto* elem : ano_elem->sub_elements_)
-      {
-        if(resolveDisjunctionTree(indiv, elem, used) == true) // if true, at least one in the or expression is disjoint, so eq is verif
-          return true;
-      }
-      used.clear();
-      return false;
-    }
-    else if(ano_elem->class_involved_ != nullptr)
-      return checkClassesDisjointess(indiv, ano_elem->class_involved_); // actual check of disjointness
+    else if(ano_elem->class_involved_ != nullptr) // equivalent to identifier
+      return (ontology_->individual_graph_.isA(indiv, ano_elem->class_involved_->get()));
 
     return false;
   }
@@ -354,7 +228,7 @@ namespace ontologenius {
     // works for class and class expression on object property range, not for data property
     // do we need to take into account the used, since disjointness isn't dynamic
     // check the disjunctions between the indiv and the class elements in the ano_elem tree (not( Lidar and Sonar))
-    if(ano_elem->logical_type_ == logical_and)
+    if(ano_elem->type_ == ClassExpressionType_e::class_expression_intersection_of)
     {
       for(auto* elem : ano_elem->sub_elements_)
       {
@@ -363,7 +237,7 @@ namespace ontologenius {
       }
       return true;
     }
-    else if(ano_elem->logical_type_ == logical_or)
+    else if(ano_elem->type_ == ClassExpressionType_e::class_expression_union_of)
     {
       for(auto* elem : ano_elem->sub_elements_)
       {
@@ -378,117 +252,205 @@ namespace ontologenius {
     return false;
   }
 
-  bool ReasonerAnonymous::checkRestrictionFirstLayer(IndividualBranch* indiv, ClassExpression* ano_elem)
+  bool ReasonerAnonymous::checkOneOfFirstLayer(IndividualBranch* indiv, ClassExpression* ano_elem)
   {
-    if(ano_elem->object_property_involved_ != nullptr)
+    for(auto* indiv_elem : ano_elem->sub_elements_)
     {
       if(indiv->same_as_.empty() == false)
       {
-        for(auto& indiv_same : indiv->same_as_)
-        {
-          if(checkPropertyExistence(indiv_same.elem->object_relations_.relations, ano_elem))
-            return true;
-        }
-      }
-      return checkPropertyExistence(indiv->object_relations_.relations, ano_elem);
-    }
-    else if(ano_elem->data_property_involved_ != nullptr)
-    {
-      if(indiv->same_as_.empty() == false)
-      {
-        for(auto& indiv_same : indiv->same_as_)
-        {
-          if(checkPropertyExistence(indiv_same.elem->data_relations_.relations, ano_elem))
-            return true;
-        }
-      }
-      return checkPropertyExistence(indiv->data_relations_.relations, ano_elem);
-    }
-    else if(ano_elem->class_involved_ != nullptr)
-      return (ontology_->individual_graph_.isA(indiv, ano_elem->class_involved_->get()));
-    else if(ano_elem->oneof)
-    {
-      for(auto* indiv_elem : ano_elem->sub_elements_)
-      {
-        if(indiv->same_as_.empty() == false)
-        {
-          if(std::find_if(indiv->same_as_.begin(), indiv->same_as_.end(),
-                          [elem = indiv_elem->individual_involved_](auto same) { return same == elem; }) != indiv->same_as_.end())
-          {
-            return true;
-          }
-        }
-        if(indiv->get() == indiv_elem->individual_involved_->get())
+        if(std::find_if(indiv->same_as_.begin(), indiv->same_as_.end(), [elem = indiv_elem->individual_involved_](auto same) { return same == elem; }) != indiv->same_as_.end())
           return true;
       }
+      else if(indiv->get() == indiv_elem->individual_involved_->get())
+        return true;
     }
     return false;
   }
 
-  bool ReasonerAnonymous::checkRestriction(IndividualBranch* indiv, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
+  // We just check if the required proprty is involved, regardless the value
+  // todo: Is it reaaly that we need to do ?
+  bool ReasonerAnonymous::checkRestrictionFirstLayer(IndividualBranch* indiv, ClassExpression* ano_elem)
   {
-    if(ano_elem->object_property_involved_ != nullptr || ano_elem->data_property_involved_ != nullptr)
+    if(ano_elem->object_property_involved_ != nullptr)
     {
+      std::unordered_set<ObjectPropertyBranch*> down_properties;
+      ontology_->object_property_graph_.getDownPtr(ano_elem->object_property_involved_, down_properties);
+
       if(indiv->same_as_.empty() == false)
       {
-        const size_t same_size = indiv->same_as_.size();
-        for(size_t i = 0; i < same_size; i++)
+        for(auto& indiv_same : indiv->same_as_)
         {
-          if(indiv->same_as_[i].elem->get() != indiv->get())
-          {
-            if(checkCard(indiv->same_as_[i].elem, ano_elem, used))
-            {
-              used.emplace_back(indiv->value() + "|sameAs|" + indiv->same_as_[i].elem->value(),
-                                indiv->same_as_.has_induced_inheritance_relations[i]);
-              return true;
-            }
-          }
+          if(checkPropertyExistence(indiv_same.elem->object_relations_.relations, down_properties))
+            return true;
         }
       }
-
-      return checkCard(indiv, ano_elem, used);
+      else
+        return checkPropertyExistence(indiv->object_relations_.relations, down_properties);
     }
-    else if(ano_elem->class_involved_ != nullptr)
-      return checkTypeRestriction(indiv, ano_elem, used);
-    else if(ano_elem->oneof)
+    else if(ano_elem->data_property_involved_ != nullptr)
     {
-      std::string one_of;
-      std::string explanation;
-      for(auto* elem : ano_elem->sub_elements_)
+      std::unordered_set<DataPropertyBranch*> down_properties;
+      ontology_->data_property_graph_.getDownPtr(ano_elem->data_property_involved_, down_properties);
+
+      if(indiv->same_as_.empty() == false)
       {
-        if(one_of.empty() == false)
-          one_of += ", ";
-        one_of += elem->individual_involved_->value();
-        if(checkIndividualRestriction(indiv, elem, used) == true)
-          explanation = indiv->value();
+        for(auto& indiv_same : indiv->same_as_)
+        {
+          if(checkPropertyExistence(indiv_same.elem->data_relations_.relations, down_properties))
+            return true;
+        }
       }
-      if(explanation.empty() == false)
+      else
+        return checkPropertyExistence(indiv->data_relations_.relations, down_properties);
+    }
+
+    return false;
+  }
+
+  /* Full Datatype tree resolution */
+
+  bool ReasonerAnonymous::resolveTree(LiteralNode* literal, ClassExpression* expession, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
+  {
+    switch (expession->type_)
+    {
+    case ClassExpressionType_e::class_expression_identifier:      // Type 1
+      return resolveIdentifier(literal, expession, used);
+
+    case ClassExpressionType_e::class_expression_one_of:          // Type 2
+      return resolveOneOfDatatype(literal, expession, used); // can be returned directly as `used` if not filled if false
+
+    case ClassExpressionType_e::class_expression_intersection_of: // Type 4
+      for(auto* elem : expession->sub_elements_)
       {
-        explanation += "|isOneOf|(" + one_of + ")";
-        used.emplace_back(explanation, nullptr);
+        if(resolveTree(literal, elem, used) == false)
+        {
+          used.clear();
+          return false;
+        }
+      }
+      return true;
+    
+    case ClassExpressionType_e::class_expression_union_of:        // Type 5
+      for(auto* elem : expession->sub_elements_)
+        if(resolveTree(literal, elem, used))
+          return true;
+      break;
+    
+    case ClassExpressionType_e::class_expression_complement_of:   //Type 6
+      if(resolveTree(literal, expession->sub_elements_.front(), used) == false)
         return true;
-      }
+      break;
+
+    default:                                                      // Type 3 is not applicable to datatype
+      break;
     }
 
     used.clear();
     return false;
   }
 
-  bool ReasonerAnonymous::checkTypeRestriction(IndividualBranch* indiv, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
+  // Type 1 on datatype
+  bool ReasonerAnonymous::resolveIdentifier(LiteralNode* literal, ClassExpression* expession, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
   {
-    if(indiv->same_as_.empty() == false)
+    (void)used;
+    if(expession->literal_involved_ != nullptr)
+      return (literal->type_ == expession->literal_involved_->type_);
+    else if(expession->datatype_involved_ != nullptr)
+      return (literal->type_ == expession->datatype_involved_);
+    else 
+      return false;
+  }
+
+  // Type 2 on datatype
+  bool ReasonerAnonymous::resolveOneOfDatatype(LiteralNode* literal, ClassExpression* expession, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
+  {
+    std::string list_string;
+    std::string explanation;
+    for(auto* elem : expession->sub_elements_)
     {
-      const size_t same_size = indiv->same_as_.size();
-      for(size_t i = 0; i < same_size; i++)
+      if(literal == expession->literal_involved_)
+        explanation = literal->value();
+
+      if(list_string.empty() == false)
+        list_string += ", ";
+      list_string += elem->literal_involved_->value();
+    }
+
+    if(explanation.empty() == false)
+    {
+      explanation += "|isOneOf|(" + list_string + ")";
+      used.emplace_back(explanation, nullptr);
+      return true;
+    }
+    return false;
+  }
+
+  /* Full Individual tree resolution */
+
+  bool ReasonerAnonymous::resolveTree(IndividualBranch* indiv, ClassExpression* expession, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
+  {
+    switch (expession->type_)
+    {
+    case ClassExpressionType_e::class_expression_identifier:      // Type 1
+      return resolveIdentifier(indiv, expession, used);      // can be returned directly as `used` if not filled if false
+
+    case ClassExpressionType_e::class_expression_one_of:          // Type 2
+      return resolveOneOfIndividual(indiv, expession, used); // can be returned directly as `used` if not filled if false
+
+    case ClassExpressionType_e::class_expression_restriction:     // Type 3
+      return resolveRestriction(indiv, expession, used);
+
+    case ClassExpressionType_e::class_expression_intersection_of: // Type 4
+      for(auto* elem : expession->sub_elements_)
       {
-        if(indiv->same_as_[i].elem->get() != indiv->get())
+        if(resolveTree(indiv, elem, used) == false)
+        {
+          used.clear();
+          return false;
+        }
+      }
+      return true;
+    
+    case ClassExpressionType_e::class_expression_union_of:        // Type 5
+      for(auto* elem : expession->sub_elements_)
+        if(resolveTree(indiv, elem, used))
+          return true;
+      break;
+    
+    case ClassExpressionType_e::class_expression_complement_of:   //Type 6
+      if(standard_mode_ == true)
+      {
+        return resolveDisjunctionTree(indiv, expession->sub_elements_.front(), used); // todo check
+      }
+      else if(resolveTree(indiv, expession->sub_elements_.front(), used) == false)
+        return true;
+      break;
+
+    default:
+      break;
+    }
+
+    used.clear();
+    return false;
+  }
+
+  // Type 1 on individuals
+  bool ReasonerAnonymous::resolveIdentifier(IndividualBranch* indiv, ClassExpression* expession, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
+  {
+    if(expession->individual_involved_ != nullptr)
+      return compareIndividuals(indiv, expession->individual_involved_, used);
+    else if(indiv->same_as_.empty() == false)
+    {
+      for(size_t i = 0; i < indiv->same_as_.size(); i++)
+      {
+        if(indiv->same_as_[i].elem != indiv)
         {
           const size_t is_a_size = indiv->same_as_[i].elem->is_a_.size();
           for(size_t j = 0; j < is_a_size; j++)
           {
-            if(existInInheritance(indiv->same_as_[i].elem->is_a_[j].elem, ano_elem->class_involved_->get(), used))
+            if(existInInheritance(indiv->same_as_[i].elem->is_a_[j].elem, expession->class_involved_, used))
             {
-              used.emplace_back(indiv->same_as_[i].elem->value() + "|isA|" + ano_elem->class_involved_->value(),
+              used.emplace_back(indiv->same_as_[i].elem->value() + "|isA|" + expession->class_involved_->value(),
                                 indiv->same_as_[i].elem->is_a_.has_induced_inheritance_relations[j]);
 
               used.emplace_back(indiv->value() + "|sameAs|" + indiv->same_as_[i].elem->value(),
@@ -501,254 +463,393 @@ namespace ontologenius {
     }
     else
     {
-      const size_t is_a_size = indiv->is_a_.size();
-      for(size_t i = 0; i < is_a_size; i++)
-      {
-        if(existInInheritance(indiv->is_a_[i].elem, ano_elem->class_involved_->get(), used))
+      for(size_t i = 0; i < indiv->is_a_.size(); i++)
+        if(existInInheritance(indiv->is_a_[i].elem, expession->class_involved_, used))
         {
-          used.emplace_back(indiv->value() + "|isA|" + ano_elem->class_involved_->value(),
+          used.emplace_back(indiv->value() + "|isA|" + expession->class_involved_->value(),
                             indiv->is_a_.has_induced_inheritance_relations[i]);
           return true;
         }
-      }
     }
 
     used.clear();
     return false;
   }
 
-  bool ReasonerAnonymous::checkTypeRestriction(LiteralNode* literal, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
+  // Type 2 on individuals
+  bool ReasonerAnonymous::resolveOneOfIndividual(IndividualBranch* indiv, ClassExpression* expession, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
   {
-    // To prevent warning of unused parameter for used
-    (void)used;
-    if(ano_elem->literal_involved_ != nullptr)
-      return (literal->type_ == ano_elem->literal_involved_->type_);
-    else if(ano_elem->datatype_involved_ != nullptr)
-      return (literal->type_ == ano_elem->datatype_involved_);
-    else {
-      std::cout << "checkTypeRestriction but no card has been setted" << std::endl;
+    std::string list_string;
+    std::string explanation;
+    for(auto* elem : expession->sub_elements_)
+    {
+      if(compareIndividuals(indiv, elem->individual_involved_, used))
+        explanation = indiv->value();
+
+      if(list_string.empty() == false)
+        list_string += ", ";
+      list_string += elem->individual_involved_->value();
+    }
+
+    if(explanation.empty() == false)
+    {
+      explanation += "|isOneOf|(" + list_string + ")";
+      used.emplace_back(explanation, nullptr);
+      return true;
+    }
+    return false;
+  }
+
+  // Type 3 on individuals
+  bool ReasonerAnonymous::resolveRestriction(IndividualBranch* indiv, ClassExpression* expession, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
+  {
+    bool solved = false;
+    switch(expession->restriction_type_)
+    {
+    case RestrictionConstraintType_e::restriction_all_values_from:
+      solved = standard_mode_ ? false : resolveAllValuesFrom(indiv, expession, used);
+      break;
+    case RestrictionConstraintType_e::restriction_some_values_from:
+      solved = resolveSomeValuesFrom(indiv, expession, used);
+      break;
+    case RestrictionConstraintType_e::restriction_has_value:
+      solved = resolveHasValue(indiv, expession, used);
+      break;
+    case RestrictionConstraintType_e::restriction_max_cardinality:
+      solved = standard_mode_ ? false : resolveMaxCardinality(indiv, expession, used);
+      break;
+    case RestrictionConstraintType_e::restriction_min_cardinality:
+      solved = standard_mode_ ? false : resolveMinCardinality(indiv, expession, used);
+      break;
+    case RestrictionConstraintType_e::restriction_cardinality:
+      solved = standard_mode_ ? false : resolveMaxCardinality(indiv, expession, used); // Max cardinality check if it is an exact cardinality
+      break;
+    default:
+      Display::error("Cardinality type outside of [min, max, exactly, only, value, some]");
+      break;
+    }
+
+    if(solved == false)
+      used.clear();
+    return solved;
+  }
+
+  bool ReasonerAnonymous::compareIndividuals(IndividualBranch* indiv, IndividualBranch* other, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
+  {
+    if(indiv->same_as_.empty())
+      return (indiv == other);
+    else
+    {
+      for(size_t i = 0; i < indiv->same_as_.size(); i++)
+      {
+        if((indiv->same_as_[i].elem != indiv) && 
+           (indiv->same_as_[i].elem == other))
+        {
+          used.emplace_back(indiv->value() + "|sameAs|" + other->value(),
+                            indiv->same_as_.has_induced_inheritance_relations[i]);
+          return true;
+        }
+      }
       return false;
     }
   }
 
-  bool ReasonerAnonymous::checkIndividualRestriction(IndividualBranch* indiv, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
+  bool ReasonerAnonymous::checkValue(IndividualBranch* indiv_from, ClassExpression* expession, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
   {
-    if(indiv->same_as_.empty() == false)
+    return compareIndividuals(indiv_from, expession->individual_involved_, used);
+  }
+
+  bool ReasonerAnonymous::checkValue(LiteralNode* literal_from, ClassExpression* expession, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
+  {
+    (void)used;
+    if(literal_from == nullptr)
+      std::cout << "literal_from is null" << std::endl;
+    if(expession->literal_involved_ == nullptr)
+      std::cout << "expession->literal_involved_ is null" << std::endl;
+    return (literal_from->get() == expession->literal_involved_->get());
+  }
+
+  bool ReasonerAnonymous::resolveAllValuesFrom(IndividualBranch* indiv, ClassExpression* expession, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
+  {
+    std::unordered_map<IndividualBranch*, std::vector<std::pair<std::string, size_t>>> indiv_indexes;
+    bool valid = false;
+    size_t nb_relations = 0;
+    if(indiv->same_as_.empty())
     {
-      const size_t same_size = indiv->same_as_.size();
-      for(size_t i = 0; i < same_size; i++)
+      if(expession->object_property_involved_ != nullptr)
+        valid = resolveAllValuesFrom(indiv->object_relations_.relations, expession->object_property_involved_, indiv_indexes[indiv], expession, used);
+      else if(expession->data_property_involved_ != nullptr)
+        valid = resolveAllValuesFrom(indiv->data_relations_.relations, expession->data_property_involved_, indiv_indexes[indiv], expession, used);
+
+      if(valid)
+        nb_relations += indiv_indexes[indiv].size();
+    }
+    else
+    {
+      for(size_t i = 0; i < indiv->same_as_.size(); i++)
       {
-        if(indiv->same_as_[i].elem->get() != indiv->get())
+        auto* same = indiv->same_as_[i].elem;
+        if(expession->object_property_involved_ != nullptr)
+          valid = resolveAllValuesFrom(same->object_relations_.relations, expession->object_property_involved_, indiv_indexes[same], expession, used);
+        else if(expession->data_property_involved_ != nullptr)
+          valid = resolveAllValuesFrom(same->data_relations_.relations, expession->data_property_involved_, indiv_indexes[same], expession, used);
+
+        if(valid)
         {
-          if(indiv->same_as_[i].elem->get() == ano_elem->individual_involved_->get())
+          nb_relations += indiv_indexes[same].size();
+
+          if((indiv_indexes[same].empty() == false) && (same != indiv))
+            used.emplace_back(indiv->value() + "|sameAs|" + same->value(), indiv->same_as_.has_induced_inheritance_relations[i]);
+        }
+        else
+          break;
+      }
+    }
+
+    if(valid && (nb_relations != 0))
+    {
+      if(expession->object_property_involved_ != nullptr)
+      {
+        for(auto& indexes : indiv_indexes)
+          for(auto& expl : indexes.second)
+            used.emplace_back(indexes.first->value() + "|" + expl.first, indexes.first->object_relations_.has_induced_inheritance_relations[expl.second]);
+      }
+      else if(expession->data_property_involved_ != nullptr)
+      {
+        for(auto& indexes : indiv_indexes)
+          for(auto& expl : indexes.second)
+            used.emplace_back(indexes.first->value() + "|" + expl.first, indexes.first->data_relations_.has_induced_inheritance_relations[expl.second]);
+      }
+      return true;
+    }
+    return false; // used will be cleared by resolveRestriction
+  }
+
+  bool ReasonerAnonymous::resolveSomeValuesFrom(IndividualBranch* indiv, ClassExpression* expession, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
+  {
+    std::pair<std::string, int> index{"", -1};
+    IndividualBranch* valid_indiv = nullptr;
+
+    if(expession->object_property_involved_ != nullptr)
+      index = resolveSomeValuesFrom(indiv->object_relations_.relations, expession->object_property_involved_, expession, used);
+    else if(expession->data_property_involved_ != nullptr)
+      index = resolveSomeValuesFrom(indiv->data_relations_.relations, expession->data_property_involved_, expession, used);
+
+    if(index.second != -1)
+      valid_indiv = indiv;
+    else
+    {
+      for(size_t i = 0; i < indiv->same_as_.size(); i++)
+      {
+        auto* same = indiv->same_as_[i].elem;
+        if(indiv != same)
+        {
+          if(expession->object_property_involved_ != nullptr)
+            index = resolveSomeValuesFrom(same->object_relations_.relations, expession->object_property_involved_, expession, used);
+          else if(expession->data_property_involved_ != nullptr)
+            index = resolveSomeValuesFrom(same->data_relations_.relations, expession->data_property_involved_, expession, used);
+
+          if(index.second != -1)
           {
-            used.emplace_back(indiv->value() + "|sameAs|" + ano_elem->individual_involved_->value(),
-                              indiv->same_as_.has_induced_inheritance_relations[i]);
-            return true;
+            valid_indiv = same;
+            used.emplace_back(indiv->value() + "|sameAs|" + same->value(), indiv->same_as_.has_induced_inheritance_relations[i]);
+            break;
           }
         }
       }
     }
 
-    return (indiv->get() == ano_elem->individual_involved_->get());
+    if(valid_indiv != nullptr)
+    {
+      if(expession->object_property_involved_ != nullptr)
+        used.emplace_back(valid_indiv->value() + "|" + index.first, valid_indiv->object_relations_.has_induced_inheritance_relations[index.second]);
+      else if(expession->data_property_involved_ != nullptr)
+        used.emplace_back(valid_indiv->value() + "|" + index.first, valid_indiv->data_relations_.has_induced_inheritance_relations[index.second]);
+
+      return true;
+    }
+    return false; // used will be cleared by resolveRestriction
   }
 
-  bool ReasonerAnonymous::checkCard(IndividualBranch* indiv, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
+  bool ReasonerAnonymous::resolveHasValue(IndividualBranch* indiv, ClassExpression* expession, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
   {
-    switch(ano_elem->restriction_type_)
+    std::pair<std::string, int> index{"", -1};
+    IndividualBranch* valid_indiv = nullptr;
+
+    if(expession->object_property_involved_ != nullptr)
+      index = resolveHasValue(indiv->object_relations_.relations, expession->object_property_involved_, expession, used);
+    else if(expession->data_property_involved_ != nullptr)
+      index = resolveHasValue(indiv->data_relations_.relations, expession->data_property_involved_, expession, used);
+
+    if(index.second != -1)
+      valid_indiv = indiv;
+    else
     {
-    case RestrictionConstraintType_e::restriction_some_values_from:
-      return checkSomeCard(indiv, ano_elem, used);
-    case RestrictionConstraintType_e::restriction_min_cardinality:
-      if(standard_mode_ == true)
-        return false;
-      else
-        return checkMinCard(indiv, ano_elem, used);
-    case RestrictionConstraintType_e::restriction_max_cardinality:
-      if(standard_mode_ == true)
-        return false;
-      else
-        return checkMaxCard(indiv, ano_elem, used);
-    case RestrictionConstraintType_e::restriction_cardinality:
-      if(standard_mode_ == true)
-        return false;
-      else
-        return checkExactlyCard(indiv, ano_elem, used);
-    case RestrictionConstraintType_e::restriction_all_values_from:
-      if(standard_mode_ == true)
-        return false;
-      else
-        return checkOnlyCard(indiv, ano_elem, used);
-    case RestrictionConstraintType_e::restriction_has_value:
-      return checkValueCard(indiv, ano_elem, used);
-    default:
-      Display::error("Cardinality type outside of [min, max, exactly, only, value, some]");
+      for(size_t i = 0; i < indiv->same_as_.size(); i++)
+      {
+        auto* same = indiv->same_as_[i].elem;
+        if(indiv != same)
+        {
+          if(expession->object_property_involved_ != nullptr)
+            index = resolveHasValue(same->object_relations_.relations, expession->object_property_involved_, expession, used);
+          else if(expession->data_property_involved_ != nullptr)
+            index = resolveHasValue(same->data_relations_.relations, expession->data_property_involved_, expession, used);
+
+          if(index.second != -1)
+          {
+            valid_indiv = same;
+            used.emplace_back(indiv->value() + "|sameAs|" + same->value(), indiv->same_as_.has_induced_inheritance_relations[i]);
+            break;
+          }
+        }
+      }
+    }
+
+    if(valid_indiv != nullptr)
+    {
+      if(expession->object_property_involved_ != nullptr)
+        used.emplace_back(valid_indiv->value() + "|" + index.first, valid_indiv->object_relations_.has_induced_inheritance_relations[index.second]);
+      else if(expession->data_property_involved_ != nullptr)
+        used.emplace_back(valid_indiv->value() + "|" + index.first, valid_indiv->data_relations_.has_induced_inheritance_relations[index.second]);
+
+      return true;
+    }
+    return false; // used will be cleared by resolveRestriction
+  }
+
+  bool ReasonerAnonymous::resolveMaxCardinality(IndividualBranch* indiv, ClassExpression* expession, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
+  {
+    std::unordered_map<IndividualBranch*, std::vector<std::pair<std::string, size_t>>> indiv_indexes;
+    bool valid = false;
+    size_t nb_relations = 0;
+    if(indiv->same_as_.empty())
+    {
+      if(expession->object_property_involved_ != nullptr)
+        valid = resolveMaxCardinality(indiv->object_relations_.relations, expession->object_property_involved_, indiv_indexes[indiv], nb_relations, expession, used);
+      else if(expession->data_property_involved_ != nullptr)
+        valid = resolveMaxCardinality(indiv->data_relations_.relations, expession->data_property_involved_, indiv_indexes[indiv], nb_relations, expession, used);
+    }
+    else
+    {
+      for(size_t i = 0; i < indiv->same_as_.size(); i++)
+      {
+        auto* same = indiv->same_as_[i].elem;
+        if(expession->object_property_involved_ != nullptr)
+          valid = resolveMaxCardinality(same->object_relations_.relations, expession->object_property_involved_, indiv_indexes[same], nb_relations, expession, used);
+        else if(expession->data_property_involved_ != nullptr)
+          valid = resolveMaxCardinality(same->data_relations_.relations, expession->data_property_involved_, indiv_indexes[same], nb_relations, expession, used);
+
+        if(valid)
+        {
+          if((indiv_indexes[same].empty() == false) && (same != indiv))
+            used.emplace_back(indiv->value() + "|sameAs|" + same->value(), indiv->same_as_.has_induced_inheritance_relations[i]);
+        }
+        else
+          break;
+      }
+    }
+
+    if(expession->restriction_type_ == RestrictionConstraintType_e::restriction_cardinality)
+      valid = (nb_relations == expession->cardinality_value_);
+
+    if(valid)
+    {
+      if(expession->object_property_involved_ != nullptr)
+      {
+        for(auto& indexes : indiv_indexes)
+          for(auto& expl : indexes.second)
+            used.emplace_back(indexes.first->value() + "|" + expl.first, indexes.first->object_relations_.has_induced_inheritance_relations[expl.second]);
+      }
+      else if(expession->data_property_involved_ != nullptr)
+      {
+        for(auto& indexes : indiv_indexes)
+          for(auto& expl : indexes.second)
+            used.emplace_back(indexes.first->value() + "|" + expl.first, indexes.first->data_relations_.has_induced_inheritance_relations[expl.second]);
+      }
+    }
+    return valid; // used will be cleared by resolveRestriction if `valid` is false
+  }
+
+  bool ReasonerAnonymous::resolveMinCardinality(IndividualBranch* indiv, ClassExpression* expession, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
+  {
+    std::unordered_map<IndividualBranch*, std::vector<std::pair<std::string, size_t>>> indiv_indexes;
+    bool valid = false;
+    size_t nb_relations = 0;
+    if(indiv->same_as_.empty())
+    {
+      if(expession->object_property_involved_ != nullptr)
+        valid = resolveMinCardinality(indiv->object_relations_.relations, expession->object_property_involved_, indiv_indexes[indiv], nb_relations, expession, used);
+      else if(expession->data_property_involved_ != nullptr)
+        valid = resolveMinCardinality(indiv->data_relations_.relations, expession->data_property_involved_, indiv_indexes[indiv], nb_relations, expession, used);
+    }
+    else
+    {
+      for(size_t i = 0; i < indiv->same_as_.size(); i++)
+      {
+        auto* same = indiv->same_as_[i].elem;
+        if(expession->object_property_involved_ != nullptr)
+          valid = resolveMinCardinality(same->object_relations_.relations, expession->object_property_involved_, indiv_indexes[same], nb_relations, expession, used);
+        else if(expession->data_property_involved_ != nullptr)
+          valid = resolveMinCardinality(same->data_relations_.relations, expession->data_property_involved_, indiv_indexes[same], nb_relations, expession, used);
+
+        if((indiv_indexes[same].empty() == false) && (same != indiv))
+          used.emplace_back(indiv->value() + "|sameAs|" + same->value(), indiv->same_as_.has_induced_inheritance_relations[i]);
+
+        if(valid)
+          break;
+      }
+    }
+
+    if(valid)
+    {
+      if(expession->object_property_involved_ != nullptr)
+      {
+        for(auto& indexes : indiv_indexes)
+          for(auto& expl : indexes.second)
+            used.emplace_back(indexes.first->value() + "|" + expl.first, indexes.first->object_relations_.has_induced_inheritance_relations[expl.second]);
+      }
+      else if(expession->data_property_involved_ != nullptr)
+      {
+        for(auto& indexes : indiv_indexes)
+          for(auto& expl : indexes.second)
+            used.emplace_back(indexes.first->value() + "|" + expl.first, indexes.first->data_relations_.has_induced_inheritance_relations[expl.second]);
+      }
+    }
+    return valid; // used will be cleared by resolveRestriction if `valid` is false
+  }
+
+  // Not yet checked
+
+  bool ReasonerAnonymous::resolveDisjunctionTree(IndividualBranch* indiv, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
+  {
+    // works for class and class expression on object property range, not for data property
+    // do we need to take into account the used, since disjointness isn't dynamic
+    // check the disjunctions between the indiv and the class elements in the ano_elem tree (not( Lidar and Sonar))
+    if(ano_elem->type_ == ClassExpressionType_e::class_expression_intersection_of)
+    {
+      for(auto* elem : ano_elem->sub_elements_)
+      {
+        if(resolveDisjunctionTree(indiv, elem, used) == false) // if false, one of the classes is not disjunctive, and thus the eq is not verif
+        {
+          used.clear();
+          return false;
+        }
+      }
+      return true;
+    }
+    else if(ano_elem->type_ == ClassExpressionType_e::class_expression_union_of)
+    {
+      for(auto* elem : ano_elem->sub_elements_)
+      {
+        if(resolveDisjunctionTree(indiv, elem, used) == true) // if true, at least one in the or expression is disjoint, so eq is verif
+          return true;
+      }
+      used.clear();
       return false;
     }
-  }
+    else if(ano_elem->class_involved_ != nullptr)
+      return checkClassesDisjointess(indiv, ano_elem->class_involved_); // actual check of disjointness
 
-  bool ReasonerAnonymous::checkMinCard(IndividualBranch* indiv, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
-  {
-    std::vector<std::pair<std::string, size_t>> indexes;
-
-    if(ano_elem->object_property_involved_ != nullptr)
-    {
-      indexes = checkMinCard(indiv->object_relations_.relations, ano_elem, used);
-      if(indexes.empty() == false)
-      {
-        for(auto& index : indexes)
-          used.emplace_back(indiv->value() + "|" + index.first, indiv->object_relations_.has_induced_inheritance_relations[index.second]);
-        return true;
-      }
-    }
-    else if(ano_elem->data_property_involved_ != nullptr)
-    {
-      indexes = checkMinCard(indiv->data_relations_.relations, ano_elem, used);
-      if(indexes.empty() == false)
-      {
-        for(auto& index : indexes)
-          used.emplace_back(indiv->value() + "|" + index.first, indiv->data_relations_.has_induced_inheritance_relations[index.second]);
-        return true;
-      }
-    }
-    used.clear();
-    return false;
-  }
-
-  bool ReasonerAnonymous::checkMaxCard(IndividualBranch* indiv, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
-  {
-    std::vector<std::pair<std::string, size_t>> indexes;
-
-    if(ano_elem->object_property_involved_ != nullptr)
-    {
-      indexes = checkMaxCard(indiv->object_relations_.relations, ano_elem, used);
-      if(indexes.empty() == false)
-      {
-        for(auto& index : indexes)
-          used.emplace_back(indiv->value() + "|" + index.first, indiv->object_relations_.has_induced_inheritance_relations[index.second]);
-        return true;
-      }
-    }
-    else if(ano_elem->data_property_involved_ != nullptr)
-    {
-      indexes = checkMaxCard(indiv->data_relations_.relations, ano_elem, used);
-      if(indexes.empty() == false)
-      {
-        for(auto& index : indexes)
-          used.emplace_back(indiv->value() + "|" + index.first, indiv->data_relations_.has_induced_inheritance_relations[index.second]);
-        return true;
-      }
-    }
-    used.clear();
-    return false;
-  }
-
-  bool ReasonerAnonymous::checkExactlyCard(IndividualBranch* indiv, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
-  {
-    std::vector<std::pair<std::string, size_t>> indexes;
-
-    if(ano_elem->object_property_involved_ != nullptr)
-    {
-      indexes = checkExactlyCard(indiv->object_relations_.relations, ano_elem, used);
-      if(indexes.empty() == false)
-      {
-        for(auto& index : indexes)
-          used.emplace_back(indiv->value() + "|" + index.first, indiv->object_relations_.has_induced_inheritance_relations[index.second]);
-        return true;
-      }
-    }
-    else if(ano_elem->data_property_involved_ != nullptr)
-    {
-      indexes = checkExactlyCard(indiv->data_relations_.relations, ano_elem, used);
-      if(indexes.empty() == false)
-      {
-        for(auto& index : indexes)
-          used.emplace_back(indiv->value() + "|" + index.first, indiv->data_relations_.has_induced_inheritance_relations[index.second]);
-        return true;
-      }
-    }
-    used.clear();
-    return false;
-  }
-
-  bool ReasonerAnonymous::checkOnlyCard(IndividualBranch* indiv, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
-  {
-    std::vector<std::pair<std::string, size_t>> indexes;
-
-    if(ano_elem->object_property_involved_ != nullptr)
-    {
-      indexes = checkOnlyCard(indiv->object_relations_.relations, ano_elem, used);
-      if(indexes.empty() == false)
-      {
-        for(auto& index : indexes)
-          used.emplace_back(indiv->value() + "|" + index.first, indiv->object_relations_.has_induced_inheritance_relations[index.second]);
-        return true;
-      }
-    }
-    else if(ano_elem->data_property_involved_ != nullptr)
-    {
-      indexes = checkOnlyCard(indiv->data_relations_.relations, ano_elem, used);
-      if(indexes.empty() == false)
-      {
-        for(auto& index : indexes)
-          used.emplace_back(indiv->value() + "|" + index.first, indiv->data_relations_.has_induced_inheritance_relations[index.second]);
-        return true;
-      }
-    }
-    used.clear();
-    return false;
-  }
-
-  bool ReasonerAnonymous::checkSomeCard(IndividualBranch* indiv, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
-  {
-    std::pair<std::string, int> index;
-
-    if(ano_elem->object_property_involved_ != nullptr)
-    {
-      index = checkSomeCard(indiv->object_relations_.relations, ano_elem, used);
-      if(index.second != -1)
-      {
-        used.emplace_back(indiv->value() + "|" + index.first, indiv->object_relations_.has_induced_inheritance_relations[index.second]);
-        return true;
-      }
-    }
-    else if(ano_elem->data_property_involved_ != nullptr)
-    {
-      index = checkSomeCard(indiv->data_relations_.relations, ano_elem, used);
-      if(index.second != -1)
-      {
-        used.emplace_back(indiv->value() + "|" + index.first, indiv->data_relations_.has_induced_inheritance_relations[index.second]);
-        return true;
-      }
-    }
-    used.clear();
-    return false;
-  }
-
-  bool ReasonerAnonymous::checkValueCard(IndividualBranch* indiv, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
-  {
-    std::pair<std::string, int> index;
-
-    if(ano_elem->object_property_involved_ != nullptr)
-    {
-      index = checkValueCard(indiv->object_relations_.relations, ano_elem, used);
-      if(index.second != -1)
-      {
-        used.emplace_back(indiv->value() + "|" + index.first, indiv->object_relations_.has_induced_inheritance_relations[index.second]);
-        return true;
-      }
-    }
-    else if(ano_elem->data_property_involved_ != nullptr)
-    {
-      index = checkValueCard(indiv->data_relations_.relations, ano_elem, used);
-      if(index.second != -1)
-      {
-        used.emplace_back(indiv->value() + "|" + index.first, indiv->data_relations_.has_induced_inheritance_relations[index.second]);
-        return true;
-      }
-    }
-
-    used.clear();
     return false;
   }
 
