@@ -23,6 +23,8 @@ namespace ontologenius {
 
   private:
     bool standard_mode_;
+    IndividualBranch* current_individual_;
+    bool has_involved_other_individual_;
 
     std::unordered_map<ClassBranch*, std::unordered_set<ClassBranch*>> disjoints_cache_;
 
@@ -46,21 +48,12 @@ namespace ontologenius {
     bool resolveMinCardinality(IndividualBranch* indiv, ClassExpression* expession, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used);
 
     bool checkClassesDisjointess(IndividualBranch* indiv, ClassBranch* class_equiv);
+    bool resolveDisjunctionTree(IndividualBranch* indiv, ClassExpression* ano_elem);
 
     void addInferredInheritance(IndividualBranch* indiv,
                                 AnonymousClassBranch* anonymous_branch,
                                 AnonymousClassTree* anonymous_tree,
-                                const std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used);
-
-    bool resolveFirstLayer(IndividualBranch* indiv, ClassExpression* ano_elem);    
-
-    bool resolveDisjunctionTree(IndividualBranch* indiv, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used);
-    bool resolveDisjunctionTreeFirstLayer(IndividualBranch* indiv, ClassExpression* ano_elem);
-
-    bool checkOneOfFirstLayer(IndividualBranch* indiv, ClassExpression* ano_elem);
-    bool checkRestrictionFirstLayer(IndividualBranch* indiv, ClassExpression* ano_elem);
-
-    
+                                const std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used);  
 
     std::string computeDebugUpdate(IndividualBranch* indiv, AnonymousClassTree* anonymous_tree)
     {
@@ -72,15 +65,6 @@ namespace ontologenius {
       else
         res += "|equiv: 0";
       return res;
-    }
-
-    template<typename T, typename U>
-    bool checkPropertyExistence(const std::vector<T>& relations, const std::unordered_set<U*>& properties)
-    {
-      for(auto& relation : relations)
-        if(properties.find(relation.first) != properties.end())
-          return true;
-      return false;
     }
 
     template<typename T, typename B>

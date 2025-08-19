@@ -16,7 +16,7 @@
 #include "ontologenius/core/reasoner/plugins/ReasonerInterface.h"
 #include "ontologenius/graphical/Display.h"
 
-// #define DEBUG
+//#define DEBUG
 
 namespace ontologenius {
 
@@ -29,7 +29,7 @@ namespace ontologenius {
       standard_mode_ = true;
   }
 
-  void ReasonerAnonymous::postReason()
+ void ReasonerAnonymous::postReason()
   {
     const std::lock_guard<std::shared_timed_mutex> lock(ontology_->individual_graph_.mutex_);
     const std::shared_lock<std::shared_timed_mutex> lock_class(ontology_->class_graph_.mutex_);
@@ -40,12 +40,14 @@ namespace ontologenius {
 
     for(auto* indiv : ontology_->individual_graph_.get())
     {
+      current_individual_ = indiv;
+
       if(first_run_ ||
          indiv->isUpdated() ||
          (indiv->flags_.find("equiv") != indiv->flags_.end()) ||
-         indiv->hasUpdatedObjectRelation() ||
-         indiv->hasUpdatedDataRelation() ||
-         indiv->hasUpdatedInheritanceRelation())
+         indiv->hasUpdatedObjectRelation() ||    // test if one of its `object_relations` property has been updated
+         indiv->hasUpdatedDataRelation() ||      // test if one of its `data_relations` property has been updated
+         indiv->hasUpdatedInheritanceRelation()) // test if one of its `is_a` class has been updated
       {
         bool has_active_equiv = false;
 
@@ -53,17 +55,19 @@ namespace ontologenius {
         for(auto* anonymous_branch : ontology_->anonymous_graph_.get())
         {
           bool trees_evaluation_result = false;
-          bool is_already_a = std::any_of(indiv->is_a_.cbegin(), indiv->is_a_.cend(), [anonymous_branch](const auto& is_a) { return is_a.elem == anonymous_branch->class_equiv_; });
+          bool is_already_a = std::any_of(indiv->is_a_.cbegin(), indiv->is_a_.cend(), [anonymous_branch](const auto& is_a) { return is_a.elem == anonymous_branch->class_equiv_; }); // same as not done // need to test if same_as is_already_a
 
           if(is_already_a || checkClassesDisjointess(indiv, anonymous_branch->class_equiv_) == false)
           {
+             
             // Loop over every equivalence relations corresponding to one class
             for(auto* anonymous_tree : anonymous_branch->ano_trees_)
             {
 #ifdef DEBUG
               computeDebugUpdate(indiv, anonymous_tree);
 #endif
-
+              std::string equiv_flag = "equiv_" + anonymous_tree->ano_name;
+              
               if(is_already_a)
               {
                 const bool inferred_by_me = std::any_of(indiv->is_a_.cbegin(), indiv->is_a_.cend(), [anonymous_branch, anonymous_tree](const auto& is_a) {
@@ -71,60 +75,62 @@ namespace ontologenius {
                 });
                 if(inferred_by_me == false)
                 {
+                  indiv->flags_[equiv_flag] = {};
                   is_already_a = false;
                   break;
                 }
               }
 
-              std::string equiv_flag = "equiv_" + anonymous_tree->ano_name;
-
               if((indiv->flags_.find(equiv_flag) != indiv->flags_.end()) || // already validated at least one member of an ano expression
-                 ((indiv->isUpdated() == true) &&                           // indiv has been updated -> new individual
+                 ((indiv->isUpdated() == true) &&
                   ((anonymous_tree->involves_class && indiv->is_a_.isUpdated()) ||
                    (anonymous_tree->involves_object_property && indiv->object_relations_.isUpdated()) ||
                    (anonymous_tree->involves_data_property && indiv->data_relations_.isUpdated()) ||
                    (anonymous_tree->involves_individual && indiv->same_as_.isUpdated()))))
               {
-                bool tree_first_layer_result = is_already_a ? true : resolveFirstLayer(indiv, anonymous_tree->root_node_);
-                has_active_equiv = has_active_equiv || tree_first_layer_result;
+                has_involved_other_individual_ = false; // reset the flag before running resolveTree
+                used.clear();
+                used.reserve(anonymous_tree->depth_);
 
-                if(tree_first_layer_result == true)
+                bool equivalence_found = resolveTree(indiv, anonymous_tree->root_node_, used);
+                trees_evaluation_result = trees_evaluation_result || equivalence_found; // mark if a least one of the tree has succeeded
+
+                if(equivalence_found)
                 {
                   indiv->flags_[equiv_flag] = {};
-                  used.clear();
-                  used.reserve(anonymous_tree->depth_);
-                  bool equivalence_found = resolveTree(indiv, anonymous_tree->root_node_, used);
-                  trees_evaluation_result = trees_evaluation_result || equivalence_found;
+                  has_active_equiv = true;
 
-                  if(equivalence_found)
+                  if(is_already_a == false) // the indiv is checked to still be of the same class so we can break out of the loop
                   {
-                    if(is_already_a == false) // the indiv is checked to still be of the same class so we can break out of the loop
+                    addInferredInheritance(indiv, anonymous_branch, anonymous_tree, used);
+                    nb_update++;
+                    if(anonymous_branch->class_equiv_->isHidden() == false)
                     {
-                      addInferredInheritance(indiv, anonymous_branch, anonymous_tree, used);
-                      nb_update++;
-                      if(anonymous_branch->class_equiv_->isHidden() == false)
-                      {
-                        explanations_.emplace_back("[ADD]" + indiv->value() + "|isA|" + anonymous_branch->class_equiv_->value(),
-                                                  "[ADD]" + indiv->is_a_.back().getExplanation());
-                      }
+                      explanations_.emplace_back("[ADD]" + indiv->value() + "|isA|" + anonymous_branch->class_equiv_->value(),
+                                                "[ADD]" + indiv->is_a_.back().getExplanation());
                     }
-                    // once we get a valid equivalence for a class, we break out of the loop
-                    break;
                   }
+                }
+                else if(has_involved_other_individual_)
+                {
+                  indiv->flags_[equiv_flag] = {};
+                  has_active_equiv = true;
                 }
                 else
                   indiv->flags_.erase(equiv_flag);
               }
-            }
+            } // for all trees
           }
+
           // used to remove inheritance in case an individual previously inferred does not check any of the expressions after updates
-          if(trees_evaluation_result == false && anonymous_branch->ano_trees_.empty() == false && is_already_a)
+          if((trees_evaluation_result == false) && (anonymous_branch->ano_trees_.empty() == false) && is_already_a)
           {
             indiv->nb_updates_++;
             anonymous_branch->class_equiv_->nb_updates_++;
             ontology_->individual_graph_.removeInheritage(indiv, anonymous_branch->class_equiv_, explanations_, true);
           }
         }
+
         if(has_active_equiv)
           indiv->flags_["equiv"] = {};
         else
@@ -160,151 +166,6 @@ namespace ontologenius {
         }
       }
     }
-  }
-
-  bool ReasonerAnonymous::checkClassesDisjointess(IndividualBranch* indiv, ClassBranch* class_equiv)
-  {
-    auto it = disjoints_cache_.find(class_equiv);
-    std::unordered_set<ClassBranch*> disjoints;
-
-    if(it != disjoints_cache_.end())
-    {
-      if(it->second.empty())
-        return false;
-      else
-        disjoints = it->second;
-    }
-    else
-    {
-      ontology_->class_graph_.getDisjoint(class_equiv, disjoints);
-      disjoints_cache_[class_equiv] = disjoints;
-    }
-
-    if(disjoints.empty() == false)
-    {
-      std::unordered_set<ClassBranch*> ups;
-      ontology_->individual_graph_.getUpPtr(indiv, ups);
-      return (ontology_->class_graph_.firstIntersection(ups, disjoints) != nullptr);
-    }
-    else
-      return false;
-  }
-
-  /* First layer test */
-
-  bool ReasonerAnonymous::resolveFirstLayer(IndividualBranch* indiv, ClassExpression* ano_elem)
-  {
-    if(ano_elem->type_ == ClassExpressionType_e::class_expression_intersection_of)
-    {
-      if(ano_elem->sub_elements_.empty() == false)
-        return resolveFirstLayer(indiv, ano_elem->sub_elements_.front());
-    }
-    else if(ano_elem->type_ == ClassExpressionType_e::class_expression_union_of)
-    {
-      for(auto* elem : ano_elem->sub_elements_)
-        if(resolveFirstLayer(indiv, elem) == true)
-          return true;
-      return false;
-    }
-    else if(ano_elem->type_ == ClassExpressionType_e::class_expression_complement_of)
-    {
-      if(standard_mode_ == true)                                                         // OWA
-        return resolveDisjunctionTreeFirstLayer(indiv, ano_elem->sub_elements_.front()); // need to make a version without the 'used' vector
-      else                                                                               // CWA
-        return !resolveFirstLayer(indiv, ano_elem->sub_elements_.front());
-    }
-    else if(ano_elem->type_ == ClassExpressionType_e::class_expression_one_of)
-      return checkOneOfFirstLayer(indiv, ano_elem);
-    else if(ano_elem->type_ == ClassExpressionType_e::class_expression_restriction)
-      return checkRestrictionFirstLayer(indiv, ano_elem);
-    else if(ano_elem->class_involved_ != nullptr) // equivalent to identifier
-      return (ontology_->individual_graph_.isA(indiv, ano_elem->class_involved_->get()));
-
-    return false;
-  }
-
-  bool ReasonerAnonymous::resolveDisjunctionTreeFirstLayer(IndividualBranch* indiv, ClassExpression* ano_elem)
-  {
-    // works for class and class expression on object property range, not for data property
-    // do we need to take into account the used, since disjointness isn't dynamic
-    // check the disjunctions between the indiv and the class elements in the ano_elem tree (not( Lidar and Sonar))
-    if(ano_elem->type_ == ClassExpressionType_e::class_expression_intersection_of)
-    {
-      for(auto* elem : ano_elem->sub_elements_)
-      {
-        if(resolveDisjunctionTreeFirstLayer(indiv, elem) == false)
-          return false;
-      }
-      return true;
-    }
-    else if(ano_elem->type_ == ClassExpressionType_e::class_expression_union_of)
-    {
-      for(auto* elem : ano_elem->sub_elements_)
-      {
-        if(resolveDisjunctionTreeFirstLayer(indiv, elem) == true)
-          return true;
-      }
-      return false;
-    }
-    else if(ano_elem->class_involved_ != nullptr)
-      return checkClassesDisjointess(indiv, ano_elem->class_involved_); // actual check of disjointness
-
-    return false;
-  }
-
-  bool ReasonerAnonymous::checkOneOfFirstLayer(IndividualBranch* indiv, ClassExpression* ano_elem)
-  {
-    for(auto* indiv_elem : ano_elem->sub_elements_)
-    {
-      if(indiv->same_as_.empty() == false)
-      {
-        if(std::find_if(indiv->same_as_.begin(), indiv->same_as_.end(), [elem = indiv_elem->individual_involved_](auto same) { return same == elem; }) != indiv->same_as_.end())
-          return true;
-      }
-      else if(indiv->get() == indiv_elem->individual_involved_->get())
-        return true;
-    }
-    return false;
-  }
-
-  // We just check if the required proprty is involved, regardless the value
-  // todo: Is it reaaly that we need to do ?
-  bool ReasonerAnonymous::checkRestrictionFirstLayer(IndividualBranch* indiv, ClassExpression* ano_elem)
-  {
-    if(ano_elem->object_property_involved_ != nullptr)
-    {
-      std::unordered_set<ObjectPropertyBranch*> down_properties;
-      ontology_->object_property_graph_.getDownPtr(ano_elem->object_property_involved_, down_properties);
-
-      if(indiv->same_as_.empty() == false)
-      {
-        for(auto& indiv_same : indiv->same_as_)
-        {
-          if(checkPropertyExistence(indiv_same.elem->object_relations_.relations, down_properties))
-            return true;
-        }
-      }
-      else
-        return checkPropertyExistence(indiv->object_relations_.relations, down_properties);
-    }
-    else if(ano_elem->data_property_involved_ != nullptr)
-    {
-      std::unordered_set<DataPropertyBranch*> down_properties;
-      ontology_->data_property_graph_.getDownPtr(ano_elem->data_property_involved_, down_properties);
-
-      if(indiv->same_as_.empty() == false)
-      {
-        for(auto& indiv_same : indiv->same_as_)
-        {
-          if(checkPropertyExistence(indiv_same.elem->data_relations_.relations, down_properties))
-            return true;
-        }
-      }
-      else
-        return checkPropertyExistence(indiv->data_relations_.relations, down_properties);
-    }
-
-    return false;
   }
 
   /* Full Datatype tree resolution */
@@ -389,6 +250,8 @@ namespace ontologenius {
 
   bool ReasonerAnonymous::resolveTree(IndividualBranch* indiv, ClassExpression* expession, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
   {
+    has_involved_other_individual_ = has_involved_other_individual_ || (indiv != current_individual_);
+
     switch (expession->type_)
     {
     case ClassExpressionType_e::class_expression_identifier:      // Type 1
@@ -419,9 +282,7 @@ namespace ontologenius {
     
     case ClassExpressionType_e::class_expression_complement_of:   //Type 6
       if(standard_mode_ == true)
-      {
-        return resolveDisjunctionTree(indiv, expession->sub_elements_.front(), used); // todo check
-      }
+        return resolveDisjunctionTree(indiv, expession->sub_elements_.front());
       else if(resolveTree(indiv, expession->sub_elements_.front(), used) == false)
         return true;
       break;
@@ -818,33 +679,50 @@ namespace ontologenius {
     return valid; // used will be cleared by resolveRestriction if `valid` is false
   }
 
-  // Not yet checked
+  bool ReasonerAnonymous::checkClassesDisjointess(IndividualBranch* indiv, ClassBranch* class_equiv)
+  {
+    auto it = disjoints_cache_.find(class_equiv);
+    std::unordered_set<ClassBranch*> disjoints;
 
-  bool ReasonerAnonymous::resolveDisjunctionTree(IndividualBranch* indiv, ClassExpression* ano_elem, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
+    if(it != disjoints_cache_.end())
+    {
+      if(it->second.empty())
+        return false;
+      else
+        disjoints = it->second;
+    }
+    else
+    {
+      ontology_->class_graph_.getDisjoint(class_equiv, disjoints);
+      disjoints_cache_[class_equiv] = disjoints;
+    }
+
+    if(disjoints.empty() == false)
+    {
+      std::unordered_set<ClassBranch*> ups;
+      ontology_->individual_graph_.getUpPtr(indiv, ups);
+      return (ontology_->class_graph_.firstIntersection(ups, disjoints) != nullptr);
+    }
+    else
+      return false;
+  }
+
+  bool ReasonerAnonymous::resolveDisjunctionTree(IndividualBranch* indiv, ClassExpression* ano_elem)
   {
     // works for class and class expression on object property range, not for data property
-    // do we need to take into account the used, since disjointness isn't dynamic
     // check the disjunctions between the indiv and the class elements in the ano_elem tree (not( Lidar and Sonar))
     if(ano_elem->type_ == ClassExpressionType_e::class_expression_intersection_of)
     {
       for(auto* elem : ano_elem->sub_elements_)
-      {
-        if(resolveDisjunctionTree(indiv, elem, used) == false) // if false, one of the classes is not disjunctive, and thus the eq is not verif
-        {
-          used.clear();
+        if(resolveDisjunctionTree(indiv, elem) == false) // if false, one of the classes is not disjunctive, and thus the eq is not verif
           return false;
-        }
-      }
       return true;
     }
     else if(ano_elem->type_ == ClassExpressionType_e::class_expression_union_of)
     {
       for(auto* elem : ano_elem->sub_elements_)
-      {
-        if(resolveDisjunctionTree(indiv, elem, used) == true) // if true, at least one in the or expression is disjoint, so eq is verif
+        if(resolveDisjunctionTree(indiv, elem) == true) // if true, at least one in the or expression is disjoint, so eq is verif
           return true;
-      }
-      used.clear();
       return false;
     }
     else if(ano_elem->class_involved_ != nullptr)
