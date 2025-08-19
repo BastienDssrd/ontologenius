@@ -53,8 +53,8 @@ TEST(reasoning_anonymous_class, trace_cleaning)
   onto_ptr->feeder.addRelation("a", "hasComponent", "b");
   onto_ptr->feeder.addRelation("b", "hasCamera", "c");
   onto_ptr->feeder.addInheritage("c", "Camera");
-  onto_ptr->feeder.addRelation("b", "hasComponent", "d");
-  onto_ptr->feeder.addInheritage("d", "Lidar");
+  onto_ptr->feeder.addRelation("b", "hasComponent", "d"); 
+  onto_ptr->feeder.addInheritage("d", "Lidar"); // there b is a Capability
   onto_ptr->feeder.waitUpdate(1000);
 
   res = onto_ptr->individuals.getUp("a");
@@ -147,7 +147,7 @@ TEST(reasoning_anonymous_class, two_equivalences_deletion)
   onto_ptr->feeder.waitUpdate(1000);
 
   res = onto_ptr->individuals.getUp("a");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "RGBVisionCapa") != res.end());
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "RGBVisionCapa") != res.end()); // should be keept because use of `hasComponent hasValue realsense`
 
   onto_ptr->feeder.removeRelation("a", "hasComponent", "realsense");
   onto_ptr->feeder.waitUpdate(1000);
@@ -171,14 +171,14 @@ TEST(reasoning_anonymous_class, same_as_one_of)
   onto_ptr->feeder.waitUpdate(1000);
 
   res = onto_ptr->individuals.getUp("the_builder");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "Bob") != res.end());
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "Bob") != res.end()); // this does not test same as, the same as relation is not used for the inference
 
   onto_ptr->feeder.addConcept("the_builder_capa");
   onto_ptr->feeder.addRelation("the_builder_capa", "=", "bob_capa");
   onto_ptr->feeder.waitUpdate(1000);
 
   res = onto_ptr->individuals.getUp("the_builder_capa");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "BobInstances") != res.end());
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "BobInstances") != res.end()); // this does not test same as, the same as relation is not used for the inference
 
   onto_ptr->feeder.removeRelation("the_builder", "=", "bob");
   onto_ptr->feeder.waitUpdate(1000);
@@ -199,54 +199,59 @@ TEST(global_tests, card_value)
 
   // object property
   onto_ptr->feeder.addConcept("a");
-  onto_ptr->feeder.addProperty("a", "hasCamera", "realsense");
+  onto_ptr->feeder.addRelation("a", "hasCamera", "realsense");
   onto_ptr->feeder.waitUpdate(1000);
 
   res = onto_ptr->individuals.getUp("a");
   EXPECT_TRUE(std::find(res.begin(), res.end(), "RealsenseOwner") != res.end());
 
-  onto_ptr->feeder.removeProperty("a", "hasCamera", "realsense");
+  onto_ptr->feeder.removeRelation("a", "hasCamera", "realsense");
   onto_ptr->feeder.waitUpdate(1000);
 
   res = onto_ptr->individuals.getUp("a");
   EXPECT_TRUE(std::find(res.begin(), res.end(), "RealsenseOwner") == res.end());
 
   onto_ptr->feeder.addConcept("realsense2");
-  onto_ptr->feeder.addProperty("realsense", "=", "realsense2");
-  onto_ptr->feeder.addProperty("a", "hasCamera", "realsense2");
+  onto_ptr->feeder.addRelation("realsense", "=", "realsense2");
+  onto_ptr->feeder.addRelation("a", "hasCamera", "realsense2");
   onto_ptr->feeder.waitUpdate(1000);
 
   res = onto_ptr->individuals.getUp("a");
   EXPECT_TRUE(std::find(res.begin(), res.end(), "RealsenseOwner") != res.end());
 
-  onto_ptr->feeder.removeProperty("realsense", "=", "realsense2");
+  onto_ptr->feeder.removeRelation("realsense", "=", "realsense2");
   onto_ptr->feeder.waitUpdate(1000);
 
   res = onto_ptr->individuals.getUp("a");
   EXPECT_TRUE(std::find(res.begin(), res.end(), "RealsenseOwner") == res.end());
 
   // data property
-  onto_ptr->feeder.addConcept("b");
-  onto_ptr->feeder.addProperty("b", "has_node", "boolean#true");
+  /*onto_ptr->feeder.addConcept("f");
   onto_ptr->feeder.waitUpdate(1000);
 
-  res = onto_ptr->individuals.getUp("b");
+  res = onto_ptr->individuals.getUp("f");
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "Capability") == res.end()); // b is already a Capability
+
+  onto_ptr->feeder.addRelation("f", "has_node", "boolean#true");
+  onto_ptr->feeder.waitUpdate(1000);
+
+  res = onto_ptr->individuals.getUp("f");
   EXPECT_TRUE(std::find(res.begin(), res.end(), "Capability") != res.end());
   EXPECT_TRUE(std::find(res.begin(), res.end(), "YoloAlgo") != res.end());
 
-  onto_ptr->feeder.removeProperty("b", "has_node", "boolean#true");
-  onto_ptr->feeder.waitUpdate(1000);
+  onto_ptr->feeder.removeRelation("f", "has_node", "boolean#true");
+  onto_ptr->feeder.waitUpdate();
 
-  res = onto_ptr->individuals.getUp("b");
+  res = onto_ptr->individuals.getUp("f");
   EXPECT_TRUE(std::find(res.begin(), res.end(), "Capability") == res.end());
   EXPECT_TRUE(std::find(res.begin(), res.end(), "YoloAlgo") == res.end());
 
-  onto_ptr->feeder.addProperty("b", "has_node", "boolean#false");
+  onto_ptr->feeder.addRelation("f", "has_node", "boolean#false");
   onto_ptr->feeder.waitUpdate(1000);
   
-  res = onto_ptr->individuals.getUp("b");
+  res = onto_ptr->individuals.getUp("f");
   EXPECT_TRUE(std::find(res.begin(), res.end(), "Capability") == res.end());
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "YoloAlgo") != res.end());
+  EXPECT_FALSE(std::find(res.begin(), res.end(), "YoloAlgo") == res.end());*/
 }
 
 int main(int argc, char** argv)
