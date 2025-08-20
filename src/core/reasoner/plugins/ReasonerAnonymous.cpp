@@ -55,75 +55,85 @@ namespace ontologenius {
         for(auto* anonymous_branch : ontology_->anonymous_graph_.get())
         {
           bool trees_evaluation_result = false;
+          bool has_been_evaluated = false;
           bool is_already_a = std::any_of(indiv->is_a_.cbegin(), indiv->is_a_.cend(), [anonymous_branch](const auto& is_a) { return is_a.elem == anonymous_branch->class_equiv_; }); // same as not done // need to test if same_as is_already_a
 
           if(is_already_a || checkClassesDisjointess(indiv, anonymous_branch->class_equiv_) == false)
           {
-             
-            // Loop over every equivalence relations corresponding to one class
             for(auto* anonymous_tree : anonymous_branch->ano_trees_)
             {
 #ifdef DEBUG
               computeDebugUpdate(indiv, anonymous_tree);
 #endif
               std::string equiv_flag = "equiv_" + anonymous_tree->ano_name;
+              bool should_be_evaluated = true;
               
               if(is_already_a)
               {
                 const bool inferred_by_me = std::any_of(indiv->is_a_.cbegin(), indiv->is_a_.cend(), [anonymous_branch, anonymous_tree](const auto& is_a) {
                   return ((is_a.elem == anonymous_branch->class_equiv_) && (is_a.used_rule == anonymous_tree));
                 });
-                if(inferred_by_me == false)
+                if(inferred_by_me == false) // This branch has already been inferred but by another tree of the same equivalent class
                 {
-                  indiv->flags_[equiv_flag] = {};
-                  is_already_a = false;
-                  break;
+                  indiv->flags_[equiv_flag] = {}; // We just mark the flag to force a potential futur verification
+                  should_be_evaluated = false;    // so could think it would be better to set trees_evaluation_result at true but its scope is bigger
                 }
+                else if(standard_mode_)
+                  should_be_evaluated = false;
+                else if(anonymous_tree->involves_close_world_assumption == false)
+                  should_be_evaluated = false;
               }
 
-              if((indiv->flags_.find(equiv_flag) != indiv->flags_.end()) || // already validated at least one member of an ano expression
-                 ((indiv->isUpdated() == true) &&
-                  ((anonymous_tree->involves_class && indiv->is_a_.isUpdated()) ||
-                   (anonymous_tree->involves_object_property && indiv->object_relations_.isUpdated()) ||
-                   (anonymous_tree->involves_data_property && indiv->data_relations_.isUpdated()) ||
-                   (anonymous_tree->involves_individual && indiv->same_as_.isUpdated()))))
+              if(should_be_evaluated)
               {
-                has_involved_other_individual_ = false; // reset the flag before running resolveTree
-                used.clear();
-                used.reserve(anonymous_tree->depth_);
 
-                bool equivalence_found = resolveTree(indiv, anonymous_tree->root_node_, used);
-                trees_evaluation_result = trees_evaluation_result || equivalence_found; // mark if a least one of the tree has succeeded
-
-                if(equivalence_found)
+                if((indiv->flags_.find(equiv_flag) != indiv->flags_.end()) || // has been proven to use other individuals
+                  ((indiv->isUpdated() == true) &&
+                    ((anonymous_tree->involves_class && indiv->is_a_.isUpdated()) ||
+                    (anonymous_tree->involves_object_property && indiv->object_relations_.isUpdated()) ||
+                    (anonymous_tree->involves_data_property && indiv->data_relations_.isUpdated()) ||
+                    (anonymous_tree->involves_individual && indiv->same_as_.isUpdated()) ||
+                    (anonymous_tree->involves_close_world_assumption)))) // improve this condition to make it more specific
                 {
-                  indiv->flags_[equiv_flag] = {};
-                  has_active_equiv = true;
+                  has_involved_other_individual_ = false; // reset the flag before running resolveTree
+                  used.clear();
+                  used.reserve(anonymous_tree->depth_);
 
-                  if(is_already_a == false) // the indiv is checked to still be of the same class so we can break out of the loop
+                  bool equivalence_found = resolveTree(indiv, anonymous_tree->root_node_, used);
+
+                  trees_evaluation_result = trees_evaluation_result || equivalence_found; // mark if a least one of the tree has succeeded
+                  has_been_evaluated = true;
+
+                  if(equivalence_found)
                   {
-                    addInferredInheritance(indiv, anonymous_branch, anonymous_tree, used);
-                    nb_update++;
-                    if(anonymous_branch->class_equiv_->isHidden() == false)
+                    has_active_equiv = true;
+
+                    if(is_already_a == false) // the indiv is checked to still be of the same class so we can break out of the loop
                     {
-                      explanations_.emplace_back("[ADD]" + indiv->value() + "|isA|" + anonymous_branch->class_equiv_->value(),
-                                                "[ADD]" + indiv->is_a_.back().getExplanation());
+                      addInferredInheritance(indiv, anonymous_branch, anonymous_tree, used);
+                      nb_update++;
+                      if(anonymous_branch->class_equiv_->isHidden() == false)
+                      {
+                        explanations_.emplace_back("[ADD]" + indiv->value() + "|isA|" + anonymous_branch->class_equiv_->value(),
+                                                  "[ADD]" + indiv->is_a_.back().getExplanation());
+                      }
                     }
                   }
+
+                  if(has_involved_other_individual_) // this is a pre-activation not yet complete, so we have to evaluate it next time
+                  {
+                    indiv->flags_[equiv_flag] = {};
+                    has_active_equiv = true;
+                  }
+                  else
+                    indiv->flags_.erase(equiv_flag);
                 }
-                else if(has_involved_other_individual_)
-                {
-                  indiv->flags_[equiv_flag] = {};
-                  has_active_equiv = true;
-                }
-                else
-                  indiv->flags_.erase(equiv_flag);
               }
             } // for all trees
           }
 
           // used to remove inheritance in case an individual previously inferred does not check any of the expressions after updates
-          if((trees_evaluation_result == false) && (anonymous_branch->ano_trees_.empty() == false) && is_already_a)
+          if(has_been_evaluated && is_already_a && (trees_evaluation_result == false))
           {
             indiv->nb_updates_++;
             anonymous_branch->class_equiv_->nb_updates_++;
@@ -417,16 +427,13 @@ namespace ontologenius {
 
   bool ReasonerAnonymous::checkValue(IndividualBranch* indiv_from, ClassExpression* expession, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
   {
+    has_involved_other_individual_ = has_involved_other_individual_ || (indiv_from != current_individual_); // this has to be done just because a "same_as" could be added dynamicaly
     return compareIndividuals(indiv_from, expession->individual_involved_, used);
   }
 
   bool ReasonerAnonymous::checkValue(LiteralNode* literal_from, ClassExpression* expession, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
   {
     (void)used;
-    if(literal_from == nullptr)
-      std::cout << "literal_from is null" << std::endl;
-    if(expession->literal_involved_ == nullptr)
-      std::cout << "expession->literal_involved_ is null" << std::endl;
     return (literal_from->get() == expession->literal_involved_->get());
   }
 
