@@ -66,13 +66,14 @@ namespace ontologenius {
   public:
     AnonymousClassTree(const std::string& rule) : InferenceRuleNode(rule),
                                                   involves_class(false), involves_object_property(false), involves_data_property(false), involves_individual(false),
-                                                  root_node_(nullptr)
+                                                  involves_close_world_assumption(false), root_node_(nullptr), depth_(0)
     {}
 
     bool involves_class;
     bool involves_object_property;
     bool involves_data_property;
     bool involves_individual;
+    bool involves_close_world_assumption;
 
     ClassExpression* root_node_;
     size_t depth_;
@@ -83,7 +84,8 @@ namespace ontologenius {
     {
       std::string involves_res;
       involves_res = " c : " + std::to_string(int(involves_class)) + " o : " + std::to_string(int(involves_object_property)) +
-                     " d : " + std::to_string(int(involves_data_property)) + " i : " + std::to_string(int(involves_individual));
+                     " d : " + std::to_string(int(involves_data_property)) + " i : " + std::to_string(int(involves_individual)) +
+                     " cwa : " + std::to_string(int(involves_close_world_assumption));
       return involves_res;
     }
   };
