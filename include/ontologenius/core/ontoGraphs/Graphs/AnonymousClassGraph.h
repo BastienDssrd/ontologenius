@@ -158,10 +158,10 @@ namespace ontologenius {
     IndividualGraph* individual_graph_;
 
     AnonymousClassTree* createTree(ClassExpressionDescriptor_t* class_expression_descriptor);
-    ClassExpression* createTreeNodes(ClassExpressionDescriptor_t* class_expression_descriptor, size_t& depth, AnonymousClassTree* related_tree);
-    ClassExpression* createNodeContent(ClassExpressionDescriptor_t* expression_leaf, AnonymousClassTree* related_tree);
+    ClassExpression* createTreeNodes(ClassExpressionDescriptor_t* class_expression_descriptor, size_t& depth, AnonymousClassTree* related_tree, bool mark_tree_content = true);
+    ClassExpression* createNodeContent(ClassExpressionDescriptor_t* expression_leaf, AnonymousClassTree* related_tree, bool mark_tree_content);
 
-    void setCardRange(ClassExpression* ano_element, ClassExpressionDescriptor_t* expression_leaf, AnonymousClassTree* related_tree); // todo remove, temp
+    void setCardRange(ClassExpression* ano_element, ClassExpressionDescriptor_t* expression_leaf);
 
     void cpyBranch(AnonymousClassBranch* old_branch, AnonymousClassBranch* new_branch);
     AnonymousClassTree* copyTree(AnonymousClassTree* old_tree);

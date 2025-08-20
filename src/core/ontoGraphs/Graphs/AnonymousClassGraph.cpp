@@ -84,16 +84,19 @@ namespace ontologenius {
     return tree;
   }
 
-  ClassExpression* AnonymousClassGraph::createTreeNodes(ClassExpressionDescriptor_t* class_expression_descriptor, size_t& depth, AnonymousClassTree* related_tree)
+  ClassExpression* AnonymousClassGraph::createTreeNodes(ClassExpressionDescriptor_t* class_expression_descriptor, size_t& depth, AnonymousClassTree* related_tree, bool mark_tree_content)
   {
     size_t local_depth = depth + 1;
 
-    ClassExpression* node = createNodeContent(class_expression_descriptor, related_tree);
+    ClassExpression* node = createNodeContent(class_expression_descriptor, related_tree, mark_tree_content);
+
+    if(node->type_ == ClassExpressionType_e::class_expression_restriction)
+      mark_tree_content = false;
 
     for(auto* child : class_expression_descriptor->sub_expressions)
     {
       size_t child_depth = depth + 1;
-      node->sub_elements_.push_back(createTreeNodes(child, child_depth, related_tree));
+      node->sub_elements_.push_back(createTreeNodes(child, child_depth, related_tree, mark_tree_content));
       local_depth = std::max(child_depth, local_depth);
     }
 
@@ -102,7 +105,7 @@ namespace ontologenius {
     return node;
   }
 
-  ClassExpression* AnonymousClassGraph::createNodeContent(ClassExpressionDescriptor_t* expression_leaf, AnonymousClassTree* related_tree)
+  ClassExpression* AnonymousClassGraph::createNodeContent(ClassExpressionDescriptor_t* expression_leaf, AnonymousClassTree* related_tree, bool mark_tree_content)
   {
     ClassExpression* ano_element = new ClassExpression();
     ano_element->type_ = expression_leaf->type;
@@ -120,31 +123,38 @@ namespace ontologenius {
       else if(expression_leaf->is_instanciated)
       {
         ano_element->individual_involved_ = individual_graph_->findOrCreateBranch(expression_leaf->resource_value);
-        related_tree->involves_individual = true;
+        if(mark_tree_content)
+          related_tree->involves_individual = true;
       }
       else
       {
         ano_element->class_involved_ = class_graph_->findOrCreateBranch(expression_leaf->resource_value);
-        related_tree->involves_class = true;
+        if(mark_tree_content)
+          related_tree->involves_class = true;
       }
       break;
     case ClassExpressionType_e::class_expression_restriction:
       if(expression_leaf->data_usage == true)
       {
         ano_element->data_property_involved_ = data_property_graph_->findOrCreateBranch(expression_leaf->restriction_property);
-        related_tree->involves_data_property = true;
+        if(mark_tree_content)
+          related_tree->involves_data_property = true;
       }
       else
       {
         ano_element->object_property_involved_ = object_property_graph_->findBranch(expression_leaf->restriction_property);
         if(ano_element->object_property_involved_ != nullptr)
-          related_tree->involves_object_property = true;
+        {
+          if(mark_tree_content)
+            related_tree->involves_object_property = true;
+        }
         else
         {
           ano_element->data_property_involved_ = data_property_graph_->findOrCreateBranch(expression_leaf->restriction_property);
           if(ano_element->data_property_involved_ != nullptr)
           {
-            related_tree->involves_data_property = true;
+            if(mark_tree_content)
+              related_tree->involves_data_property = true;
             expression_leaf->data_usage = true;
           }
           else
@@ -156,10 +166,10 @@ namespace ontologenius {
       switch (expression_leaf->restriction_type)
       {
       case RestrictionConstraintType_e::restriction_all_values_from:
-        setCardRange(ano_element, expression_leaf, related_tree);
+        setCardRange(ano_element, expression_leaf);
         break;
       case RestrictionConstraintType_e::restriction_some_values_from:
-        setCardRange(ano_element, expression_leaf, related_tree);
+        setCardRange(ano_element, expression_leaf);
         break;
       case RestrictionConstraintType_e::restriction_has_value:
         if(expression_leaf->resource_value.empty() == false)
@@ -169,28 +179,29 @@ namespace ontologenius {
           if(expression_leaf->data_usage == true)
             sub_expression->literal_involved_ = literal_graph_->findOrCreate(expression_leaf->resource_value);
           else
-          {
             sub_expression->individual_involved_ = individual_graph_->findOrCreateBranch(expression_leaf->resource_value);
-            related_tree->involves_individual = true;
-          }
           ano_element->sub_elements_.emplace_back(sub_expression);
         }
         break;
       case RestrictionConstraintType_e::restriction_max_cardinality:
         ano_element->cardinality_value_ = std::stoi(ClassExpressionDescriptor_t::splitData(expression_leaf->cardinality_value).second);
-        setCardRange(ano_element, expression_leaf, related_tree);
+        setCardRange(ano_element, expression_leaf);
+        related_tree->involves_close_world_assumption = true;
         break;
       case RestrictionConstraintType_e::restriction_min_cardinality:
         ano_element->cardinality_value_ = std::stoi(ClassExpressionDescriptor_t::splitData(expression_leaf->cardinality_value).second);
-        setCardRange(ano_element, expression_leaf, related_tree);
+        setCardRange(ano_element, expression_leaf);
         break;
       case RestrictionConstraintType_e::restriction_cardinality:
         ano_element->cardinality_value_ = std::stoi(ClassExpressionDescriptor_t::splitData(expression_leaf->cardinality_value).second);
-        setCardRange(ano_element, expression_leaf, related_tree);
+        setCardRange(ano_element, expression_leaf);
         break;
       default:
         break;
       }
+      break;
+    case ClassExpressionType_e::class_expression_complement_of:
+      related_tree->involves_close_world_assumption = true;
       break;
     default:
       break;
@@ -199,7 +210,7 @@ namespace ontologenius {
     return ano_element;
   }
 
-  void AnonymousClassGraph::setCardRange(ClassExpression* ano_element, ClassExpressionDescriptor_t* expression_leaf, AnonymousClassTree* related_tree)
+  void AnonymousClassGraph::setCardRange(ClassExpression* ano_element, ClassExpressionDescriptor_t* expression_leaf)
   {
     if(expression_leaf->resource_value.empty() == false)
     {
@@ -208,10 +219,7 @@ namespace ontologenius {
       if(expression_leaf->data_usage == true)
         sub_expression->datatype_involved_ = literal_graph_->findOrCreateType(expression_leaf->resource_value);
       else
-      {
         sub_expression->class_involved_ = class_graph_->findOrCreateBranch(expression_leaf->resource_value);
-        related_tree->involves_class = true;
-      }
       ano_element->sub_elements_.emplace_back(sub_expression);
     }
   }
