@@ -350,6 +350,7 @@ namespace ontologenius {
   // Type 2 on individuals
   bool ReasonerAnonymous::resolveOneOfIndividual(IndividualBranch* indiv, ClassExpression* expession, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
   {
+    has_involved_other_individual_ = true;
     std::string list_string;
     std::string explanation;
     for(auto* elem : expession->sub_elements_)
