@@ -167,6 +167,7 @@ namespace ontologenius {
       {
       case RestrictionConstraintType_e::restriction_all_values_from:
         setCardRange(ano_element, expression_leaf);
+        related_tree->involves_close_world_assumption = true;
         break;
       case RestrictionConstraintType_e::restriction_some_values_from:
         setCardRange(ano_element, expression_leaf);
@@ -191,10 +192,12 @@ namespace ontologenius {
       case RestrictionConstraintType_e::restriction_min_cardinality:
         ano_element->cardinality_value_ = std::stoi(ClassExpressionDescriptor_t::splitData(expression_leaf->cardinality_value).second);
         setCardRange(ano_element, expression_leaf);
+        related_tree->involves_close_world_assumption = true;
         break;
       case RestrictionConstraintType_e::restriction_cardinality:
         ano_element->cardinality_value_ = std::stoi(ClassExpressionDescriptor_t::splitData(expression_leaf->cardinality_value).second);
         setCardRange(ano_element, expression_leaf);
+        related_tree->involves_close_world_assumption = true;
         break;
       default:
         break;
