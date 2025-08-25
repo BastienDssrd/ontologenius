@@ -118,7 +118,8 @@ namespace ontologenius {
       {
         if(existInInheritance(relations[i].first, target_property, used))
         {
-          if(resolveTree(relations[i].second, expession->sub_elements_.front(), used))
+          if(expession->sub_elements_.empty() ||                                       // unqualified cardinality
+             resolveTree(relations[i].second, expession->sub_elements_.front(), used)) // qualified cardinality
           {
             nb_relation++;
             if(nb_relation > expession->cardinality_value_)
@@ -140,7 +141,8 @@ namespace ontologenius {
       {
         if(existInInheritance(relations[i].first, target_property, used))
         {
-          if(resolveTree(relations[i].second, expession->sub_elements_.front(), used))
+          if(expession->sub_elements_.empty() ||                                       // unqualified cardinality
+             resolveTree(relations[i].second, expession->sub_elements_.front(), used)) // qualified cardinality
           {
             nb_relation++;
             indexes.emplace_back(relations[i].first->value() + "|" + relations[i].second->value(), i);
