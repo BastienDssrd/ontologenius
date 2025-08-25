@@ -156,7 +156,8 @@ namespace ontologenius {
                                                  AnonymousClassTree* anonymous_tree,
                                                  const std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
   {
-    indiv->is_a_.emplaceBack(anonymous_branch->class_equiv_, 1.0, true); // adding the emplaceBack so that the is_a get in updated mode
+    auto& new_relation = indiv->is_a_.emplaceBack(anonymous_branch->class_equiv_, 1.0, true); // adding the emplaceBack so that the is_a get in updated mode
+    new_relation.used_rule = anonymous_tree;
     anonymous_branch->class_equiv_->individual_childs_.emplace_back(IndividualElement(indiv, 1.0, true));
 
     indiv->nb_updates_++;
@@ -165,7 +166,6 @@ namespace ontologenius {
     for(const auto& induced_vector : used)
     {
       indiv->is_a_.back().explanation.push_back(induced_vector.first);
-      indiv->is_a_.back().used_rule = anonymous_tree;
       // check for nullptr because OneOf returns a (string, nullptr)
       if(induced_vector.second != nullptr)
       {
