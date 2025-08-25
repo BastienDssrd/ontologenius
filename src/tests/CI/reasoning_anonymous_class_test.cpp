@@ -5,253 +5,161 @@
 
 #include "ontologenius/API/ontologenius/OntologyManipulator.h"
 
+/*
+│   ├──BinarySensor
+│   │   ├── + Sensor
+hasData allValuesFrom (oneOf ())=>
+-0 data_prop(hasData) rest(0) 
+ -1 
+ c : 0 o : 0 d : 1 i : 0 cwa : 0
+│   │   ├── = hasData allValuesFrom (oneOf ())
+*/
+
 onto::OntologyManipulator* onto_ptr;
 
-TEST(reasoning_anonymous_class, same_as_range_restriction)
+TEST(reasoning_anonymous_class, no_datatype)
 {
   std::vector<std::string> res;
 
-  res = onto_ptr->individuals.getUp("indiv2");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "RealSenseVisionCapability") != res.end());
+  res = onto_ptr->individuals.getUp("garfield", 1);
+  EXPECT_EQ(res.size(), 1);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "Cat") != res.end());
 
-  res = onto_ptr->individuals.getUp("indiv1"); // indiv1 = indiv2
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "RealSenseVisionCapability") != res.end());
+  // test if no inference exist at initialization
+  res = onto_ptr->individuals.getUp("alice", 1);
+  EXPECT_EQ(res.size(), 1);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "Human") != res.end());
 
-  onto_ptr->feeder.addConcept("indiv3");
-  onto_ptr->feeder.addRelation("indiv3", "hasCapability", "indiv1");
+  onto_ptr->feeder.addRelation("alice", "ownPet", "garfield");
   onto_ptr->feeder.waitUpdate(1000);
 
-  res = onto_ptr->individuals.getUp("indiv3"); // indiv3 hasCapability indiv1
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "PepperVisionCapability") != res.end());
+  res = onto_ptr->individuals.getUp("alice", 1);
+  EXPECT_EQ(res.size(), 5);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "GarfieldOwner") != res.end());     // ownPet value garfield
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "PetLover") != res.end());          // ((ownPet min 1) and (ownPet max 3))
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "ExclusiveCatOwner") != res.end()); // ownPet only Cat
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "PetOwner") != res.end());          // ownPet some (Cat or {rex, pongo})
 
-  onto_ptr->feeder.removeRelation("indiv3", "hasCapability", "indiv1");
+  onto_ptr->feeder.addRelation("alice", "ownPet", "felix");
   onto_ptr->feeder.waitUpdate(1000);
 
-  res = onto_ptr->individuals.getUp("indiv3");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "PepperVisionCapability") == res.end());
+  res = onto_ptr->individuals.getUp("alice", 1);
+  EXPECT_EQ(res.size(), 6);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "GarfieldOwner") != res.end());     // ownPet value garfield
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "PetLover") != res.end());          // ((ownPet min 1) and (ownPet max 3))
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "ExclusiveCatOwner") != res.end()); // ownPet only Cat
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "PetOwner") != res.end());          // ownPet some (Cat or {rex, pongo})
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "PerfectCatOwner") != res.end());   // (PetOwner and (ownPet exactly 2 {felix, garfield, duchesse}))
 
-  onto_ptr->feeder.addRelation("indiv3", "hasCapability", "indiv1");
-  onto_ptr->feeder.removeRelation("indiv2", "=", "indiv1");
+  onto_ptr->feeder.addRelation("alice", "ownPet", "duchesse");
   onto_ptr->feeder.waitUpdate(1000);
 
-  res = onto_ptr->individuals.getUp("indiv3");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "PepperVisionCapability") == res.end());
+  res = onto_ptr->individuals.getUp("alice", 1);
+  EXPECT_EQ(res.size(), 6);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "GarfieldOwner") != res.end());     // ownPet value garfield
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "PetLover") != res.end());          // ((ownPet min 1) and (ownPet max 3))
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "ExclusiveCatOwner") != res.end()); // ownPet only Cat
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "PetOwner") != res.end());          // ownPet some (Cat or {rex, pongo})
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "CrazyCatOwner") != res.end());     // (PetOwner and (ownPet min 3 Cat))
 
-  onto_ptr->feeder.addRelation("indiv2", "=", "indiv1");
-  onto_ptr->feeder.removeRelation("realsense_d435i", "=", "realsense_pepper");
+  onto_ptr->feeder.addRelation("alice", "ownPet", "rex");
   onto_ptr->feeder.waitUpdate(1000);
 
-  res = onto_ptr->individuals.getUp("indiv3");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "PepperVisionCapability") == res.end());
+  res = onto_ptr->individuals.getUp("alice", 1);
+  EXPECT_EQ(res.size(), 4);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "GarfieldOwner") != res.end());     // ownPet value garfield
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "PetOwner") != res.end());          // ownPet some (Cat or {rex, pongo})
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "CrazyCatOwner") != res.end());     // (PetOwner and (ownPet min 3 Cat))
+
+  onto_ptr->feeder.removeRelation("alice", "ownPet", "duchesse");
+  onto_ptr->feeder.waitUpdate(1000);
+
+  res = onto_ptr->individuals.getUp("alice", 1);
+  EXPECT_EQ(res.size(), 5);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "GarfieldOwner") != res.end());     // ownPet value garfield
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "PetOwner") != res.end());          // ownPet some (Cat or {rex, pongo})
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "PetLover") != res.end());          // ((ownPet min 1) and (ownPet max 3))
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "PerfectCatOwner") != res.end());   // (PetOwner and (ownPet exactly 2 {felix, garfield, duchesse}))
+
+  onto_ptr->feeder.removeRelation("alice", "ownPet", "felix");
+  onto_ptr->feeder.waitUpdate(1000);
+
+  res = onto_ptr->individuals.getUp("alice", 1);
+  EXPECT_EQ(res.size(), 4);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "GarfieldOwner") != res.end());     // ownPet value garfield
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "PetOwner") != res.end());          // ownPet some (Cat or {rex, pongo})
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "PetLover") != res.end());          // ((ownPet min 1) and (ownPet max 3))
+
+  onto_ptr->feeder.removeRelation("alice", "ownPet", "garfield");
+  onto_ptr->feeder.waitUpdate(1000);
+
+  res = onto_ptr->individuals.getUp("alice", 1);
+  EXPECT_EQ(res.size(), 4);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "NotCatOwner") != res.end());       // ownPet only (not Cat)
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "PetOwner") != res.end());          // ownPet some (Cat or {rex, pongo})
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "PetLover") != res.end());          // ((ownPet min 1) and (ownPet max 3))
+
+  onto_ptr->feeder.removeRelation("alice", "ownPet", "rex");
+  onto_ptr->feeder.waitUpdate(1000);
+
+  res = onto_ptr->individuals.getUp("alice", 1);
+  EXPECT_EQ(res.size(), 1);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "Human") != res.end());
 }
 
-TEST(reasoning_anonymous_class, trace_cleaning)
+TEST(reasoning_anonymous_class, no_datatype_same_as)
 {
   std::vector<std::string> res;
 
-  onto_ptr->feeder.addConcept("a");
-  onto_ptr->feeder.addRelation("a", "hasComponent", "b");
-  onto_ptr->feeder.addRelation("b", "hasCamera", "c");
-  onto_ptr->feeder.addInheritage("c", "Camera");
-  onto_ptr->feeder.addRelation("b", "hasComponent", "d"); 
-  onto_ptr->feeder.addInheritage("d", "Lidar"); // there b is a Capability
+  // test if no inference exist at initialization
+  res = onto_ptr->individuals.getUp("alice", 1);
+  EXPECT_EQ(res.size(), 1);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "Human") != res.end());
+
+  onto_ptr->feeder.addRelation("alice", "ownPet", "a");
   onto_ptr->feeder.waitUpdate(1000);
 
-  res = onto_ptr->individuals.getUp("a");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "LocalizeCapability") != res.end());
+  res = onto_ptr->individuals.getUp("a", 1);
+  EXPECT_EQ(res.size(), 1);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "Animal") != res.end());
 
-  onto_ptr->feeder.removeRelation("b", "hasCamera", "c");
+  res = onto_ptr->individuals.getUp("alice", 1);
+  EXPECT_EQ(res.size(), 3);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "NotCatOwner") != res.end());       // ownPet only (not Cat)
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "PetLover") != res.end());          // ((ownPet min 1) and (ownPet max 3))
+
+  onto_ptr->feeder.addRelation("a", "=", "garfield");
   onto_ptr->feeder.waitUpdate(1000);
 
-  res = onto_ptr->individuals.getUp("a");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "LocalizeCapability") == res.end());
+  res = onto_ptr->individuals.getUp("a", 1);
+  EXPECT_EQ(res.size(), 2);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "Cat") != res.end());
 
-  onto_ptr->feeder.addRelation("b", "hasCamera", "e");
-  onto_ptr->feeder.addInheritage("e", "Camera");
+  res = onto_ptr->individuals.getUp("alice", 1);
+  EXPECT_EQ(res.size(), 5);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "GarfieldOwner") != res.end());     // ownPet value garfield
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "PetLover") != res.end());          // ((ownPet min 1) and (ownPet max 3))
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "ExclusiveCatOwner") != res.end()); // ownPet only Cat
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "PetOwner") != res.end());          // ownPet some (Cat or {rex, pongo})
+
+  onto_ptr->feeder.removeRelation("a", "=", "garfield");
   onto_ptr->feeder.waitUpdate(1000);
 
-  res = onto_ptr->individuals.getUp("a");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "LocalizeCapability") != res.end());
+  res = onto_ptr->individuals.getUp("a", 1);
+  EXPECT_EQ(res.size(), 1);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "Animal") != res.end());
 
-  onto_ptr->feeder.removeInheritage("c", "Camera");
+  res = onto_ptr->individuals.getUp("alice", 1);
+  EXPECT_EQ(res.size(), 3);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "NotCatOwner") != res.end());       // ownPet only (not Cat)
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "PetLover") != res.end());          // ((ownPet min 1) and (ownPet max 3))
+
+  onto_ptr->feeder.removeRelation("alice", "ownPet", "a");
   onto_ptr->feeder.waitUpdate(1000);
 
-  res = onto_ptr->individuals.getUp("a");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "LocalizeCapability") != res.end());
-
-  onto_ptr->feeder.addInheritage("c", "Camera");
-  onto_ptr->feeder.removeInheritage("e", "Camera");
-  onto_ptr->feeder.waitUpdate(1000);
-
-  res = onto_ptr->individuals.getUp("a");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "LocalizeCapability") == res.end());
-
-  onto_ptr->feeder.addRelation("e", "=", "c");
-  onto_ptr->feeder.waitUpdate(1000);
-
-  res = onto_ptr->individuals.getUp("a");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "LocalizeCapability") != res.end());
-}
-
-TEST(reasoning_anonymous_class, cardinality_min_testing)
-{
-  std::vector<std::string> res;
-
-  onto_ptr->feeder.addRelation("pepper", "hasComponent", "bumperLeft");
-  onto_ptr->feeder.addRelation("pepper", "hasComponent", "bumperRight");
-  onto_ptr->feeder.waitUpdate(1000);
-
-  res = onto_ptr->individuals.getUp("pepper");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "ObstacleAvoidanceCapability") != res.end());
-
-  onto_ptr->feeder.addConcept("bumperMiddle");
-  onto_ptr->feeder.addInheritage("bumperMiddle", "Bumper");
-  onto_ptr->feeder.addRelation("pepper", "hasComponent", "bumperMiddle");
-  onto_ptr->feeder.waitUpdate(1000);
-
-  res = onto_ptr->individuals.getUp("pepper");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "ObstacleAvoidanceCapability") != res.end());
-
-  onto_ptr->feeder.removeInheritage("bumperLeft", "Bumper");
-  onto_ptr->feeder.waitUpdate(1000);
-
-  res = onto_ptr->individuals.getUp("pepper");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "ObstacleAvoidanceCapability") != res.end());
-
-  onto_ptr->feeder.removeInheritage("bumperRight", "Bumper");
-  onto_ptr->feeder.waitUpdate(1000);
-
-  res = onto_ptr->individuals.getUp("pepper");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "ObstacleAvoidanceCapability") == res.end());
-}
-
-TEST(reasoning_anonymous_class, two_equivalences_deletion)
-{
-  std::vector<std::string> res;
-
-  onto_ptr->feeder.addConcept("a");
-  onto_ptr->feeder.addRelation("a", "hasComponent", "b");
-  onto_ptr->feeder.addInheritage("b", "Camera");
-  onto_ptr->feeder.waitUpdate(1000);
-
-  res = onto_ptr->individuals.getUp("a");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "RGBVisionCapa") != res.end());
-
-  onto_ptr->feeder.addRelation("a", "hasComponent", "realsense");
-  onto_ptr->feeder.waitUpdate(1000);
-
-  res = onto_ptr->individuals.getUp("a");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "RGBVisionCapa") != res.end());
-
-  onto_ptr->feeder.removeInheritage("b", "Camera");
-  onto_ptr->feeder.waitUpdate(1000);
-
-  res = onto_ptr->individuals.getUp("a");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "RGBVisionCapa") != res.end()); // should be keept because use of `hasComponent hasValue realsense`
-
-  onto_ptr->feeder.removeRelation("a", "hasComponent", "realsense");
-  onto_ptr->feeder.waitUpdate(1000);
-
-  res = onto_ptr->individuals.getUp("a");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "RGBVisionCapa") == res.end());
-
-  onto_ptr->feeder.addInheritage("b", "Camera");
-  onto_ptr->feeder.waitUpdate(1000);
-
-  res = onto_ptr->individuals.getUp("a");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "RGBVisionCapa") != res.end());
-}
-
-TEST(reasoning_anonymous_class, same_as_one_of)
-{
-  std::vector<std::string> res;
-
-  onto_ptr->feeder.addConcept("the_builder");
-  onto_ptr->feeder.addRelation("the_builder", "=", "bob");
-  onto_ptr->feeder.waitUpdate(1000);
-
-  res = onto_ptr->individuals.getUp("the_builder");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "Bob") != res.end()); // this does not test same as, the same as relation is not used for the inference
-
-  onto_ptr->feeder.addConcept("the_builder_capa");
-  onto_ptr->feeder.addRelation("the_builder_capa", "=", "bob_capa");
-  onto_ptr->feeder.waitUpdate(1000);
-
-  res = onto_ptr->individuals.getUp("the_builder_capa");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "BobInstances") != res.end()); // this does not test same as, the same as relation is not used for the inference
-
-  onto_ptr->feeder.removeRelation("the_builder", "=", "bob");
-  onto_ptr->feeder.waitUpdate(1000);
-
-  res = onto_ptr->individuals.getUp("the_builder_capa");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "BobInstances") != res.end());
-
-  onto_ptr->feeder.removeRelation("the_builder_capa", "=", "bob_capa");
-  onto_ptr->feeder.waitUpdate(1000);
-
-  res = onto_ptr->individuals.getUp("the_builder_capa");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "BobInstances") == res.end());
-}
-
-TEST(global_tests, card_value)
-{
-  std::vector<std::string> res;
-
-  // object property
-  onto_ptr->feeder.addConcept("a");
-  onto_ptr->feeder.addRelation("a", "hasCamera", "realsense");
-  onto_ptr->feeder.waitUpdate(1000);
-
-  res = onto_ptr->individuals.getUp("a");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "RealsenseOwner") != res.end());
-
-  onto_ptr->feeder.removeRelation("a", "hasCamera", "realsense");
-  onto_ptr->feeder.waitUpdate(1000);
-
-  res = onto_ptr->individuals.getUp("a");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "RealsenseOwner") == res.end());
-
-  onto_ptr->feeder.addConcept("realsense2");
-  onto_ptr->feeder.addRelation("realsense", "=", "realsense2");
-  onto_ptr->feeder.addRelation("a", "hasCamera", "realsense2");
-  onto_ptr->feeder.waitUpdate(1000);
-
-  res = onto_ptr->individuals.getUp("a");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "RealsenseOwner") != res.end());
-
-  onto_ptr->feeder.removeRelation("realsense", "=", "realsense2");
-  onto_ptr->feeder.waitUpdate(1000);
-
-  res = onto_ptr->individuals.getUp("a");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "RealsenseOwner") == res.end());
-
-  // data property
-  /*onto_ptr->feeder.addConcept("f");
-  onto_ptr->feeder.waitUpdate(1000);
-
-  res = onto_ptr->individuals.getUp("f");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "Capability") == res.end()); // b is already a Capability
-
-  onto_ptr->feeder.addRelation("f", "has_node", "boolean#true");
-  onto_ptr->feeder.waitUpdate(1000);
-
-  res = onto_ptr->individuals.getUp("f");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "Capability") != res.end());
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "YoloAlgo") != res.end());
-
-  onto_ptr->feeder.removeRelation("f", "has_node", "boolean#true");
-  onto_ptr->feeder.waitUpdate();
-
-  res = onto_ptr->individuals.getUp("f");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "Capability") == res.end());
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "YoloAlgo") == res.end());
-
-  onto_ptr->feeder.addRelation("f", "has_node", "boolean#false");
-  onto_ptr->feeder.waitUpdate(1000);
-  
-  res = onto_ptr->individuals.getUp("f");
-  EXPECT_TRUE(std::find(res.begin(), res.end(), "Capability") == res.end());
-  EXPECT_FALSE(std::find(res.begin(), res.end(), "YoloAlgo") == res.end());*/
+  res = onto_ptr->individuals.getUp("alice", 1);
+  EXPECT_EQ(res.size(), 1);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "Human") != res.end());
 }
 
 int main(int argc, char** argv)
@@ -263,6 +171,7 @@ int main(int argc, char** argv)
 
   onto_ptr->reasoners.activate("ontologenius::ReasonerAnonymous");
   onto.close();
+  onto.feeder.waitConnected();
 
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
