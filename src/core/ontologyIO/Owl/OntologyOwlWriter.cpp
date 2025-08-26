@@ -4,7 +4,7 @@
 #include <iostream>
 #include <string>
 
-#include "ontologenius/core/ontoGraphs/Graphs/AnonymousClassGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 #include "ontologenius/core/ontoGraphs/Ontology.h"
 #include "ontologenius/core/ontologyIO/Owl/writers/AnnotationOwlWriter.h"
 #include "ontologenius/core/ontologyIO/Owl/writers/ClassOwlWriter.h"
@@ -16,27 +16,8 @@
 
 namespace ontologenius {
 
-  OntologyOwlWriter::OntologyOwlWriter(ClassGraph* class_graph,
-                                       ObjectPropertyGraph* object_property_graph,
-                                       DataPropertyGraph* data_property_graph,
-                                       IndividualGraph* individual_graph,
-                                       AnonymousClassGraph* anonymous_graph,
-                                       RuleGraph* rule_graph) : class_graph_(class_graph),
-                                                                object_property_graph_(object_property_graph),
-                                                                data_property_graph_(data_property_graph),
-                                                                individual_graph_(individual_graph),
-                                                                anonymous_graph_(anonymous_graph),
-                                                                rule_graph_(rule_graph),
-                                                                file_(nullptr)
-  {}
-
-  OntologyOwlWriter::OntologyOwlWriter(Ontology& onto) : class_graph_(&onto.class_graph_),
-                                                         object_property_graph_(&onto.object_property_graph_),
-                                                         data_property_graph_(&onto.data_property_graph_),
-                                                         individual_graph_(&onto.individual_graph_),
-                                                         anonymous_graph_(&onto.anonymous_graph_),
-                                                         rule_graph_(&onto.rule_graph_),
-                                                         file_(nullptr)
+  OntologyOwlWriter::OntologyOwlWriter(OntologyGraphs* graphs) : graphs_(graphs),
+                                                                 file_(nullptr)
   {}
 
   void OntologyOwlWriter::write(const std::string& file_name)
@@ -60,23 +41,23 @@ namespace ontologenius {
     writeStart();
 
     writeBanner("Annotations Properties");
-    AnnotationOwlWriter annotations(object_property_graph_, data_property_graph_, file_, ns_);
+    AnnotationOwlWriter annotations(&graphs_->object_properties_, &graphs_->data_properties_, file_, ns_);
     annotations.write();
 
     writeBanner("Classes");
-    ClassOwlWriter classes(class_graph_,file_,  ns_);
+    ClassOwlWriter classes(&graphs_->classes_, file_, ns_);
     classes.write();
 
     writeBanner("Object Properties");
-    ObjectPropertiesOwlWriter object_properties(object_property_graph_, file_, ns_);
+    ObjectPropertiesOwlWriter object_properties(&graphs_->object_properties_, file_, ns_);
     object_properties.write();
 
     writeBanner("Data properties");
-    DataPropertiesOwlWriter data_properties(data_property_graph_, file_, ns_);
+    DataPropertiesOwlWriter data_properties(&graphs_->data_properties_, file_, ns_);
     data_properties.write();
 
     writeBanner("Individuals");
-    IndividualOwlWriter individuals(individual_graph_, file_, ns_);
+    IndividualOwlWriter individuals(&graphs_->individuals_, file_, ns_);
     individuals.write();
 
     writeBanner("General axioms");
@@ -84,7 +65,7 @@ namespace ontologenius {
     individuals.writeGeneralAxioms();
 
     writeBanner("Rules");
-    RuleOwlWriter rules(rule_graph_, file_, ns_);
+    RuleOwlWriter rules(&graphs_->rules_, file_, ns_);
     rules.write();
 
     writeEnd();

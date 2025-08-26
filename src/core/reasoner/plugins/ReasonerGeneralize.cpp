@@ -32,7 +32,7 @@ namespace ontologenius {
 
   bool ReasonerGeneralize::periodicReason()
   {
-    std::vector<ClassBranch*> classes = ontology_->class_graph_.getSafe();
+    std::vector<ClassBranch*> classes = ontology_->classes_.getSafe();
 
     if(classes.empty() == false)
     {
@@ -42,12 +42,12 @@ namespace ontologenius {
       const size_t first_id = current_id_;
       for(size_t i = 0; i < class_per_period_; i++)
       {
-        std::unordered_set<ClassBranch*> down_set = ontology_->class_graph_.getDownPtrSafe(classes[current_id_], 1);
+        std::unordered_set<ClassBranch*> down_set = ontology_->classes_.getDownPtrSafe(classes[current_id_], 1);
         down_set.erase(classes[current_id_]);
 
-        const std::unordered_set<IndividualBranch*> indiv_down_set = ontology_->class_graph_.getDownIndividualPtrSafe(classes[current_id_], 0);
-        std::shared_lock<std::shared_timed_mutex> lock_indiv_shared(ontology_->individual_graph_.mutex_);
-        std::shared_lock<std::shared_timed_mutex> lock_shared(ontology_->class_graph_.mutex_);
+        const std::unordered_set<IndividualBranch*> indiv_down_set = ontology_->classes_.getDownIndividualPtrSafe(classes[current_id_], 0);
+        std::shared_lock<std::shared_timed_mutex> lock_indiv_shared(ontology_->individuals_.mutex_);
+        std::shared_lock<std::shared_timed_mutex> lock_shared(ontology_->classes_.mutex_);
 
         PropertiesCounter<DataPropertyBranch*, LiteralNode*> data_counter((int)min_count_, min_percent_);
         PropertiesCounter<ObjectPropertyBranch*, ClassBranch*> object_counter;
@@ -69,8 +69,8 @@ namespace ontologenius {
 
         lock_shared.unlock();
         lock_indiv_shared.unlock();
-        const std::lock_guard<std::shared_timed_mutex> lock_indiv(ontology_->individual_graph_.mutex_);
-        const std::lock_guard<std::shared_timed_mutex> lock(ontology_->class_graph_.mutex_);
+        const std::lock_guard<std::shared_timed_mutex> lock_indiv(ontology_->individuals_.mutex_);
+        const std::lock_guard<std::shared_timed_mutex> lock(ontology_->classes_.mutex_);
 
         auto data_properties = data_counter.get();
         setDeduced(classes[current_id_], data_properties);

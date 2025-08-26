@@ -11,12 +11,7 @@
 #include "ontologenius/core/ontoGraphs/Branchs/Elements.h"
 #include "ontologenius/core/ontoGraphs/Branchs/LiteralNode.h"
 #include "ontologenius/core/ontoGraphs/Branchs/PropertyBranch.h"
-#include "ontologenius/core/ontoGraphs/Graphs/AnonymousClassGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/IndividualGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/RuleGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 #include "ontologenius/core/ontoGraphs/Ontology.h"
 #include "ontologenius/core/ontologyIO/OntologyReader.h"
 #include "ontologenius/core/utility/error_code.h"
@@ -24,30 +19,14 @@
 
 namespace ontologenius {
 
-  OntologyOwlReader::OntologyOwlReader(ClassGraph* class_graph,
-                                       ObjectPropertyGraph* object_property_graph,
-                                       DataPropertyGraph* data_property_graph,
-                                       IndividualGraph* individual_graph,
-                                       AnonymousClassGraph* anonymous_graph,
-                                       RuleGraph* rule_graph) : OntologyReader(class_graph, object_property_graph, data_property_graph, individual_graph, anonymous_graph, rule_graph),
-                                                                card_map_{
+  OntologyOwlReader::OntologyOwlReader(OntologyGraphs* graphs) : OntologyReader(graphs),
+                                                                 card_map_{
                                                                   {"owl:someValuesFrom",          "some"   },
                                                                   {"owl:allValuesFrom",           "only"   },
                                                                   {"owl:minQualifiedCardinality", "min"    },
                                                                   {"owl:maxQualifiedCardinality", "max"    },
                                                                   {"owl:qualifiedCardinality",    "exactly"},
                                                                   {"owl:hasValue",                "value"  }
-  }
-  {}
-
-  OntologyOwlReader::OntologyOwlReader(Ontology& onto) : OntologyReader(onto),
-                                                         card_map_{
-                                                           {"owl:someValuesFrom",          "some"   },
-                                                           {"owl:allValuesFrom",           "only"   },
-                                                           {"owl:minQualifiedCardinality", "min"    },
-                                                           {"owl:maxQualifiedCardinality", "max"    },
-                                                           {"owl:qualifiedCardinality",    "exactly"},
-                                                           {"owl:hasValue",                "value"  }
   }
   {}
 
@@ -266,12 +245,12 @@ namespace ontologenius {
     if(anonymous_descriptor.expression_members.empty() == false)
     {
       anonymous_descriptor.class_name = node_name;
-      anonymous_graph_->add(anonymous_descriptor);
+      graphs_->anonymous_classes_.add(anonymous_descriptor);
       for(auto* expression_elem : anonymous_descriptor.expression_members)
         push(class_descriptor.equivalences_, expression_elem->toString(), "=");
     }
 
-    class_graph_->add(node_name, class_descriptor);
+    graphs_->classes_.add(node_name, class_descriptor);
     nb_loaded_elem_++;
   }
 
@@ -316,7 +295,7 @@ namespace ontologenius {
         }
       }
     }
-    individual_graph_->add(node_name, individual_descriptor);
+    graphs_->individuals_.add(node_name, individual_descriptor);
     nb_loaded_elem_++;
   }
 
@@ -342,7 +321,7 @@ namespace ontologenius {
     RuleDescriptor_t rule = readRuleDescription(elem);
     if(!rule.rule_str.empty()) // check if the str expression is not empty, to make sure that the rule exists
     {
-      rule_graph_->add(rule);
+      graphs_->rules_.add(rule);
       if(display_)
         std::cout << "│   ├── " + rule.rule_str << std::endl; // todo: mal fait je pense, à mieux intégrer
     }
@@ -363,9 +342,9 @@ namespace ontologenius {
           readCollection(disjoints, member_elem, "-");
 
         if(is_class)
-          class_graph_->add(disjoints);
+          graphs_->classes_.add(disjoints);
         else
-          object_property_graph_->add(disjoints);
+          graphs_->object_properties_.add(disjoints);
       }
     }
   }
@@ -394,7 +373,7 @@ namespace ontologenius {
       }
     }
     if(is_distinct_all)
-      individual_graph_->add(distincts);
+      graphs_->individuals_.add(distincts);
     distincts.clear();
   }
 
@@ -439,7 +418,7 @@ namespace ontologenius {
       }
     }
 
-    object_property_graph_->add(node_name, property_vector);
+    graphs_->object_properties_.add(node_name, property_vector);
     nb_loaded_elem_++;
   }
 
@@ -474,7 +453,7 @@ namespace ontologenius {
       }
     }
 
-    data_property_graph_->add(node_name, property_vector);
+    graphs_->data_properties_.add(node_name, property_vector);
     nb_loaded_elem_++;
   }
 
@@ -514,7 +493,7 @@ namespace ontologenius {
     }
 
     // data_property_graph_ will return false if no data property is found with this name
-    if(data_property_graph_->addAnnotation(node_name, property_vector) == false)
+    if(graphs_->data_properties_.addAnnotation(node_name, property_vector) == false)
     {
       ObjectPropertyDescriptor_t object_property_vector;
       object_property_vector.mothers_ = property_vector.mothers_;
@@ -525,7 +504,7 @@ namespace ontologenius {
       object_property_vector.muted_dictionary_ = property_vector.muted_dictionary_;
       object_property_vector.annotation_usage_ = true;
 
-      object_property_graph_->add(node_name, object_property_vector);
+      graphs_->object_properties_.add(node_name, object_property_vector);
       // if no data property is found, the annotation will be setted as an object property by default
     }
 

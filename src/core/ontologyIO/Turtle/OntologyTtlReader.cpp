@@ -12,12 +12,7 @@
 
 #include "ontologenius/core/ontoGraphs/Branchs/Elements.h"
 #include "ontologenius/core/ontoGraphs/Branchs/LiteralNode.h"
-#include "ontologenius/core/ontoGraphs/Graphs/AnonymousClassGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/IndividualGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/RuleGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 #include "ontologenius/core/ontoGraphs/Ontology.h"
 #include "ontologenius/core/ontologyIO/OntologyReader.h"
 #include "ontologenius/core/utility/error_code.h"
@@ -25,26 +20,10 @@
 
 namespace ontologenius {
 
-  OntologyTtlReader::OntologyTtlReader(ClassGraph* class_graph,
-                                       ObjectPropertyGraph* object_property_graph,
-                                       DataPropertyGraph* data_property_graph,
-                                       IndividualGraph* individual_graph,
-                                       AnonymousClassGraph* anonymous_graph,
-                                       RuleGraph* rule_graph) : OntologyReader(class_graph,
-                                                                               object_property_graph,
-                                                                               data_property_graph,
-                                                                               individual_graph,
-                                                                               anonymous_graph,
-                                                                               rule_graph),
-                                                                               double_reg_(R"(^[-+]?\d+\.\d+[eE][-+]?\d+$)"),
-                                                                               decimal_reg_(R"(^[-+]?\d*\.\d+$)"),
-                                                                               integer_reg_(R"(^[-+]?\d+$)")
-  {}
-
-  OntologyTtlReader::OntologyTtlReader(Ontology& onto) : OntologyReader(onto),
-                                                         double_reg_(R"(^[-+]?\d+\.\d+[eE][-+]?\d+$)"),
-                                                         decimal_reg_(R"(^[-+]?\d*\.\d+$)"),
-                                                         integer_reg_(R"(^[-+]?\d+$)")
+  OntologyTtlReader::OntologyTtlReader(OntologyGraphs* graphs) : OntologyReader(graphs),
+                                                                 double_reg_(R"(^[-+]?\d+\.\d+[eE][-+]?\d+$)"),
+                                                                 decimal_reg_(R"(^[-+]?\d*\.\d+$)"),
+                                                                 integer_reg_(R"(^[-+]?\d+$)")
   {}
 
   int OntologyTtlReader::readFromUri(std::string& content, const std::string& uri)
@@ -88,7 +67,7 @@ namespace ontologenius {
 
     if(previous_subject_.empty() == false)
     {
-      individual_graph_->add(previous_subject_, individual_vector_);
+      graphs_->individuals_.add(previous_subject_, individual_vector_);
       nb_loaded_elem_++;
       individual_vector_ = IndividualDescriptor_t();
     }
@@ -233,7 +212,7 @@ namespace ontologenius {
     {
       if(previous_subject_.empty() == false)
       {
-        individual_graph_->add(previous_subject_, individual_vector_);
+        graphs_->individuals_.add(previous_subject_, individual_vector_);
         nb_loaded_elem_++;
         individual_vector_ = IndividualDescriptor_t();
       }

@@ -7,11 +7,7 @@
 #include <utility>
 #include <vector>
 
-#include "ontologenius/core/ontoGraphs/Graphs/AnonymousClassGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/IndividualGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 #include "ontologenius/core/utility/error_code.h"
 #include "ontologenius/graphical/Display.h"
 #include "ontologenius/utils/Commands.h"
@@ -19,16 +15,7 @@
 
 namespace ontologenius {
 
-  OntologyLoader::OntologyLoader(ClassGraph* class_graph,
-                                 ObjectPropertyGraph* object_property_graph,
-                                 DataPropertyGraph* data_property_graph,
-                                 IndividualGraph* individual_graph,
-                                 AnonymousClassGraph* anonymous_graph,
-                                 RuleGraph* rule_graph) : owl_reader_(class_graph, object_property_graph, data_property_graph, individual_graph, anonymous_graph, rule_graph),
-                                                          ttl_reader_(class_graph, object_property_graph, data_property_graph, individual_graph, anonymous_graph, rule_graph)
-  {}
-
-  OntologyLoader::OntologyLoader(Ontology& onto) : owl_reader_(onto), ttl_reader_(onto)
+  OntologyLoader::OntologyLoader(OntologyGraphs* graph) : owl_reader_(graph), ttl_reader_(graph)
   {}
 
   int OntologyLoader::loadFile(std::string file)

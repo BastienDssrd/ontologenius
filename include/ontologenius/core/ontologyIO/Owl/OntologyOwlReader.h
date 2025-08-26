@@ -13,12 +13,7 @@
 #include "ontologenius/core/ontoGraphs/Branchs/Elements.h"
 #include "ontologenius/core/ontoGraphs/Branchs/PropertyBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/RuleBranch.h"
-#include "ontologenius/core/ontoGraphs/Graphs/AnonymousClassGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/IndividualGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/RuleGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 #include "ontologenius/core/ontologyIO/OntologyReader.h"
 
 namespace ontologenius {
@@ -28,8 +23,7 @@ namespace ontologenius {
   class OntologyOwlReader : public OntologyReader
   {
   public:
-    OntologyOwlReader(ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph, IndividualGraph* individual_graph, AnonymousClassGraph* anonymous_graph, RuleGraph* rule_graph);
-    explicit OntologyOwlReader(Ontology& onto);
+    explicit OntologyOwlReader(OntologyGraphs* graphs);
     ~OntologyOwlReader() = default;
 
     int readFromUri(std::string content, const std::string& uri, bool individual = false);

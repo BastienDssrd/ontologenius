@@ -31,14 +31,14 @@ namespace ontologenius {
 
  void ReasonerAnonymous::postReason()
   {
-    const std::lock_guard<std::shared_timed_mutex> lock(ontology_->individual_graph_.mutex_);
-    const std::shared_lock<std::shared_timed_mutex> lock_class(ontology_->class_graph_.mutex_);
-    const std::shared_lock<std::shared_timed_mutex> lock_obj_prop(ontology_->object_property_graph_.mutex_);
-    const std::shared_lock<std::shared_timed_mutex> lock_data_prop(ontology_->data_property_graph_.mutex_);
+    const std::lock_guard<std::shared_timed_mutex> lock(ontology_->individuals_.mutex_);
+    const std::shared_lock<std::shared_timed_mutex> lock_class(ontology_->classes_.mutex_);
+    const std::shared_lock<std::shared_timed_mutex> lock_obj_prop(ontology_->object_properties_.mutex_);
+    const std::shared_lock<std::shared_timed_mutex> lock_data_prop(ontology_->data_properties_.mutex_);
 
     std::vector<std::pair<std::string, InheritedRelationTriplets*>> used;
 
-    for(auto* indiv : ontology_->individual_graph_.get())
+    for(auto* indiv : ontology_->individuals_.get())
     {
       current_individual_ = indiv;
 
@@ -52,7 +52,7 @@ namespace ontologenius {
         bool has_active_equiv = false;
 
         // Loop over every classes which includes equivalence relations
-        for(auto* anonymous_branch : ontology_->anonymous_graph_.get())
+        for(auto* anonymous_branch : ontology_->anonymous_classes_.get())
         {
           bool trees_evaluation_result = false;
           bool has_been_evaluated = false;
@@ -135,7 +135,7 @@ namespace ontologenius {
           {
             indiv->nb_updates_++;
             anonymous_branch->class_equiv_->nb_updates_++;
-            ontology_->individual_graph_.removeInheritage(indiv, anonymous_branch->class_equiv_, explanations_, true);
+            ontology_->individuals_.removeInheritage(indiv, anonymous_branch->class_equiv_, explanations_, true);
             // todo: no explanation provided
           }
         }
@@ -700,15 +700,15 @@ namespace ontologenius {
     }
     else
     {
-      ontology_->class_graph_.getDisjoint(class_equiv, disjoints);
+      ontology_->classes_.getDisjoint(class_equiv, disjoints);
       disjoints_cache_[class_equiv] = disjoints;
     }
 
     if(disjoints.empty() == false)
     {
       std::unordered_set<ClassBranch*> ups;
-      ontology_->individual_graph_.getUpPtr(indiv, ups);
-      return (ontology_->class_graph_.firstIntersection(ups, disjoints) != nullptr);
+      ontology_->individuals_.getUpPtr(indiv, ups);
+      return (ontology_->classes_.firstIntersection(ups, disjoints) != nullptr);
     }
     else
       return false;

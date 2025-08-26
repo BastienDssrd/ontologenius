@@ -4,12 +4,7 @@
 #include <cstdio>
 #include <string>
 
-#include "ontologenius/core/ontoGraphs/Graphs/AnonymousClassGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/IndividualGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/RuleGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 
 namespace ontologenius {
 
@@ -18,8 +13,7 @@ namespace ontologenius {
   class OntologyOwlWriter
   {
   public:
-    OntologyOwlWriter(ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph, IndividualGraph* individual_graph, AnonymousClassGraph* anonymous_graph, RuleGraph* rule_graph);
-    explicit OntologyOwlWriter(Ontology& onto);
+    explicit OntologyOwlWriter(OntologyGraphs* graphs);
     ~OntologyOwlWriter() = default;
 
     void setFileName(const std::string& name) { file_name_ = name; }
@@ -27,12 +21,7 @@ namespace ontologenius {
     void write(const std::string& file_name = "none");
 
   private:
-    ClassGraph* class_graph_;
-    ObjectPropertyGraph* object_property_graph_;
-    DataPropertyGraph* data_property_graph_;
-    IndividualGraph* individual_graph_;
-    AnonymousClassGraph* anonymous_graph_;
-    RuleGraph* rule_graph_;
+    OntologyGraphs* graphs_;
     std::string ns_;
 
     std::string file_name_;

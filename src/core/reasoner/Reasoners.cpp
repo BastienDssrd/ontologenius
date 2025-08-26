@@ -314,10 +314,10 @@ namespace ontologenius {
 
   void Reasoners::computeUpdates()
   {
-    computeGraphUpdates(&ontology_->individual_graph_);
-    computeGraphUpdates(&ontology_->class_graph_);
-    computeGraphUpdates(&ontology_->object_property_graph_);
-    computeGraphUpdates(&ontology_->data_property_graph_);
+    computeGraphUpdates(&ontology_->individuals_);
+    computeGraphUpdates(&ontology_->classes_);
+    computeGraphUpdates(&ontology_->object_properties_);
+    computeGraphUpdates(&ontology_->data_properties_);
   }
 
   template<typename B>
@@ -336,7 +336,7 @@ namespace ontologenius {
 
   void Reasoners::computeIndividualsUpdatesPeriodic()
   {
-    const std::vector<IndividualBranch*> indivs = ontology_->individual_graph_.getSafe();
+    const std::vector<IndividualBranch*> indivs = ontology_->individuals_.getSafe();
     for(auto* indiv : indivs)
       if(indiv->nb_updates_ != 0)
       {

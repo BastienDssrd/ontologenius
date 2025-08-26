@@ -65,7 +65,7 @@ namespace ontologenius {
   {
     if(feed.prop_.empty())
     {
-      if(onto_->class_graph_.findBranchSafe(feed.from_) != nullptr)
+      if(onto_->classes_.findBranchSafe(feed.from_) != nullptr)
         return addDelClass(feed.action_, feed.from_);
       else
         return addDelIndiv(feed.action_, feed.from_);
@@ -94,14 +94,14 @@ namespace ontologenius {
   {
     if(action == action_add)
     {
-      const std::lock_guard<std::shared_timed_mutex> lock(onto_->class_graph_.mutex_);
-      onto_->class_graph_.findOrCreateBranch(name);
+      const std::lock_guard<std::shared_timed_mutex> lock(onto_->classes_.mutex_);
+      onto_->classes_.findOrCreateBranch(name);
       return true;
     }
     else
     {
-      ClassBranch* tmp = onto_->class_graph_.findBranchSafe(name);
-      onto_->class_graph_.deleteClass(tmp);
+      ClassBranch* tmp = onto_->classes_.findBranchSafe(name);
+      onto_->classes_.deleteClass(tmp);
       return (tmp != nullptr);
     }
   }
@@ -110,13 +110,13 @@ namespace ontologenius {
   {
     if(action == action_add)
     {
-      onto_->individual_graph_.findOrCreateBranchSafe(name);
+      onto_->individuals_.findOrCreateBranchSafe(name);
       return true;
     }
     else
     {
-      IndividualBranch* tmp = onto_->individual_graph_.findBranchSafe(name);
-      onto_->individual_graph_.deleteIndividual(tmp);
+      IndividualBranch* tmp = onto_->individuals_.findBranchSafe(name);
+      onto_->individuals_.deleteIndividual(tmp);
       return (tmp != nullptr);
     }
   }
@@ -127,20 +127,20 @@ namespace ontologenius {
     {
       if(feed.action_ == action_add)
       {
-        if(onto_->class_graph_.findBranchSafe(feed.from_) != nullptr)
-          return onto_->class_graph_.addInheritage(feed.from_, feed.on_);
-        else if(onto_->individual_graph_.findBranchSafe(feed.from_) != nullptr)
-          return onto_->individual_graph_.addInheritage(feed.from_, feed.on_);
-        else if(onto_->class_graph_.findBranchSafe(feed.on_) != nullptr)
-          return onto_->individual_graph_.addInheritageInvert(feed.from_, feed.on_);
-        else if(onto_->individual_graph_.findBranchSafe(feed.on_) != nullptr)
-          return onto_->individual_graph_.addInheritageInvertUpgrade(feed.from_, feed.on_);
-        else if((onto_->data_property_graph_.findBranchSafe(feed.from_) != nullptr) ||
-                (onto_->data_property_graph_.findBranchSafe(feed.on_) != nullptr))
-          return onto_->data_property_graph_.addInheritage(feed.from_, feed.on_);
-        else if((onto_->object_property_graph_.findBranchSafe(feed.from_) != nullptr) ||
-                (onto_->object_property_graph_.findBranchSafe(feed.on_) != nullptr))
-          return onto_->object_property_graph_.addInheritage(feed.from_, feed.on_);
+        if(onto_->classes_.findBranchSafe(feed.from_) != nullptr)
+          return onto_->classes_.addInheritage(feed.from_, feed.on_);
+        else if(onto_->individuals_.findBranchSafe(feed.from_) != nullptr)
+          return onto_->individuals_.addInheritage(feed.from_, feed.on_);
+        else if(onto_->classes_.findBranchSafe(feed.on_) != nullptr)
+          return onto_->individuals_.addInheritageInvert(feed.from_, feed.on_);
+        else if(onto_->individuals_.findBranchSafe(feed.on_) != nullptr)
+          return onto_->individuals_.addInheritageInvertUpgrade(feed.from_, feed.on_);
+        else if((onto_->data_properties_.findBranchSafe(feed.from_) != nullptr) ||
+                (onto_->data_properties_.findBranchSafe(feed.on_) != nullptr))
+          return onto_->data_properties_.addInheritage(feed.from_, feed.on_);
+        else if((onto_->object_properties_.findBranchSafe(feed.from_) != nullptr) ||
+                (onto_->object_properties_.findBranchSafe(feed.on_) != nullptr))
+          return onto_->object_properties_.addInheritage(feed.from_, feed.on_);
         else
         {
           notifications_.push_back("[FAIL][no known items in the requested inheritance]" + current_str_feed_);
@@ -149,24 +149,24 @@ namespace ontologenius {
       }
       else if(feed.action_ == action_del)
       {
-        if(onto_->class_graph_.findBranchSafe(feed.from_) != nullptr)
+        if(onto_->classes_.findBranchSafe(feed.from_) != nullptr)
         {
-          auto tmp = onto_->class_graph_.removeInheritage(feed.from_, feed.on_);
+          auto tmp = onto_->classes_.removeInheritage(feed.from_, feed.on_);
           explanations_.insert(explanations_.end(), tmp.begin(), tmp.end());
         }
-        else if(onto_->individual_graph_.findBranchSafe(feed.from_) != nullptr)
+        else if(onto_->individuals_.findBranchSafe(feed.from_) != nullptr)
         {
-          auto tmp = onto_->individual_graph_.removeInheritage(feed.from_, feed.on_);
+          auto tmp = onto_->individuals_.removeInheritage(feed.from_, feed.on_);
           explanations_.insert(explanations_.end(), tmp.begin(), tmp.end());
         }
-        else if(onto_->object_property_graph_.findBranchSafe(feed.from_) != nullptr)
+        else if(onto_->object_properties_.findBranchSafe(feed.from_) != nullptr)
         {
-          auto tmp = onto_->object_property_graph_.removeInheritage(feed.from_, feed.on_);
+          auto tmp = onto_->object_properties_.removeInheritage(feed.from_, feed.on_);
           explanations_.insert(explanations_.end(), tmp.begin(), tmp.end());
         }
-        else if(onto_->data_property_graph_.findBranchSafe(feed.from_) != nullptr)
+        else if(onto_->data_properties_.findBranchSafe(feed.from_) != nullptr)
         {
-          auto tmp = onto_->data_property_graph_.removeInheritage(feed.from_, feed.on_);
+          auto tmp = onto_->data_properties_.removeInheritage(feed.from_, feed.on_);
           explanations_.insert(explanations_.end(), tmp.begin(), tmp.end());
         }
         else
@@ -188,7 +188,7 @@ namespace ontologenius {
   {
     if(feed.action_ == action_add)
     {
-      if(!onto_->object_property_graph_.addInverseOf(feed.from_, feed.on_))
+      if(!onto_->object_properties_.addInverseOf(feed.from_, feed.on_))
       {
         notifications_.push_back("[FAIL][no known items in the request]" + current_str_feed_);
         return false;
@@ -198,7 +198,7 @@ namespace ontologenius {
     }
     else if(feed.action_ == action_del)
     {
-      if(!onto_->object_property_graph_.removeInverseOf(feed.from_, feed.on_))
+      if(!onto_->object_properties_.removeInverseOf(feed.from_, feed.on_))
       {
         notifications_.push_back("[FAIL][unknown item in the request]" + current_str_feed_);
         return false;
@@ -216,12 +216,12 @@ namespace ontologenius {
     {
       if(feed.action_ == action_add)
       {
-        onto_->individual_graph_.addSameAs(feed.from_, feed.on_);
+        onto_->individuals_.addSameAs(feed.from_, feed.on_);
         return true;
       }
       else if(feed.action_ == action_del)
       {
-        auto tmp = onto_->individual_graph_.removeSameAs(feed.from_, feed.on_);
+        auto tmp = onto_->individuals_.removeSameAs(feed.from_, feed.on_);
         if(tmp.empty() == false)
           explanations_.insert(explanations_.end(), tmp.begin(), tmp.end());
         return true;
@@ -240,14 +240,14 @@ namespace ontologenius {
   {
     if(feed.action_ == action_add)
     {
-      if(onto_->class_graph_.findBranchSafe(feed.from_) != nullptr)
-        return onto_->class_graph_.addLang(feed.from_, feed.prop_, feed.on_);
-      else if(onto_->individual_graph_.findBranchSafe(feed.from_) != nullptr)
-        return onto_->individual_graph_.addLang(feed.from_, feed.prop_, feed.on_);
-      else if(onto_->object_property_graph_.findBranchSafe(feed.from_) != nullptr)
-        return onto_->object_property_graph_.addLang(feed.from_, feed.prop_, feed.on_);
-      else if(onto_->data_property_graph_.findBranchSafe(feed.from_) != nullptr)
-        return onto_->data_property_graph_.addLang(feed.from_, feed.prop_, feed.on_);
+      if(onto_->classes_.findBranchSafe(feed.from_) != nullptr)
+        return onto_->classes_.addLang(feed.from_, feed.prop_, feed.on_);
+      else if(onto_->individuals_.findBranchSafe(feed.from_) != nullptr)
+        return onto_->individuals_.addLang(feed.from_, feed.prop_, feed.on_);
+      else if(onto_->object_properties_.findBranchSafe(feed.from_) != nullptr)
+        return onto_->object_properties_.addLang(feed.from_, feed.prop_, feed.on_);
+      else if(onto_->data_properties_.findBranchSafe(feed.from_) != nullptr)
+        return onto_->data_properties_.addLang(feed.from_, feed.prop_, feed.on_);
       else
       {
         notifications_.push_back("[FAIL][unknown element in the requested language addition]" + current_str_feed_);
@@ -256,14 +256,14 @@ namespace ontologenius {
     }
     else if(feed.action_ == action_del)
     {
-      if(onto_->class_graph_.findBranchSafe(feed.from_) != nullptr)
-        return onto_->class_graph_.removeLang(feed.from_, feed.prop_, feed.on_);
-      else if(onto_->individual_graph_.findBranchSafe(feed.from_) != nullptr)
-        return onto_->individual_graph_.removeLang(feed.from_, feed.prop_, feed.on_);
-      else if(onto_->object_property_graph_.findBranchSafe(feed.from_) != nullptr)
-        return onto_->object_property_graph_.removeLang(feed.from_, feed.prop_, feed.on_);
-      else if(onto_->data_property_graph_.findBranchSafe(feed.from_) != nullptr)
-        return onto_->data_property_graph_.removeLang(feed.from_, feed.prop_, feed.on_);
+      if(onto_->classes_.findBranchSafe(feed.from_) != nullptr)
+        return onto_->classes_.removeLang(feed.from_, feed.prop_, feed.on_);
+      else if(onto_->individuals_.findBranchSafe(feed.from_) != nullptr)
+        return onto_->individuals_.removeLang(feed.from_, feed.prop_, feed.on_);
+      else if(onto_->object_properties_.findBranchSafe(feed.from_) != nullptr)
+        return onto_->object_properties_.removeLang(feed.from_, feed.prop_, feed.on_);
+      else if(onto_->data_properties_.findBranchSafe(feed.from_) != nullptr)
+        return onto_->data_properties_.removeLang(feed.from_, feed.prop_, feed.on_);
       else
       {
         notifications_.push_back("[FAIL][unknown element in the requested language deletion]" + current_str_feed_);
@@ -295,34 +295,34 @@ namespace ontologenius {
     {
       if(feed.action_ == action_add)
       {
-        indiv_branch = onto_->individual_graph_.findBranchSafe(feed.from_);
+        indiv_branch = onto_->individuals_.findBranchSafe(feed.from_);
         if(indiv_branch != nullptr)
         {
           if(data_property == true)
-            onto_->individual_graph_.addRelation(indiv_branch, feed.prop_, type, data);
+            onto_->individuals_.addRelation(indiv_branch, feed.prop_, type, data);
           else
-            onto_->individual_graph_.addRelation(indiv_branch, feed.prop_, feed.on_);
+            onto_->individuals_.addRelation(indiv_branch, feed.prop_, feed.on_);
         }
         else
         {
-          class_branch = onto_->class_graph_.findBranchSafe(feed.from_);
+          class_branch = onto_->classes_.findBranchSafe(feed.from_);
           if(class_branch != nullptr)
           {
             if(data_property == true)
-              onto_->class_graph_.addRelation(class_branch, feed.prop_, type, data);
+              onto_->classes_.addRelation(class_branch, feed.prop_, type, data);
             else
-              onto_->class_graph_.addRelation(class_branch, feed.prop_, feed.on_);
+              onto_->classes_.addRelation(class_branch, feed.prop_, feed.on_);
           }
           else
           {
-            class_branch = onto_->class_graph_.findBranchSafe(feed.on_);
+            class_branch = onto_->classes_.findBranchSafe(feed.on_);
             if(class_branch != nullptr)
-              onto_->class_graph_.addRelationInvert(feed.from_, feed.prop_, class_branch);
+              onto_->classes_.addRelationInvert(feed.from_, feed.prop_, class_branch);
             else
             {
-              indiv_branch = onto_->individual_graph_.findBranchSafe(feed.on_);
+              indiv_branch = onto_->individuals_.findBranchSafe(feed.on_);
               if(indiv_branch != nullptr)
-                onto_->individual_graph_.addRelationInvert(feed.from_, feed.prop_, indiv_branch);
+                onto_->individuals_.addRelationInvert(feed.from_, feed.prop_, indiv_branch);
               else
               {
                 notifications_.push_back("[FAIL][unknown concept to apply property]" + current_str_feed_);
@@ -334,23 +334,23 @@ namespace ontologenius {
       }
       else if(feed.action_ == action_del)
       {
-        if(onto_->class_graph_.findBranchSafe(feed.from_) != nullptr)
+        if(onto_->classes_.findBranchSafe(feed.from_) != nullptr)
         {
           if(data_property == true)
-            onto_->class_graph_.removeRelation(feed.from_, feed.prop_, type, data);
+            onto_->classes_.removeRelation(feed.from_, feed.prop_, type, data);
           else
-            onto_->class_graph_.removeRelation(feed.from_, feed.prop_, feed.on_);
+            onto_->classes_.removeRelation(feed.from_, feed.prop_, feed.on_);
         }
-        else if(onto_->individual_graph_.findBranchSafe(feed.from_) != nullptr)
+        else if(onto_->individuals_.findBranchSafe(feed.from_) != nullptr)
         {
           if(data_property == true)
           {
-            auto tmp = onto_->individual_graph_.removeRelation(feed.from_, feed.prop_, type, data);
+            auto tmp = onto_->individuals_.removeRelation(feed.from_, feed.prop_, type, data);
             explanations_.insert(explanations_.end(), tmp.begin(), tmp.end());
           }
           else
           {
-            auto tmp = onto_->individual_graph_.removeRelation(feed.from_, feed.prop_, feed.on_);
+            auto tmp = onto_->individuals_.removeRelation(feed.from_, feed.prop_, feed.on_);
             explanations_.insert(explanations_.end(), tmp.begin(), tmp.end());
           }
         }

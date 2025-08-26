@@ -26,13 +26,13 @@ namespace ontologenius {
 
   void ReasonerRule::postReason()
   {
-    const std::lock_guard<std::shared_timed_mutex> lock(ontology_->individual_graph_.mutex_);
-    const std::shared_lock<std::shared_timed_mutex> lock_class(ontology_->class_graph_.mutex_);
-    const std::shared_lock<std::shared_timed_mutex> lock_obj_prop(ontology_->object_property_graph_.mutex_);
-    const std::shared_lock<std::shared_timed_mutex> lock_data_prop(ontology_->data_property_graph_.mutex_);
-    const std::shared_lock<std::shared_timed_mutex> lock_ano(ontology_->anonymous_graph_.mutex_);
+    const std::lock_guard<std::shared_timed_mutex> lock(ontology_->individuals_.mutex_);
+    const std::shared_lock<std::shared_timed_mutex> lock_class(ontology_->classes_.mutex_);
+    const std::shared_lock<std::shared_timed_mutex> lock_obj_prop(ontology_->object_properties_.mutex_);
+    const std::shared_lock<std::shared_timed_mutex> lock_data_prop(ontology_->data_properties_.mutex_);
+    const std::shared_lock<std::shared_timed_mutex> lock_ano(ontology_->anonymous_classes_.mutex_);
 
-    for(auto* rule_branch : ontology_->rule_graph_.get())
+    for(auto* rule_branch : ontology_->rules_.get())
     {
       std::vector<RuleResult_t> results_resolve;
       std::vector<index_t> empty_accu(rule_branch->variables_.size(), index_t()); // need to initialize each index at 0
@@ -81,15 +81,15 @@ namespace ontologenius {
     }
     else
     {
-      ontology_->class_graph_.getDisjoint(class_equiv, disjoints);
+      ontology_->classes_.getDisjoint(class_equiv, disjoints);
       disjoints_cache_[class_equiv] = disjoints;
     }
 
     if(disjoints.empty() == false)
     {
       std::unordered_set<ClassBranch*> ups;
-      ontology_->individual_graph_.getUpPtr(indiv, ups);
-      return (ontology_->class_graph_.firstIntersection(ups, disjoints) != nullptr);
+      ontology_->individuals_.getUpPtr(indiv, ups);
+      return (ontology_->classes_.firstIntersection(ups, disjoints) != nullptr);
     }
     else
       return false;
@@ -102,7 +102,7 @@ namespace ontologenius {
     auto& subject = triplet.arguments[0];
 
     if(subject.is_variable && (solution.assigned_result[subject.variable_id] != 0))
-      involved_indiv = ontology_->individual_graph_.findBranch(solution.assigned_result[subject.variable_id]);
+      involved_indiv = ontology_->individuals_.findBranch(solution.assigned_result[subject.variable_id]);
     else
       involved_indiv = subject.indiv_value;
 
@@ -151,19 +151,19 @@ namespace ontologenius {
     auto& object = triplet.arguments[1];
 
     if(subject.is_variable && (solution.assigned_result[subject.variable_id] != 0))
-      involved_indiv_from = ontology_->individual_graph_.findBranch(solution.assigned_result[subject.variable_id]);
+      involved_indiv_from = ontology_->individuals_.findBranch(solution.assigned_result[subject.variable_id]);
     else
       involved_indiv_from = subject.indiv_value;
     if(object.is_variable && (solution.assigned_result[object.variable_id] != 0))
-      involved_indiv_on = ontology_->individual_graph_.findBranch(solution.assigned_result[object.variable_id]);
+      involved_indiv_on = ontology_->individuals_.findBranch(solution.assigned_result[object.variable_id]);
     else
       involved_indiv_on = object.indiv_value;
 
     if(involved_indiv_from != nullptr && involved_indiv_on != nullptr)
     {
-      if(ontology_->individual_graph_.relationExists(involved_indiv_from, triplet.object_predicate, involved_indiv_on) == false)
+      if(ontology_->individuals_.relationExists(involved_indiv_from, triplet.object_predicate, involved_indiv_on) == false)
       {
-        int relation_index = ontology_->individual_graph_.addRelation(involved_indiv_from, triplet.object_predicate, involved_indiv_on, 1.0, true, false);
+        int relation_index = ontology_->individuals_.addRelation(involved_indiv_from, triplet.object_predicate, involved_indiv_on, 1.0, true, false);
         involved_indiv_from->nb_updates_++;
 
         involved_indiv_from->object_relations_[relation_index].explanation.insert(involved_indiv_from->object_relations_[relation_index].explanation.end(),
@@ -197,19 +197,19 @@ namespace ontologenius {
     auto& object = triplet.arguments[1];
 
     if(subject.is_variable && (solution.assigned_result[subject.variable_id] != 0))
-      involved_indiv_from = ontology_->individual_graph_.findBranch(solution.assigned_result[subject.variable_id]);
+      involved_indiv_from = ontology_->individuals_.findBranch(solution.assigned_result[subject.variable_id]);
     else
       involved_indiv_from = subject.indiv_value;
     if(object.is_variable && (solution.assigned_result[object.variable_id] != 0))
-      involved_literal_on = ontology_->literal_graph_.find(solution.assigned_result[object.variable_id]);
+      involved_literal_on = ontology_->literals_.find(solution.assigned_result[object.variable_id]);
     else
       involved_literal_on = object.datatype_value;
 
     if(involved_indiv_from != nullptr && involved_literal_on != nullptr)
     {
-      if(ontology_->individual_graph_.relationExists(involved_indiv_from, triplet.data_predicate, involved_literal_on) == false)
+      if(ontology_->individuals_.relationExists(involved_indiv_from, triplet.data_predicate, involved_literal_on) == false)
       {
-        int relation_index = ontology_->individual_graph_.addRelation(involved_indiv_from, triplet.data_predicate, involved_literal_on, 1.0, true, false);
+        int relation_index = ontology_->individuals_.addRelation(involved_indiv_from, triplet.data_predicate, involved_literal_on, 1.0, true, false);
         involved_indiv_from->nb_updates_++;
 
         involved_indiv_from->data_relations_[relation_index].explanation.insert(involved_indiv_from->data_relations_[relation_index].explanation.end(),
@@ -325,7 +325,7 @@ namespace ontologenius {
         getType(triplet.class_predicate, values);
       else
       {
-        IndividualBranch* involved_indiv = ontology_->individual_graph_.findBranch(accu[var_index]);
+        IndividualBranch* involved_indiv = ontology_->individuals_.findBranch(accu[var_index]);
         auto res = isA(involved_indiv, triplet.class_predicate);
         if(res.empty() == false)
           values.emplace_back(std::move(res));
@@ -436,7 +436,7 @@ namespace ontologenius {
         values = getFromObject(triplet);
       else
       {
-        subject.indiv_value = ontology_->individual_graph_.findBranch(accu[var_index]);
+        subject.indiv_value = ontology_->individuals_.findBranch(accu[var_index]);
         var_index = object.variable_id;
         values = getOnObject(triplet, object.indiv_value->get());
       }
@@ -451,13 +451,13 @@ namespace ontologenius {
       var_index = subject.variable_id;
       if(accu[var_index] != 0)
       {
-        subject.indiv_value = ontology_->individual_graph_.findBranch(accu[var_index]);
+        subject.indiv_value = ontology_->individuals_.findBranch(accu[var_index]);
         var_index = object.variable_id;
         values = getOnObject(triplet, accu[var_index]);
       }
       else if(accu[object.variable_id] != 0)
       {
-        object.indiv_value = ontology_->individual_graph_.findBranch(accu[object.variable_id]);
+        object.indiv_value = ontology_->individuals_.findBranch(accu[object.variable_id]);
         values = getFromObject(triplet);
       }
       else
@@ -472,7 +472,7 @@ namespace ontologenius {
 
     if(object.indiv_value->same_as_.empty())
     {
-      for(auto& indiv : ontology_->individual_graph_.all_branchs_)
+      for(auto& indiv : ontology_->individuals_.all_branchs_)
         for(size_t i = 0; i < indiv->object_relations_.size(); i++)
         {
           const auto& relations = indiv->object_relations_;
@@ -491,7 +491,7 @@ namespace ontologenius {
     }
     else
     {
-      for(auto& indiv : ontology_->individual_graph_.all_branchs_)
+      for(auto& indiv : ontology_->individuals_.all_branchs_)
         for(size_t i = 0; i < indiv->object_relations_.size(); i++)
         {
           for(size_t j = 0; j < object.indiv_value->same_as_.size(); j++)
@@ -526,7 +526,7 @@ namespace ontologenius {
     IndividualBranch* indiv = triplet.arguments[0].indiv_value;
     IndividualBranch* selector_ptr = nullptr;
     if(selector != 0)
-      selector_ptr = ontology_->individual_graph_.findBranch(selector);
+      selector_ptr = ontology_->individuals_.findBranch(selector);
     
     if(indiv->same_as_.empty())
     {
@@ -646,7 +646,7 @@ namespace ontologenius {
         values = getFromData(triplet);
       else
       {
-        subject.indiv_value = ontology_->individual_graph_.findBranch(accu[var_index]);
+        subject.indiv_value = ontology_->individuals_.findBranch(accu[var_index]);
         var_index = object.variable_id;
         values = getOnData(triplet, object.datatype_value->get());
       }
@@ -661,13 +661,13 @@ namespace ontologenius {
       var_index = subject.variable_id;
       if(accu[var_index] != 0)
       {
-        subject.indiv_value = ontology_->individual_graph_.findBranch(accu[var_index]);
+        subject.indiv_value = ontology_->individuals_.findBranch(accu[var_index]);
         var_index = object.variable_id;
         values = getOnData(triplet, accu[var_index]);
       }
       else if(accu[object.variable_id] != 0)
       {
-        object.datatype_value = ontology_->literal_graph_.find(accu[object.variable_id]);
+        object.datatype_value = ontology_->literals_.find(accu[object.variable_id]);
         values = getFromData(triplet);
       }
       else
@@ -679,7 +679,7 @@ namespace ontologenius {
   {
     std::vector<IndivResult_t> res;
 
-    for(auto& indiv : ontology_->individual_graph_.all_branchs_)
+    for(auto& indiv : ontology_->individuals_.all_branchs_)
       for(size_t i = 0; i < indiv->data_relations_.size(); i++)
       {
         const auto& relations = indiv->data_relations_;
@@ -763,7 +763,7 @@ namespace ontologenius {
     var_index = subject.variable_id;
 
     if(accu[subject.variable_id] != 0)
-      subject_ptr = ontology_->literal_graph_.find(accu[subject.variable_id]);
+      subject_ptr = ontology_->literals_.find(accu[subject.variable_id]);
     else if(subject.datatype_value != nullptr)
       subject_ptr = subject.datatype_value;
     else
@@ -773,7 +773,7 @@ namespace ontologenius {
     }
 
     if(accu[object.variable_id] != 0)
-      object_ptr = ontology_->literal_graph_.find(accu[object.variable_id]);
+      object_ptr = ontology_->literals_.find(accu[object.variable_id]);
     else if(object.datatype_value != nullptr)
       object_ptr = object.datatype_value;
     else

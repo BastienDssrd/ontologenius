@@ -179,7 +179,6 @@ target_link_libraries(ontologenius_Checkers_lib
 
 add_onto_library(ontologenius_OntologyIO_lib
   src/core/ontologyIO/OntologyLoader.cpp
-  src/core/ontologyIO/OntologyReader.cpp
   src/core/ontologyIO/Turtle/OntologyTtlReader.cpp
   src/core/ontologyIO/Owl/OntologyOwlReader.cpp
   src/core/ontologyIO/Owl/OntologyOwlAnonymousReader.cpp
