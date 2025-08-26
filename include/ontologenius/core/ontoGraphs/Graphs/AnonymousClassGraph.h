@@ -132,8 +132,6 @@ namespace ontologenius {
 
   class AnonymousClassGraph : public Graph<AnonymousClassBranch>
   {
-    friend ObjectPropertyGraph;
-    friend DataPropertyGraph;
     friend IndividualGraph;
     friend ClassGraph;
 

@@ -61,7 +61,6 @@ namespace ontologenius {
       return checkIdentifier(ano_elem, disjoints, uppers, complement_mode);
     else if(ano_elem->type_ == class_expression_one_of)
       return checkOneOf(ano_elem, disjoints, uppers, complement_mode);
-    // return checkOneOf(ano_elem, disjoints, uppers, complement_mode);
     else if(ano_elem->type_ == class_expression_restriction)
       return checkRestriction(ano_elem, disjoints, uppers, complement_mode);
     else if(ano_elem->type_ == class_expression_union_of)
@@ -131,7 +130,7 @@ namespace ontologenius {
     else if(ano_elem->type_ == class_expression_complement_of)
     {
       std::unordered_set<LiteralType*> empty_data_range;
-      // TO DO : boolean and not(boolean) case with the uppers and complement mode
+      // todo: boolean and not(boolean) case with the uppers and complement mode
       auto tmp = resolveTreeDisjoint(ano_elem->sub_elements_.front(), empty_data_range);
       for(auto& err : tmp)
         errs.emplace_back(err_compl + ", " + err);

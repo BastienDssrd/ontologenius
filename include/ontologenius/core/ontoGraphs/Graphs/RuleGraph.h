@@ -107,16 +107,12 @@ namespace ontologenius {
   class AnonymousClassGraph;
 
   class RuleChecker;
-  class RuleOwlWriter;
 
   class RuleGraph : public Graph<RuleBranch>
   {
-    friend ObjectPropertyGraph;
-    friend DataPropertyGraph;
     friend IndividualGraph;
     friend ClassGraph;
     friend AnonymousClassGraph;
-    friend RuleOwlWriter;
 
     friend RuleChecker;
 
@@ -130,6 +126,8 @@ namespace ontologenius {
     RuleBranch* add(const RuleDescriptor_t& rule);
 
     void deepCopy(const RuleGraph& other);
+
+    const std::set<std::string>& getVariables() const { return variable_names_; }
 
   private:
     LiteralGraph* literal_graph_;

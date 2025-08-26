@@ -35,8 +35,6 @@ namespace ontologenius {
 
   class ClassGraph : public OntoGraph<ClassBranch>
   {
-    friend ObjectPropertyGraph;
-    friend DataPropertyGraph;
     friend IndividualGraph;
     friend AnonymousClassGraph;
 

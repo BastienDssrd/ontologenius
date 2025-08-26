@@ -27,7 +27,7 @@ namespace ontologenius {
     const std::vector<RuleBranch*> rules = rule_graph_->get();
 
     // write all the variables involved in the rules
-    for(const auto& var : rule_graph_->variable_names_)
+    for(const auto& var : rule_graph_->getVariables())
       writeVariable(var);
 
     // write the rules
