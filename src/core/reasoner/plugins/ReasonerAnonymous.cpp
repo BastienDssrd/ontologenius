@@ -86,19 +86,17 @@ namespace ontologenius {
 
               if(should_be_evaluated)
               {
-
                 if((indiv->flags_.find(equiv_flag) != indiv->flags_.end()) || // has been proven to use other individuals
                   ((indiv->isUpdated() == true) &&
                     ((anonymous_tree->involves_class && indiv->is_a_.isUpdated()) ||
                     (anonymous_tree->involves_object_property && indiv->object_relations_.isUpdated()) ||
                     (anonymous_tree->involves_data_property && indiv->data_relations_.isUpdated()) ||
-                    (anonymous_tree->involves_individual && indiv->same_as_.isUpdated()) ||
+                    (anonymous_tree->involves_individual && (indiv->same_as_.isUpdated() || first_run_)) ||
                     (anonymous_tree->involves_close_world_assumption)))) // improve this condition to make it more specific
                 {
                   has_involved_other_individual_ = false; // reset the flag before running resolveTree
                   used.clear();
                   used.reserve(anonymous_tree->depth_);
-
                   bool equivalence_found = resolveTree(indiv, anonymous_tree->root_node_, used);
 
                   trees_evaluation_result = trees_evaluation_result || equivalence_found; // mark if a least one of the tree has succeeded
@@ -115,7 +113,7 @@ namespace ontologenius {
                       if(anonymous_branch->class_equiv_->isHidden() == false)
                       {
                         explanations_.emplace_back("[ADD]" + indiv->value() + "|isA|" + anonymous_branch->class_equiv_->value(),
-                                                  "[ADD]" + indiv->is_a_.back().getExplanation());
+                                                   "[ADD]" + indiv->is_a_.back().getExplanation());
                       }
                     }
                   }
@@ -138,6 +136,7 @@ namespace ontologenius {
             indiv->nb_updates_++;
             anonymous_branch->class_equiv_->nb_updates_++;
             ontology_->individual_graph_.removeInheritage(indiv, anonymous_branch->class_equiv_, explanations_, true);
+            // todo: no explanation provided
           }
         }
 
@@ -239,7 +238,7 @@ namespace ontologenius {
     std::string explanation;
     for(auto* elem : expession->sub_elements_)
     {
-      if(literal == expession->literal_involved_)
+      if(literal == elem->literal_involved_)
         explanation = literal->value();
 
       if(list_string.empty() == false)
