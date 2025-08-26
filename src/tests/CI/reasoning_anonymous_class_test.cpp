@@ -162,6 +162,115 @@ TEST(reasoning_anonymous_class, no_datatype_same_as)
   EXPECT_TRUE(std::find(res.begin(), res.end(), "Human") != res.end());
 }
 
+TEST(reasoning_anonymous_class, datatype)
+{
+  std::vector<std::string> res;
+
+  onto_ptr->feeder.addInheritage("realsense", "Sensor");
+  onto_ptr->feeder.waitUpdate(1000);
+
+  res = onto_ptr->individuals.getUp("realsense", 1);
+  EXPECT_EQ(res.size(), 1);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "Sensor") != res.end());
+
+  onto_ptr->feeder.addRelation("realsense", "isActivated", "boolean#false");
+  onto_ptr->feeder.waitUpdate(1000);
+
+  res = onto_ptr->individuals.getUp("realsense", 1);
+  EXPECT_EQ(res.size(), 2);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "ValidSensor") != res.end());      // isActivated exactly 1 xsd:boolean
+
+  onto_ptr->feeder.addRelation("realsense", "isActivated", "boolean#true");
+  onto_ptr->feeder.waitUpdate(1000);
+
+  res = onto_ptr->individuals.getUp("realsense", 1);
+  EXPECT_EQ(res.size(), 2);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "ActiveSensor") != res.end());     // isActivated value true
+
+  onto_ptr->feeder.removeRelation("realsense", "isActivated", "boolean#false");
+  onto_ptr->feeder.waitUpdate(1000);
+
+  res = onto_ptr->individuals.getUp("realsense", 1);
+  EXPECT_EQ(res.size(), 3);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "ActiveSensor") != res.end());     // isActivated value true
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "ValidSensor") != res.end());      // isActivated exactly 1 xsd:boolean
+
+  onto_ptr->feeder.addRelation("realsense", "hasData", "string#plop");
+  onto_ptr->feeder.waitUpdate(1000);
+
+  res = onto_ptr->individuals.getUp("realsense", 1);
+  EXPECT_EQ(res.size(), 5);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "ActiveSensor") != res.end());     // isActivated value true
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "ValidSensor") != res.end());      // isActivated exactly 1 xsd:boolean
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "StringSensor") != res.end());     // hasData only xsd:string
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "SensorWithData") != res.end());   // hasData some (not errorCode)
+
+  onto_ptr->feeder.addRelation("realsense", "hasData", "string#plip");
+  onto_ptr->feeder.addRelation("realsense", "hasData", "string#error");
+  onto_ptr->feeder.waitUpdate(1000);
+
+  res = onto_ptr->individuals.getUp("realsense", 1);
+  EXPECT_EQ(res.size(), 7);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "ActiveSensor") != res.end());     // isActivated value true
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "ValidSensor") != res.end());      // isActivated exactly 1 xsd:boolean
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "StringSensor") != res.end());     // hasData only xsd:string
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "SensorWithData") != res.end());   // hasData some (not errorCode)
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "SensorInError") != res.end());    // hasData some ({"error", "critical"} or errorCode)
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "TalkativeSensor") != res.end());  // hasData min 3
+
+  onto_ptr->feeder.addRelation("realsense", "hasData", "errorCode#1");
+  onto_ptr->feeder.waitUpdate(1000);
+
+  res = onto_ptr->individuals.getUp("realsense", 1);
+  EXPECT_EQ(res.size(), 6);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "ActiveSensor") != res.end());     // isActivated value true
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "ValidSensor") != res.end());      // isActivated exactly 1 xsd:boolean
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "SensorWithData") != res.end());   // hasData some (not errorCode)
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "SensorInError") != res.end());    // hasData some ({"error", "critical"} or errorCode)
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "TalkativeSensor") != res.end());  // hasData min 3
+
+  onto_ptr->feeder.removeRelation("realsense", "hasData", "string#error");
+  onto_ptr->feeder.waitUpdate(1000);
+
+  res = onto_ptr->individuals.getUp("realsense", 1);
+  EXPECT_EQ(res.size(), 6);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "ActiveSensor") != res.end());     // isActivated value true
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "ValidSensor") != res.end());      // isActivated exactly 1 xsd:boolean
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "SensorWithData") != res.end());   // hasData some (not errorCode)
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "SensorInError") != res.end());    // hasData some ({"error", "critical"} or errorCode)
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "TalkativeSensor") != res.end());  // hasData min 3
+
+  onto_ptr->feeder.removeRelation("realsense", "hasData", "string#plop");
+  onto_ptr->feeder.removeRelation("realsense", "hasData", "string#plip");
+  onto_ptr->feeder.addRelation("realsense", "hasData", "integer#0");
+  onto_ptr->feeder.waitUpdate(1000);
+
+  res = onto_ptr->individuals.getUp("realsense", 1);
+  EXPECT_EQ(res.size(), 5);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "ActiveSensor") != res.end());     // isActivated value true
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "ValidSensor") != res.end());      // isActivated exactly 1 xsd:boolean
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "SensorInError") != res.end());    // hasData some ({"error", "critical"} or errorCode)
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "SensorWithData") != res.end());   // hasData some (not errorCode)
+
+  onto_ptr->feeder.removeRelation("realsense", "hasData", "errorCode#1");
+  onto_ptr->feeder.waitUpdate(1000);
+
+  res = onto_ptr->individuals.getUp("realsense", 1);
+  EXPECT_EQ(res.size(), 5);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "ActiveSensor") != res.end());     // isActivated value true
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "ValidSensor") != res.end());      // isActivated exactly 1 xsd:boolean
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "BinarySensor") != res.end());     // hasData only {0, 1}
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "SensorWithData") != res.end());   // hasData some (not errorCode)
+
+  onto_ptr->feeder.removeRelation("realsense", "hasData", "integer#0");
+  onto_ptr->feeder.removeRelation("realsense", "isActivated", "boolean#true");
+  onto_ptr->feeder.waitUpdate(1000);
+
+  res = onto_ptr->individuals.getUp("realsense", 1);
+  EXPECT_EQ(res.size(), 1);
+  EXPECT_TRUE(std::find(res.begin(), res.end(), "Sensor") != res.end());
+}
+
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "ontologenius_reasoning_anonymous_class_test");

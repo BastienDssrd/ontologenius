@@ -377,7 +377,7 @@
                                 <owl:oneOf>
                                     <rdf:Description>
                                         <rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#List"/>
-                                        <rdf:first>critical</rdf:first>
+                                        <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string">critical</rdf:first>
                                         <rdf:rest>
                                             <rdf:Description>
                                                 <rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#List"/>
