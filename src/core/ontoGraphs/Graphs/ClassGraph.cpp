@@ -768,53 +768,6 @@ namespace ontologenius {
     return res;
   }
 
-  template<typename T>
-  void ClassGraph::getOn(ClassBranch* class_branch, std::unordered_set<index_t>& object_properties, std::unordered_set<index_t>& data_properties, std::unordered_set<T>& res, uint32_t current_depth, int& found_depth)
-  {
-    if(class_branch != nullptr)
-    {
-      if(current_depth >= (uint32_t)found_depth)
-        return;
-
-      std::unordered_set<T> tmp_res;
-
-      if(object_properties.empty() == false)
-      {
-        for(const ClassObjectRelationElement& relation : class_branch->object_relations_)
-          for(const index_t id : object_properties)
-            if(relation.first->get() == id)
-              insert(tmp_res, relation.second);
-      }
-      else if(data_properties.empty() == false)
-      {
-        for(const ClassDataRelationElement& relation : class_branch->data_relations_)
-          for(const index_t id : data_properties)
-            if(relation.first->get() == id)
-              insert(tmp_res, relation.second);
-      }
-      else
-        return;
-
-      if(tmp_res.empty() == false)
-      {
-        if(data_properties.empty() == false)
-        {
-          res = std::move(tmp_res);
-          found_depth = (int)current_depth;
-          return;
-        }
-        else
-          res.insert(tmp_res.begin(), tmp_res.end());
-      }
-
-      current_depth++;
-      // std::unordered_set<ClassBranch*> up_set = getUpPtrSafe(class_branch, 1);
-      for(auto& up : class_branch->mothers_)
-        if(up.elem != class_branch)
-          getOn(up.elem, object_properties, data_properties, res, current_depth, found_depth);
-    }
-  }
-
   std::unordered_set<std::string> ClassGraph::getWith(const std::string& param, int depth)
   {
     const size_t pose = param.find(':');
