@@ -26,7 +26,6 @@ namespace ontologenius {
   };
 
   // for friend
-  class ClassDrawer;
   class ObjectPropertyGraph;
   class DataPropertyGraph;
   class IndividualGraph;
@@ -36,7 +35,6 @@ namespace ontologenius {
 
   class ClassGraph : public OntoGraph<ClassBranch>
   {
-    friend ClassDrawer;
     friend ObjectPropertyGraph;
     friend DataPropertyGraph;
     friend IndividualGraph;
