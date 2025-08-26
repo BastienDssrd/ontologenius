@@ -269,7 +269,7 @@ namespace ontologenius {
       if(set.empty())
         return res;
 
-      for(auto& v : c)
+      for(const auto& v : c)
       {
         if(set.find(v.elem) != set.end())
           std::inserter(res, res.end()) = v.elem;
@@ -283,7 +283,7 @@ namespace ontologenius {
       if(set.empty())
         return nullptr;
 
-      for(auto& v : c)
+      for(const auto& v : c)
       {
         if(set.find(v.elem) != set.end())
           return v.elem;
