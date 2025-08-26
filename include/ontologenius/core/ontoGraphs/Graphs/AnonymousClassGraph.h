@@ -168,6 +168,7 @@ namespace ontologenius {
     ClassExpression* copyTreeNodes(ClassExpression* old_node);
     ClassExpression* copyNodeContent(ClassExpression* old_node);
 
+    void printTree(AnonymousClassTree* tree);
     void printTree(ClassExpression* expression, size_t level);
   };
 

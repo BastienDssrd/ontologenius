@@ -60,7 +60,7 @@ namespace ontologenius {
     for(size_t i = 0; i < equivalence_descriptor.expression_members.size(); i++)
     {
       AnonymousClassTree* tree = createTree(equivalence_descriptor.expression_members[i]);
-      tree->ano_name = ano_name + "_" + std::to_string(i);
+      tree->id = ano_name + "_" + std::to_string(i);
       anonymous_branch->ano_trees_.push_back(tree);
     }
 
@@ -301,6 +301,12 @@ namespace ontologenius {
       new_node->class_involved_ = class_graph_->container_.find(old_node->class_involved_->value());
 
     return new_node;
+  }
+
+  void AnonymousClassGraph::printTree(AnonymousClassTree* tree)
+  {
+    printTree(tree->root_node_, 0);
+    std::cout << tree->involvesToString() << std::endl;
   }
 
   void AnonymousClassGraph::printTree(ClassExpression* expression, size_t level)
