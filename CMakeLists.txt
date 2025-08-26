@@ -140,13 +140,16 @@ endif()
 # ##################################
 
 # # CORE
-add_onto_library(ontologenius_ontoGraphs_lib
+add_onto_library(ontologenius_Branches_lib
   src/core/ontoGraphs/Branchs/ClassBranch.cpp
   src/core/ontoGraphs/Branchs/ObjectPropertyBranch.cpp
   src/core/ontoGraphs/Branchs/DataPropertyBranch.cpp
   src/core/ontoGraphs/Branchs/IndividualBranch.cpp
   src/core/ontoGraphs/Branchs/ValuedNode.cpp
   src/core/ontoGraphs/Branchs/LiteralNode.cpp
+)
+
+add_onto_library(ontologenius_Graphs_lib
   src/core/ontoGraphs/Graphs/ClassGraph.cpp
   src/core/ontoGraphs/Graphs/ObjectPropertyGraph.cpp
   src/core/ontoGraphs/Graphs/DataPropertyGraph.cpp
@@ -154,13 +157,27 @@ add_onto_library(ontologenius_ontoGraphs_lib
   src/core/ontoGraphs/Graphs/LiteralGraph.cpp
   src/core/ontoGraphs/Graphs/AnonymousClassGraph.cpp
   src/core/ontoGraphs/Graphs/RuleGraph.cpp
+  src/core/ontoGraphs/Graphs/OntologyGraphs.cpp
+)
+target_link_libraries(ontologenius_Graphs_lib
+  PUBLIC
+  ontologenius_Branches_lib
+)
+
+add_onto_library(ontologenius_Checkers_lib
   src/core/ontoGraphs/Checkers/ClassChecker.cpp
   src/core/ontoGraphs/Checkers/RuleChecker.cpp
   src/core/ontoGraphs/Checkers/ObjectPropertyChecker.cpp
   src/core/ontoGraphs/Checkers/DataPropertyChecker.cpp
   src/core/ontoGraphs/Checkers/IndividualChecker.cpp
   src/core/ontoGraphs/Checkers/AnonymousClassChecker.cpp
-  src/core/ontoGraphs/Ontology.cpp
+)
+target_link_libraries(ontologenius_Checkers_lib
+  PUBLIC
+  ontologenius_Graphs_lib
+)
+
+add_onto_library(ontologenius_OntologyIO_lib
   src/core/ontologyIO/OntologyLoader.cpp
   src/core/ontologyIO/OntologyReader.cpp
   src/core/ontologyIO/Turtle/OntologyTtlReader.cpp
@@ -177,13 +194,25 @@ add_onto_library(ontologenius_ontoGraphs_lib
   src/core/ontologyIO/Owl/writers/IndividualOwlWriter.cpp
   src/core/ontologyIO/Owl/writers/RuleOwlWriter.cpp
 )
-target_include_directories(ontologenius_ontoGraphs_lib
+target_include_directories(ontologenius_OntologyIO_lib
   PUBLIC
   ${TINYXML2_INCLUDE_DIRS}
 )
+target_link_libraries(ontologenius_OntologyIO_lib
+  PUBLIC
+  ontologenius_Graphs_lib
+  PRIVATE
+  ${TINYXML2_LIBRARIES}
+)
+
+add_onto_library(ontologenius_ontoGraphs_lib
+  src/core/ontoGraphs/Ontology.cpp
+)
 target_link_libraries(ontologenius_ontoGraphs_lib
   PUBLIC
-  ${TINYXML2_LIBRARIES}
+  ontologenius_Graphs_lib
+  ontologenius_Checkers_lib
+  ontologenius_OntologyIO_lib
   PRIVATE
   PkgConfig::CURL
 )
