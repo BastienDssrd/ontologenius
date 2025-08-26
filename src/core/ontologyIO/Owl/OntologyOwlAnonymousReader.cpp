@@ -121,7 +121,7 @@ namespace ontologenius {
       }
       else if(expression_type == "owl:intersectionOf")
         class_expression->type = ClassExpressionType_e::class_expression_intersection_of;
-      else if(expression_type == "owl:unionOf") // not yet tested
+      else if(expression_type == "owl:unionOf")
         class_expression->type = ClassExpressionType_e::class_expression_union_of;
 
       if(class_expression->type == ClassExpressionType_e::class_expression_complement_of)
@@ -148,11 +148,31 @@ namespace ontologenius {
 
   void OntologyOwlReader::readDatatypeEnumeration(tinyxml2::XMLElement* elem, ClassExpressionDescriptor_t* class_expression)
   {
+    tinyxml2::XMLElement* elem_to_analyse = nullptr;
+
     auto* list_elem = elem->FirstChildElement("rdf:List");
     if(list_elem != nullptr)
+      elem_to_analyse = list_elem;
+    else
     {
-      auto* first = list_elem->FirstChildElement("rdf:first");
+      auto* description_elem = elem->FirstChildElement("rdf:Description");
+      if(description_elem != nullptr)
+      {
+        auto* type_elem = description_elem->FirstChildElement("rdf:type");
+        if(type_elem != nullptr)
+        {
+          // should we verify that the type is a List ?
+          elem_to_analyse = description_elem;
+        }
+      }
+    }
+
+    if(elem_to_analyse != nullptr)
+    {
+      auto* first = elem_to_analyse->FirstChildElement("rdf:first");
       std::string type = getAttribute(first, "rdf:datatype");
+      if(type.empty())
+        type = "string";
       const auto* datavalue = first->GetText();
       if(datavalue != nullptr)
       {
@@ -163,7 +183,7 @@ namespace ontologenius {
         class_expression->sub_expressions.back()->type = ClassExpressionType_e::class_expression_identifier;
       }
 
-      auto* rest = list_elem->FirstChildElement("rdf:rest");
+      auto* rest = elem_to_analyse->FirstChildElement("rdf:rest");
       if(testAttribute(rest, "rdf:resource") == false)
         readDatatypeEnumeration(rest, class_expression);
     }
