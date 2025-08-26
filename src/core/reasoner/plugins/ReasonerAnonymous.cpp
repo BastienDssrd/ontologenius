@@ -65,7 +65,7 @@ namespace ontologenius {
 #ifdef DEBUG
               computeDebugUpdate(indiv, anonymous_tree);
 #endif
-              std::string equiv_flag = "equiv_" + anonymous_tree->ano_name;
+              std::string equiv_flag = "equiv_" + anonymous_tree->id;
               bool should_be_evaluated = true;
               
               if(is_already_a)

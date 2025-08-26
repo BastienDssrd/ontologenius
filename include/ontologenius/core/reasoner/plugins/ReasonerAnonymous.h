@@ -59,7 +59,7 @@ namespace ontologenius {
     {
       std::string res;
       res = "indiv " + indiv->value() + ": " + indiv->updatesToString();
-      res += "with " + anonymous_tree->ano_name + ": " + anonymous_tree->involvesToString();
+      res += "with " + anonymous_tree->id + ": " + anonymous_tree->involvesToString();
       if(indiv->flags_.find("equiv") != indiv->flags_.end())
         res += "|equiv: 1";
       else

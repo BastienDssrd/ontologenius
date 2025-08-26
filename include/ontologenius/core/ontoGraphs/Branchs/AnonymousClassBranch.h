@@ -78,7 +78,7 @@ namespace ontologenius {
     ClassExpression* root_node_;
     size_t depth_;
 
-    std::string ano_name; // todo: check usage
+    std::string id;
 
     std::string involvesToString() const
     {
@@ -94,6 +94,7 @@ namespace ontologenius {
   {
   public:
     explicit AnonymousClassBranch(const std::string& value, bool hidden = false) : ValuedNode(value, hidden), class_equiv_(nullptr) {}
+    AnonymousClassBranch(const AnonymousClassBranch& other) = delete;
     ~AnonymousClassBranch()
     {
       for(auto* tree : ano_trees_)

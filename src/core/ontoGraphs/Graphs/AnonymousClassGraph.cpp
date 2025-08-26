@@ -256,7 +256,7 @@ namespace ontologenius {
     AnonymousClassTree* tree = new AnonymousClassTree(old_tree->getRule());
     tree->root_node_ = copyTreeNodes(old_tree->root_node_);
     tree->depth_ = old_tree->depth_;
-    tree->ano_name = old_tree->ano_name;
+    tree->id = old_tree->id;
 
     tree->involves_class = old_tree->involves_class;
     tree->involves_data_property = old_tree->involves_data_property;
