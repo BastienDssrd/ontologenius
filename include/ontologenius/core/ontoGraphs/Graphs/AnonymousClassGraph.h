@@ -121,22 +121,14 @@ namespace ontologenius {
     }*/
   };
 
-  // for friend
   class ObjectPropertyGraph;
   class DataPropertyGraph;
   class IndividualGraph;
   class LiteralGraph;
   class ClassGraph;
 
-  class AnonymousClassChecker;
-
   class AnonymousClassGraph : public Graph<AnonymousClassBranch>
   {
-    friend IndividualGraph;
-    friend ClassGraph;
-
-    friend AnonymousClassChecker;
-
   public:
     AnonymousClassGraph(LiteralGraph* literal_graph, ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph,
                         DataPropertyGraph* data_property_graph, IndividualGraph* individual_graph);

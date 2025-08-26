@@ -65,11 +65,11 @@ namespace ontologenius {
     if(is_init_ == true)
       return true;
 
-    ClassChecker class_checker(&class_graph_);
+    ClassChecker class_checker(&class_graph_, &data_property_graph_, &object_property_graph_);
     ObjectPropertyChecker object_property_checker(&object_property_graph_);
     DataPropertyChecker data_property_checker(&data_property_graph_);
-    IndividualChecker individual_checker(&individual_graph_);
-    AnonymousClassChecker ano_class_checker(&anonymous_graph_);
+    IndividualChecker individual_checker(&individual_graph_, &class_graph_, &data_property_graph_, &object_property_graph_);
+    AnonymousClassChecker ano_class_checker(&anonymous_graph_, &class_graph_);
     RuleChecker rule_checker(&rule_graph_);
 
     size_t err = class_checker.check();
@@ -80,7 +80,6 @@ namespace ontologenius {
     {
       loader_.loadIndividuals();
 
-      individual_checker = IndividualChecker(&individual_graph_);
       err += individual_checker.check();
 
       is_init_ = true;

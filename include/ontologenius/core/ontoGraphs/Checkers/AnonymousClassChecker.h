@@ -8,13 +8,16 @@
 #include "ontologenius/core/ontoGraphs/Branchs/ClassBranch.h"
 #include "ontologenius/core/ontoGraphs/Checkers/ValidityChecker.h"
 #include "ontologenius/core/ontoGraphs/Graphs/AnonymousClassGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
 
 namespace ontologenius {
 
   class AnonymousClassChecker : public ValidityChecker<AnonymousClassBranch>
   {
   public:
-    explicit AnonymousClassChecker(AnonymousClassGraph* graph) : ValidityChecker(graph), ano_class_graph_(graph) {}
+    explicit AnonymousClassChecker(AnonymousClassGraph* graph, ClassGraph* class_graph) : ValidityChecker(graph),
+                                                                                          ano_class_graph_(graph),
+                                                                                          class_graph_(class_graph) {}
     ~AnonymousClassChecker() override = default;
 
     size_t check() override;
@@ -27,6 +30,7 @@ namespace ontologenius {
 
   private:
     AnonymousClassGraph* ano_class_graph_;
+    ClassGraph* class_graph_;
     std::string current_ano_;
 
     std::vector<std::string> resolveTreeDisjoint(ClassExpression* ano_elem, std::unordered_set<ClassBranch*>& disjoints, std::unordered_set<ClassBranch*>& uppers, bool complement_mode);

@@ -45,11 +45,11 @@ namespace ontologenius {
     ClassBranch* disjoint_with = nullptr;
     for(ClassBranch* it : ups)
     {
-      ClassBranch* tmp_intersection = individual_graph_->class_graph_->firstIntersection(ups, it->disjoints_);
+      ClassBranch* tmp_intersection = class_graph_->firstIntersection(ups, it->disjoints_);
       if(tmp_intersection != nullptr)
       {
         intersection = tmp_intersection;
-        disjoint_with = individual_graph_->class_graph_->firstIntersection(ups, intersection->disjoints_);
+        disjoint_with = class_graph_->firstIntersection(ups, intersection->disjoints_);
         if(disjoint_with != nullptr)
           break;
       }
@@ -109,11 +109,11 @@ namespace ontologenius {
     {
       std::unordered_set<ClassBranch*> domain;
       std::unordered_set<ClassBranch*> range;
-      individual_graph_->object_property_graph_->getDomainAndRangePtr(object_relation.first, domain, range, 0);
+      object_property_graph_->getDomainAndRangePtr(object_relation.first, domain, range, 0);
 
       if(domain.empty() == false)
       {
-        auto intersection = individual_graph_->class_graph_->checkDomainOrRange(domain, up_from);
+        auto intersection = class_graph_->checkDomainOrRange(domain, up_from);
         if(intersection.first == false)
         {
           if(intersection.second == nullptr)
@@ -131,7 +131,7 @@ namespace ontologenius {
         std::unordered_set<ClassBranch*> up_on;
         individual_graph_->getUpPtr(object_relation.second, up_on);
 
-        auto intersection = individual_graph_->class_graph_->checkDomainOrRange(range, up_on);
+        auto intersection = class_graph_->checkDomainOrRange(range, up_on);
         if(intersection.first == false)
         {
           if(intersection.second == nullptr)
@@ -151,11 +151,11 @@ namespace ontologenius {
     for(const IndivDataRelationElement& relation : indiv->data_relations_)
     {
       std::unordered_set<ClassBranch*> domain;
-      individual_graph_->data_property_graph_->getDomainPtr(relation.first, domain, 0);
+      data_property_graph_->getDomainPtr(relation.first, domain, 0);
 
       if(domain.empty() == false)
       {
-        auto intersection = individual_graph_->class_graph_->checkDomainOrRange(domain, up_from);
+        auto intersection = class_graph_->checkDomainOrRange(domain, up_from);
         if(intersection.first == false)
         {
           if(intersection.second == nullptr)
@@ -169,7 +169,7 @@ namespace ontologenius {
       }
 
       std::unordered_set<LiteralType*> range;
-      individual_graph_->data_property_graph_->getRangePtr(relation.first, range);
+      data_property_graph_->getRangePtr(relation.first, range);
       if(range.empty() == false)
       {
         auto intersection = range.find(relation.second->type_);

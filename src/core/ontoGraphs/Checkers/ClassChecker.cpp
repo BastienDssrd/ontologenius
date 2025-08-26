@@ -56,7 +56,7 @@ namespace ontologenius {
     for(const ClassObjectRelationElement& object_relation : branch->object_relations_)
     {
       std::unordered_set<ClassBranch*> domain;
-      class_graph_->object_property_graph_->getDomainPtr(object_relation.first, domain, 0);
+      object_property_graph_->getDomainPtr(object_relation.first, domain, 0);
 
       if(domain.empty() == false)
       {
@@ -80,7 +80,7 @@ namespace ontologenius {
     for(const ClassObjectRelationElement& object_relation : branch->object_relations_)
     {
       std::unordered_set<ClassBranch*> range;
-      class_graph_->object_property_graph_->getRangePtr(object_relation.first, range, 0);
+      object_property_graph_->getRangePtr(object_relation.first, range, 0);
 
       if(range.empty() == false)
       {
@@ -107,7 +107,7 @@ namespace ontologenius {
     for(const ClassDataRelationElement& relation : branch->data_relations_)
     {
       std::unordered_set<ClassBranch*> domain;
-      class_graph_->data_property_graph_->getDomainPtr(relation.first, domain, 0);
+      data_property_graph_->getDomainPtr(relation.first, domain, 0);
 
       if(domain.empty() == false)
       {
@@ -131,7 +131,7 @@ namespace ontologenius {
     for(const ClassDataRelationElement& relation : branch->data_relations_)
     {
       std::unordered_set<LiteralType*> range;
-      class_graph_->data_property_graph_->getRangePtr(relation.first, range);
+      data_property_graph_->getRangePtr(relation.first, range);
       if(range.empty() == false)
       {
         auto intersection = range.find(relation.second->type_);

@@ -25,21 +25,13 @@ namespace ontologenius {
     std::vector<std::string> equivalences_;
   };
 
-  // for friend
   class ObjectPropertyGraph;
   class DataPropertyGraph;
   class IndividualGraph;
   class LiteralGraph;
-  class ClassChecker;
-  class AnonymousClassGraph;
 
   class ClassGraph : public OntoGraph<ClassBranch>
   {
-    friend IndividualGraph;
-    friend AnonymousClassGraph;
-
-    friend ClassChecker;
-
   public:
     ClassGraph(IndividualGraph* individual_graph, LiteralGraph* literal_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph);
     ClassGraph(const ClassGraph& other, IndividualGraph* individual_graph, LiteralGraph* literal_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph);
@@ -95,7 +87,23 @@ namespace ontologenius {
     std::pair<bool, ClassBranch*> checkDomainOrRange(const std::unordered_set<ClassBranch*>& domain_or_range, const std::unordered_set<ClassBranch*>& classes);
 
     template<typename T>
+    void getRelatedFrom(const std::unordered_set<index_t>& object_properties, const std::unordered_set<index_t>& data_properties, std::unordered_set<T>& res);
+    void getRelationOnDataProperties(const std::string& class_name, std::unordered_set<std::string>& res, int depth);
+    void getRelationOnDataProperties(const std::string& class_name, std::unordered_set<index_t>& res, int depth);
+    void getRelatedOnDataProperties(const std::string& property, std::unordered_set<std::string>& res);
+    void getRelatedOnDataProperties(index_t property, std::unordered_set<index_t>& res);
+    void getRelationWith(ClassBranch* class_branch, std::map<index_t, int>& properties, std::vector<int>& depths, std::vector<std::string>& res, int depth);
+    void getRelationWith(ClassBranch* class_branch, std::map<index_t, int>& properties, std::vector<int>& depths, std::vector<index_t>& res, int depth);
+
+    template<typename T>
     void getOn(ClassBranch* class_branch, std::unordered_set<index_t>& object_properties, std::unordered_set<index_t>& data_properties, std::unordered_set<T>& res, uint32_t current_depth, int& found_depth);
+    void getWith(ClassBranch* first_class, index_t second_class, std::unordered_set<std::string>& res, std::unordered_set<index_t>& do_not_take, uint32_t current_depth, int& found_depth, int depth_prop, std::unordered_set<ClassBranch*>& next_step);
+    void getWith(ClassBranch* first_class, index_t second_class, std::unordered_set<index_t>& res, std::unordered_set<index_t>& do_not_take, uint32_t current_depth, int& found_depth, int depth_prop, std::unordered_set<ClassBranch*>& next_step);
+
+    void getDomainOf(ClassBranch* branch, std::unordered_set<std::string>& res, int depth = -1);
+    void getDomainOf(ClassBranch* branch, std::unordered_set<index_t>& res, int depth = -1);
+    void getRangeOf(ClassBranch* branch, std::unordered_set<std::string>& res, int depth = -1);
+    void getRangeOf(ClassBranch* branch, std::unordered_set<index_t>& res, int depth = -1);
 
   private:
     LiteralGraph* literal_graph_;
@@ -110,34 +118,39 @@ namespace ontologenius {
     template<typename T>
     void getRelationFrom(ClassBranch* class_branch, std::unordered_set<T>& res, int depth);
     template<typename T>
-    void getRelatedFrom(const std::unordered_set<index_t>& object_properties, const std::unordered_set<index_t>& data_properties, std::unordered_set<T>& res);
-    template<typename T>
     void getRelationOnObjectProperties(const std::string& class_name, std::unordered_set<T>& res, int depth);
-    void getRelationOnDataProperties(const std::string& class_name, std::unordered_set<std::string>& res, int depth);
-    void getRelationOnDataProperties(const std::string& class_name, std::unordered_set<index_t>& res, int depth);
-    void getRelatedOnDataProperties(const std::string& property, std::unordered_set<std::string>& res);
-    void getRelatedOnDataProperties(index_t property, std::unordered_set<index_t>& res);
-    void getRelationWith(ClassBranch* class_branch, std::map<index_t, int>& properties, std::vector<int>& depths, std::vector<std::string>& res, int depth);
-    void getRelationWith(ClassBranch* class_branch, std::map<index_t, int>& properties, std::vector<int>& depths, std::vector<index_t>& res, int depth);
+    
     template<typename T>
     void dataGetRelatedWith(ClassBranch* class_branch, index_t property, LiteralNode* data, std::unordered_set<T>& res, std::unordered_set<index_t>& do_not_take);
     template<typename T>
     void objectGetRelatedWith(ClassBranch* class_branch, index_t property, index_t class_id, std::unordered_set<T>& res, std::unordered_set<index_t>& do_not_take);
 
-    void getWith(ClassBranch* first_class, index_t second_class, std::unordered_set<std::string>& res, std::unordered_set<index_t>& do_not_take, uint32_t current_depth, int& found_depth, int depth_prop, std::unordered_set<ClassBranch*>& next_step);
-    void getWith(ClassBranch* first_class, index_t second_class, std::unordered_set<index_t>& res, std::unordered_set<index_t>& do_not_take, uint32_t current_depth, int& found_depth, int depth_prop, std::unordered_set<ClassBranch*>& next_step);
     template<typename T>
     void getWithTemplate(ClassBranch* first_class, index_t second_class, std::unordered_set<T>& res, std::unordered_set<index_t>& do_not_take, uint32_t current_depth, int& found_depth, int depth_prop, std::unordered_set<ClassBranch*>& next_step);
-    void getDomainOf(ClassBranch* branch, std::unordered_set<std::string>& res, int depth = -1);
-    void getDomainOf(ClassBranch* branch, std::unordered_set<index_t>& res, int depth = -1);
-    void getRangeOf(ClassBranch* branch, std::unordered_set<std::string>& res, int depth = -1);
-    void getRangeOf(ClassBranch* branch, std::unordered_set<index_t>& res, int depth = -1);
 
     bool checkRangeAndDomain(ClassBranch* from, ObjectPropertyBranch* prop, ClassBranch* on);
     bool checkRangeAndDomain(ClassBranch* from, DataPropertyBranch* prop, LiteralNode* data);
 
     void cpyBranch(ClassBranch* old_branch, ClassBranch* new_branch);
   };
+
+  template<typename T>
+  void ClassGraph::getRelatedFrom(const std::unordered_set<index_t>& object_properties, const std::unordered_set<index_t>& data_properties, std::unordered_set<T>& res)
+  {
+    const std::shared_lock<std::shared_timed_mutex> lock(Graph<ClassBranch>::mutex_);
+    for(auto& branch : all_branchs_)
+    {
+      for(const ClassObjectRelationElement& relation : branch->object_relations_)
+        for(const index_t id : object_properties)
+          if(relation.first->get() == id)
+            getDown(branch, res);
+
+      for(const ClassDataRelationElement& relation : branch->data_relations_)
+        for(const index_t id : data_properties)
+          if(relation.first->get() == id)
+            getDown(branch, res);
+    }
+  }
 
   template<typename T>
   void ClassGraph::getOn(ClassBranch* class_branch, std::unordered_set<index_t>& object_properties, std::unordered_set<index_t>& data_properties, std::unordered_set<T>& res, uint32_t current_depth, int& found_depth)

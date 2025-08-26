@@ -32,10 +32,6 @@ namespace ontologenius {
     std::map<std::string, std::vector<std::string>> muted_dictionary_;
   };
 
-  // for friend
-  class IndividualChecker;
-  class AnonymousGraph;
-
   // for graphs usage
   class ClassGraph;
   class ObjectPropertyGraph;
@@ -44,9 +40,6 @@ namespace ontologenius {
 
   class IndividualGraph : public Graph<IndividualBranch>
   {
-    friend IndividualChecker;
-    friend AnonymousGraph;
-
   public:
     IndividualGraph(LiteralGraph* literal_graph, ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph);
     IndividualGraph(const IndividualGraph& other, LiteralGraph* literal_graph, ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph);
@@ -145,6 +138,7 @@ namespace ontologenius {
     void getSame(IndividualBranch* individual, std::unordered_set<std::string>& res);
     void getLowestSame(IndividualBranch* individual, std::unordered_set<index_t>& res);
     void getSame(IndividualBranch* individual, std::unordered_set<index_t>& res);
+    void getSame(IndividualBranch* individual, std::unordered_set<IndividualBranch*>& res);
 
   private:
     LiteralGraph* literal_graph_;
@@ -215,7 +209,6 @@ namespace ontologenius {
     std::unordered_set<index_t> getSameId(const std::string& individual);
     std::unordered_set<index_t> getSameId(index_t individual);
     void getLowestSame(IndividualBranch* individual, std::unordered_set<IndividualBranch*>& res);
-    void getSame(IndividualBranch* individual, std::unordered_set<IndividualBranch*>& res);
     void getSame(IndividualBranch* individual, std::vector<IndividualBranch*>& res);
     std::unordered_set<std::string> getSame(IndividualBranch* individual);
     std::unordered_set<index_t> getSameId(IndividualBranch* individual);

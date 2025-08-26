@@ -215,24 +215,6 @@ namespace ontologenius {
     return res;
   }
 
-  template<typename T>
-  void ClassGraph::getRelatedFrom(const std::unordered_set<index_t>& object_properties, const std::unordered_set<index_t>& data_properties, std::unordered_set<T>& res)
-  {
-    const std::shared_lock<std::shared_timed_mutex> lock(Graph<ClassBranch>::mutex_);
-    for(auto& branch : all_branchs_)
-    {
-      for(const ClassObjectRelationElement& relation : branch->object_relations_)
-        for(const index_t id : object_properties)
-          if(relation.first->get() == id)
-            getDown(branch, res);
-
-      for(const ClassDataRelationElement& relation : branch->data_relations_)
-        for(const index_t id : data_properties)
-          if(relation.first->get() == id)
-            getDown(branch, res);
-    }
-  }
-
   std::unordered_set<std::string> ClassGraph::getRelationOn(const std::string& class_name, int depth)
   {
     std::unordered_set<std::string> res;

@@ -31,22 +31,12 @@ namespace ontologenius {
     DataPropertyDescriptor_t() : annotation_usage_(false) {}
   };
 
-  // for friend
   class IndividualGraph;
   class LiteralGraph;
-  class AnonymousClassGraph;
-  class RuleGraph;
-
-  // for graphs usage
   class ClassGraph;
 
   class DataPropertyGraph : public OntoGraph<DataPropertyBranch>
   {
-    friend IndividualGraph;
-    friend ClassGraph;
-    friend AnonymousClassGraph;
-    friend RuleGraph;
-
   public:
     explicit DataPropertyGraph(IndividualGraph* individual_graph, LiteralGraph* literal_graph, ClassGraph* class_graph);
     DataPropertyGraph(const DataPropertyGraph& other, IndividualGraph* individual_graph, LiteralGraph* literal_graph, ClassGraph* class_graph);
