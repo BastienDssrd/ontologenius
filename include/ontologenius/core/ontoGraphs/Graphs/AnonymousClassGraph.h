@@ -23,11 +23,12 @@ namespace ontologenius {
 
     ClassExpressionDescriptor_t() : type(class_expression_unknown), restriction_type(restriction_unknown),
                                     data_usage(false), is_instanciated(false) {}
-    /*~ClassExpressionDescriptor_t()
+    ClassExpressionDescriptor_t(const ClassExpressionDescriptor_t& other) = delete;
+    ~ClassExpressionDescriptor_t()
     {
       for(auto* sub_expression : sub_expressions)
         delete sub_expression;
-    }*/
+    }
 
     static std::pair<std::string, std::string> splitData(const std::string& data)
     {
@@ -111,14 +112,16 @@ namespace ontologenius {
 
   struct EquivalentClassDescriptor_t
   {
-    std::string class_name;
-    std::vector<ClassExpressionDescriptor_t*> expression_members;
-
-    /*~EquivalentClassDescriptor_t()
+    EquivalentClassDescriptor_t() = default;
+    EquivalentClassDescriptor_t(const EquivalentClassDescriptor_t& other) = delete;
+    ~EquivalentClassDescriptor_t()
     {
       for(auto* expression_member : expression_members)
         delete expression_member;
-    }*/
+    }
+
+    std::string class_name;
+    std::vector<ClassExpressionDescriptor_t*> expression_members;
   };
 
   class ObjectPropertyGraph;
