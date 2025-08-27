@@ -46,12 +46,12 @@ namespace ontologenius {
     if(is_init_ == true)
       return true;
 
-    ClassChecker class_checker(&classes_, &data_properties_, &object_properties_);
-    ObjectPropertyChecker object_property_checker(&object_properties_);
-    DataPropertyChecker data_property_checker(&data_properties_);
-    IndividualChecker individual_checker(&individuals_, &classes_, &data_properties_, &object_properties_);
-    AnonymousClassChecker ano_class_checker(&anonymous_classes_, &classes_);
-    RuleChecker rule_checker(&rules_);
+    ClassChecker class_checker(&classes_, this);
+    ObjectPropertyChecker object_property_checker(&object_properties_, this);
+    DataPropertyChecker data_property_checker(&data_properties_, this);
+    IndividualChecker individual_checker(&individuals_, this);
+    AnonymousClassChecker ano_class_checker(&anonymous_classes_, this);
+    RuleChecker rule_checker(&rules_, this);
 
     size_t err = class_checker.check();
     err += object_property_checker.check();
