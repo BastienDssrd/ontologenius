@@ -91,7 +91,7 @@ double testOne(const std::vector<std::string>& seq, ontologenius::Ontology& onto
   high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
   for(const auto& s : seq)
-    std::unordered_set<std::string> out = onto.class_graph_.getUp(s);
+    std::unordered_set<std::string> out = onto.classes_.getUp(s);
 
   high_resolution_clock::time_point t2 = high_resolution_clock::now();
   duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
@@ -137,7 +137,7 @@ int main(int argc, char** argv)
 
   /*int epoch = 10000;
 
-  std::vector<std::string> seq = generateSequence(onto.class_graph_);
+  std::vector<std::string> seq = generateSequence(onto.classes_);
   double total = 0;
   for(int i = 0; i < epoch; i++)
   {

@@ -13,24 +13,13 @@ namespace ontologenius {
   {
   public:
     explicit IndividualChecker(IndividualGraph* graph,
-                               ClassGraph* class_graph,
-                               DataPropertyGraph* data_property_graph,
-                               ObjectPropertyGraph* object_property_graph) : ValidityChecker(graph),
-                                                                             individual_graph_(graph),
-                                                                             class_graph_(class_graph),
-                                                                             data_property_graph_(data_property_graph),
-                                                                             object_property_graph_(object_property_graph) {}
+                               OntologyGraphs* all_graphs) : ValidityChecker(graph, all_graphs) {}
     ~IndividualChecker() override = default;
 
     size_t check() override;
     void printStatus() override { ValidityChecker<IndividualBranch>::printStatus("individual", "individuals", graph_vect_.size()); }
 
   private:
-    IndividualGraph* individual_graph_;
-    ClassGraph* class_graph_;
-    DataPropertyGraph* data_property_graph_;
-    ObjectPropertyGraph* object_property_graph_;
-
     void checkDisjointInheritance(IndividualBranch* indiv, const std::unordered_set<ClassBranch*>& ups);
 
     void checkDisjoint(IndividualBranch* indiv);

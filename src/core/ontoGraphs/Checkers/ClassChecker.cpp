@@ -14,12 +14,12 @@ namespace ontologenius {
 
   size_t ClassChecker::check()
   {
-    const std::shared_lock<std::shared_timed_mutex> lock(class_graph_->mutex_);
+    const std::shared_lock<std::shared_timed_mutex> lock(graphs_->classes_.mutex_);
     std::unordered_set<ClassBranch*> up;
 
     for(auto& class_check : graph_vect_)
     {
-      class_graph_->getUpPtr(class_check, up);
+      graphs_->classes_.getUpPtr(class_check, up);
 
       checkDisjoint(class_check, up);
       checkObjectPropertyDomain(class_check, up);
@@ -39,10 +39,10 @@ namespace ontologenius {
 
   void ClassChecker::checkDisjoint(ClassBranch* branch, const std::unordered_set<ClassBranch*>& up)
   {
-    auto* intersection = class_graph_->isDisjoint(up, up);
+    auto* intersection = graphs_->classes_.isDisjoint(up, up);
     if(intersection != nullptr)
     {
-      ClassBranch* disjoint_with = class_graph_->firstIntersection(up, intersection->disjoints_);
+      ClassBranch* disjoint_with = graphs_->classes_.firstIntersection(up, intersection->disjoints_);
 
       if(disjoint_with != nullptr)
         printError("'" + branch->value() + "' can't be a '" + intersection->value() + "' and a '" + disjoint_with->value() + "' because of disjonction between classes '" + intersection->value() + "' and '" + disjoint_with->value() + "'");
@@ -56,11 +56,11 @@ namespace ontologenius {
     for(const ClassObjectRelationElement& object_relation : branch->object_relations_)
     {
       std::unordered_set<ClassBranch*> domain;
-      object_property_graph_->getDomainPtr(object_relation.first, domain, 0);
+      graphs_->object_properties_.getDomainPtr(object_relation.first, domain, 0);
 
       if(domain.empty() == false)
       {
-        auto intersection = class_graph_->checkDomainOrRange(domain, up);
+        auto intersection = graphs_->classes_.checkDomainOrRange(domain, up);
         if(intersection.first == false)
         {
           if(intersection.second == nullptr)
@@ -80,14 +80,14 @@ namespace ontologenius {
     for(const ClassObjectRelationElement& object_relation : branch->object_relations_)
     {
       std::unordered_set<ClassBranch*> range;
-      object_property_graph_->getRangePtr(object_relation.first, range, 0);
+      graphs_->object_properties_.getRangePtr(object_relation.first, range, 0);
 
       if(range.empty() == false)
       {
         std::unordered_set<ClassBranch*> up;
-        class_graph_->getUpPtr(object_relation.second, up);
+        graphs_->classes_.getUpPtr(object_relation.second, up);
 
-        auto intersection = class_graph_->checkDomainOrRange(range, up);
+        auto intersection = graphs_->classes_.checkDomainOrRange(range, up);
         if(intersection.first == false)
         {
           if(intersection.second == nullptr)
@@ -107,11 +107,11 @@ namespace ontologenius {
     for(const ClassDataRelationElement& relation : branch->data_relations_)
     {
       std::unordered_set<ClassBranch*> domain;
-      data_property_graph_->getDomainPtr(relation.first, domain, 0);
+      graphs_->data_properties_.getDomainPtr(relation.first, domain, 0);
 
       if(domain.empty() == false)
       {
-        auto intersection = class_graph_->checkDomainOrRange(domain, up);
+        auto intersection = graphs_->classes_.checkDomainOrRange(domain, up);
         if(intersection.first == false)
         {
           if(intersection.second == nullptr)
@@ -131,7 +131,7 @@ namespace ontologenius {
     for(const ClassDataRelationElement& relation : branch->data_relations_)
     {
       std::unordered_set<LiteralType*> range;
-      data_property_graph_->getRangePtr(relation.first, range);
+      graphs_->data_properties_.getRangePtr(relation.first, range);
       if(range.empty() == false)
       {
         auto intersection = range.find(relation.second->type_);

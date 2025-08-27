@@ -3,7 +3,7 @@
 
 #include "ontologenius/core/ontoGraphs/Checkers/ValidityChecker.h"
 #include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 
 namespace ontologenius {
 
@@ -11,10 +11,7 @@ namespace ontologenius {
   {
   public:
     explicit ClassChecker(ClassGraph* graph,
-                          DataPropertyGraph* data_property_graph,
-                          ObjectPropertyGraph* object_property_graph) : ValidityChecker(graph), class_graph_(graph),
-                                                                        data_property_graph_(data_property_graph),
-                                                                        object_property_graph_(object_property_graph) {}
+                          OntologyGraphs* all_graphs) : ValidityChecker(graph, all_graphs) {}
     ~ClassChecker() override = default;
 
     size_t check() override;
@@ -28,10 +25,6 @@ namespace ontologenius {
 
     void checkDataPropertyDomain(ClassBranch* branch, const std::unordered_set<ClassBranch*>& up);
     void checkDataPropertyRange(ClassBranch* branch);
-
-    ClassGraph* class_graph_;
-    DataPropertyGraph* data_property_graph_;
-    ObjectPropertyGraph* object_property_graph_;
   };
 
 } // namespace ontologenius

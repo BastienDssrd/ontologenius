@@ -2,9 +2,7 @@
 #define ONTOLOGENIUS_RULECHECKER_H
 
 #include "ontologenius/core/ontoGraphs/Checkers/ValidityChecker.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 #include "ontologenius/core/ontoGraphs/Graphs/RuleGraph.h"
 
 namespace ontologenius {
@@ -12,7 +10,8 @@ namespace ontologenius {
   class RuleChecker : public ValidityChecker<RuleBranch>
   {
   public:
-    explicit RuleChecker(RuleGraph* graph) : ValidityChecker(graph), rule_graph_(graph) {}
+    explicit RuleChecker(RuleGraph* graph,
+                         OntologyGraphs* all_graphs) : ValidityChecker(graph, all_graphs) {}
     ~RuleChecker() override = default;
 
     size_t check() override;
@@ -21,7 +20,6 @@ namespace ontologenius {
     void printStatus() override { ValidityChecker<RuleBranch>::printStatus("rule", "rules", graph_vect_.size()); }
 
   private:
-    RuleGraph* rule_graph_;
     std::string current_rule_;
 
     void checkRuleDisjoint(RuleBranch* branch);

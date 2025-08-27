@@ -6,6 +6,7 @@
 #include <unordered_set>
 
 #include "ontologenius/core/ontoGraphs/Graphs/OntoGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 #include "ontologenius/graphical/Display.h"
 
 namespace ontologenius {
@@ -16,10 +17,12 @@ namespace ontologenius {
     static_assert(std::is_base_of<ValuedNode, B>::value, "B must be derived from ValuedNode");
 
   public:
-    explicit ValidityChecker(Graph<B>* graph) : graph_vect_(graph->get()),
-                                                is_analysed(false),
-                                                nb_error_(0),
-                                                nb_warn_(0)
+    explicit ValidityChecker(Graph<B>* graph,
+                             OntologyGraphs* all_graphs) : graph_vect_(graph->get()),
+                                                           graphs_(all_graphs),
+                                                           is_analysed(false),
+                                                           nb_error_(0),
+                                                           nb_warn_(0)
     {}
     virtual ~ValidityChecker() = default;
 
@@ -27,6 +30,7 @@ namespace ontologenius {
 
   protected:
     std::vector<B*> graph_vect_;
+    OntologyGraphs* graphs_;
     bool is_analysed;
 
     void printError(const std::string& err)
