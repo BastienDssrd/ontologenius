@@ -198,7 +198,7 @@ int main(int argc, char** argv)
 
     usleep(1000000);
 
-    query = "SELECT * WHERE {?0 isA " + std::to_string(onto->class_graph_.getIndex("movie_actor")) + "}";
+    query = "SELECT * WHERE {?0 isA " + std::to_string(onto->classes_.getIndex("movie_actor")) + "}";
     auto solution_index = runSparqlBaseIndex(sparql_base, query);
 
     usleep(1000000);
@@ -208,9 +208,9 @@ int main(int argc, char** argv)
 
     usleep(1000000);
 
-    query = "SELECT * WHERE {?0 isA " + std::to_string(onto->class_graph_.getIndex("movie_director")) +
-            ". ?0 " + std::to_string(onto->class_graph_.getIndex("movie_performance")) +
-            " ?2. ?2 isA " + std::to_string(onto->class_graph_.getIndex("movie_performance")) +
+    query = "SELECT * WHERE {?0 isA " + std::to_string(onto->classes_.getIndex("movie_director")) +
+            ". ?0 " + std::to_string(onto->classes_.getIndex("movie_performance")) +
+            " ?2. ?2 isA " + std::to_string(onto->classes_.getIndex("movie_performance")) +
             "}";
     solution_index = runSparqlBaseIndex(sparql_base, query);
   }
