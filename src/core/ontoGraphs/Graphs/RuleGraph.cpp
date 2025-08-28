@@ -122,14 +122,12 @@ namespace ontologenius {
     {
       LiteralNode* involved_datatype = graphs_->literals_.findOrCreate(variable.name);
       RuleArgument_t resource(involved_datatype);
-      setVariableIndex(rule_branch, resource); // Todo, should be removed, but removing it raise an error in ReasonerRule
       return resource;
     }
     else
     {
       IndividualBranch* involved_indiv = graphs_->individuals_.findOrCreateBranch(variable.name);
       RuleArgument_t resource(involved_indiv);
-      setVariableIndex(rule_branch, resource); // Todo, should be removed, but removing it raise an error in ReasonerRule
       return resource;
     }
   }

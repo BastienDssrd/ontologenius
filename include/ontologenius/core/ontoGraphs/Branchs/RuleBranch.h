@@ -18,7 +18,6 @@ namespace ontologenius {
 
   struct RuleArgument_t
   {
-    // empty constructor
     RuleArgument_t() : variable_id(-1),
                        is_variable(false),
                        indiv_value(nullptr),
@@ -81,7 +80,6 @@ namespace ontologenius {
 
   struct RuleTriplet_t
   {
-    // empty constructor
     RuleTriplet_t() : atom_type_(rule_atom_unknown), class_predicate(nullptr), anonymous_element(nullptr), object_predicate(nullptr), data_predicate(nullptr)
     {}
 
