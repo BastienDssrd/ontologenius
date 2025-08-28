@@ -25,16 +25,13 @@ namespace ontologenius {
     std::vector<std::string> equivalences_;
   };
 
-  class ObjectPropertyGraph;
-  class DataPropertyGraph;
-  class IndividualGraph;
-  class LiteralGraph;
+  class OntologyGraphs;
 
   class ClassGraph : public OntoGraph<ClassBranch>
   {
   public:
-    ClassGraph(IndividualGraph* individual_graph, LiteralGraph* literal_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph);
-    ClassGraph(const ClassGraph& other, IndividualGraph* individual_graph, LiteralGraph* literal_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph);
+    ClassGraph(OntologyGraphs* graphs);
+    ClassGraph(const ClassGraph& other, OntologyGraphs* graphs);
     ~ClassGraph() override = default;
 
     ClassBranch* add(const std::string& value, ClassDescriptor_t& class_descriptor);
@@ -106,9 +103,7 @@ namespace ontologenius {
     void getRangeOf(ClassBranch* branch, std::unordered_set<index_t>& res, int depth = -1);
 
   private:
-    LiteralGraph* literal_graph_;
-    ObjectPropertyGraph* object_property_graph_;
-    DataPropertyGraph* data_property_graph_;
+    OntologyGraphs* graphs_;
 
     void addObjectRelation(ClassBranch* me, PairElement<std::string, std::string>& relation);
     void addDataRelation(ClassBranch* me, PairElement<std::string, std::string>& relation);

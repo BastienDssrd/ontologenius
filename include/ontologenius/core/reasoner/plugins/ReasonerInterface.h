@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "ontologenius/core/ontoGraphs/Ontology.h"
+#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 #include "ontologenius/graphical/Display.h"
 
 namespace ontologenius {
@@ -46,7 +46,7 @@ namespace ontologenius {
   public:
     virtual ~ReasonerInterface() = default;
 
-    void initialize(const std::string& agent_name, Ontology* onto)
+    void initialize(const std::string& agent_name, OntologyGraphs* onto)
     {
       agent_name_ = agent_name;
       ontology_ = onto;
@@ -121,7 +121,7 @@ namespace ontologenius {
                           first_run_(true) {}
 
     std::string agent_name_;
-    Ontology* ontology_;
+    OntologyGraphs* ontology_;
 
     std::vector<std::pair<ReasonerNotificationStatus_e, std::string>> notifications_;
     std::vector<std::pair<std::string, std::string>> explanations_;

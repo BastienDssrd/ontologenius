@@ -32,14 +32,13 @@ namespace ontologenius {
     ObjectPropertyDescriptor_t() : annotation_usage_(false) {}
   };
 
-  class IndividualGraph;
-  class ClassGraph;
+  class OntologyGraphs;
 
   class ObjectPropertyGraph : public OntoGraph<ObjectPropertyBranch>
   {
   public:
-    explicit ObjectPropertyGraph(IndividualGraph* individual_graph, ClassGraph* class_graph);
-    ObjectPropertyGraph(const ObjectPropertyGraph& other, IndividualGraph* individual_graph, ClassGraph* class_graph);
+    explicit ObjectPropertyGraph(OntologyGraphs* graphs);
+    ObjectPropertyGraph(const ObjectPropertyGraph& other, OntologyGraphs* graphs);
     ~ObjectPropertyGraph() override = default;
 
     void deepCopy(const ObjectPropertyGraph& other);
@@ -66,7 +65,7 @@ namespace ontologenius {
     bool isAsymetric(ObjectPropertyBranch* prop);
 
   private:
-    ClassGraph* class_graph_;
+    OntologyGraphs* graphs_;
 
     template<typename T>
     void getDomain(ObjectPropertyBranch* branch, size_t depth, std::unordered_set<T>& res, std::unordered_set<ObjectPropertyBranch*>& up_trace);

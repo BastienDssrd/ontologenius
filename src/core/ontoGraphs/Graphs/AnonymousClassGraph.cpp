@@ -11,38 +11,18 @@
 #include "ontologenius/core/ontoGraphs/Branchs/AnonymousClassBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/ClassBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/LiteralNode.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/Graph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/IndividualGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/LiteralGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 #include "ontologenius/utils/String.h"
 
 namespace ontologenius {
 
-  AnonymousClassGraph::AnonymousClassGraph(LiteralGraph* literal_graph,
-                                           ClassGraph* class_graph,
-                                           ObjectPropertyGraph* object_property_graph,
-                                           DataPropertyGraph* data_property_graph,
-                                           IndividualGraph* individual_graph) : literal_graph_(literal_graph),
-                                                                                class_graph_(class_graph),
-                                                                                object_property_graph_(object_property_graph),
-                                                                                data_property_graph_(data_property_graph),
-                                                                                individual_graph_(individual_graph)
+  AnonymousClassGraph::AnonymousClassGraph(OntologyGraphs* graphs) : graphs_(graphs)
   {}
 
   AnonymousClassGraph::AnonymousClassGraph(const AnonymousClassGraph& other,
-                                           LiteralGraph* literal_graph,
-                                           ClassGraph* class_graph,
-                                           ObjectPropertyGraph* object_property_graph,
-                                           DataPropertyGraph* data_property_graph,
-                                           IndividualGraph* individual_graph) : Graph(other),
-                                                                                literal_graph_(literal_graph),
-                                                                                class_graph_(class_graph),
-                                                                                object_property_graph_(object_property_graph),
-                                                                                data_property_graph_(data_property_graph),
-                                                                                individual_graph_(individual_graph)
+                                           OntologyGraphs* graphs) : Graph(other),
+                                                                     graphs_(graphs)
 
   {}
 
@@ -51,7 +31,7 @@ namespace ontologenius {
     const std::lock_guard<std::shared_timed_mutex> lock(Graph<AnonymousClassBranch>::mutex_);
     const std::string ano_name = "anonymous_" + equivalence_descriptor.class_name;
     AnonymousClassBranch* anonymous_branch = new AnonymousClassBranch(ano_name);
-    ClassBranch* class_branch = class_graph_->findOrCreateBranch(equivalence_descriptor.class_name, hidden_anonymous);
+    ClassBranch* class_branch = graphs_->classes_.findOrCreateBranch(equivalence_descriptor.class_name, hidden_anonymous);
 
     anonymous_branch->class_equiv_ = class_branch;
     all_branchs_.push_back(anonymous_branch);
@@ -116,19 +96,19 @@ namespace ontologenius {
       if(expression_leaf->data_usage)
       {
         if(expression_leaf->is_instanciated)
-          ano_element->literal_involved_ = literal_graph_->findOrCreate(expression_leaf->resource_value);
+          ano_element->literal_involved_ = graphs_->literals_.findOrCreate(expression_leaf->resource_value);
         else
-          ano_element->datatype_involved_ = literal_graph_->findOrCreateType(expression_leaf->resource_value);
+          ano_element->datatype_involved_ = graphs_->literals_.findOrCreateType(expression_leaf->resource_value);
       }
       else if(expression_leaf->is_instanciated)
       {
-        ano_element->individual_involved_ = individual_graph_->findOrCreateBranch(expression_leaf->resource_value);
+        ano_element->individual_involved_ = graphs_->individuals_.findOrCreateBranch(expression_leaf->resource_value);
         if(mark_tree_content)
           related_tree->involves_individual = true;
       }
       else
       {
-        ano_element->class_involved_ = class_graph_->findOrCreateBranch(expression_leaf->resource_value);
+        ano_element->class_involved_ = graphs_->classes_.findOrCreateBranch(expression_leaf->resource_value);
         if(mark_tree_content)
           related_tree->involves_class = true;
       }
@@ -136,13 +116,13 @@ namespace ontologenius {
     case ClassExpressionType_e::class_expression_restriction:
       if(expression_leaf->data_usage == true)
       {
-        ano_element->data_property_involved_ = data_property_graph_->findOrCreateBranch(expression_leaf->restriction_property);
+        ano_element->data_property_involved_ = graphs_->data_properties_.findOrCreateBranch(expression_leaf->restriction_property);
         if(mark_tree_content)
           related_tree->involves_data_property = true;
       }
       else
       {
-        ano_element->object_property_involved_ = object_property_graph_->findBranch(expression_leaf->restriction_property);
+        ano_element->object_property_involved_ = graphs_->object_properties_.findBranch(expression_leaf->restriction_property);
         if(ano_element->object_property_involved_ != nullptr)
         {
           if(mark_tree_content)
@@ -150,7 +130,7 @@ namespace ontologenius {
         }
         else
         {
-          ano_element->data_property_involved_ = data_property_graph_->findOrCreateBranch(expression_leaf->restriction_property);
+          ano_element->data_property_involved_ = graphs_->data_properties_.findOrCreateBranch(expression_leaf->restriction_property);
           if(ano_element->data_property_involved_ != nullptr)
           {
             if(mark_tree_content)
@@ -178,9 +158,9 @@ namespace ontologenius {
           auto* sub_expression = new ClassExpression();
           sub_expression->type_ = ClassExpressionType_e::class_expression_identifier;
           if(expression_leaf->data_usage == true)
-            sub_expression->literal_involved_ = literal_graph_->findOrCreate(expression_leaf->resource_value);
+            sub_expression->literal_involved_ = graphs_->literals_.findOrCreate(expression_leaf->resource_value);
           else
-            sub_expression->individual_involved_ = individual_graph_->findOrCreateBranch(expression_leaf->resource_value);
+            sub_expression->individual_involved_ = graphs_->individuals_.findOrCreateBranch(expression_leaf->resource_value);
           ano_element->sub_elements_.emplace_back(sub_expression);
         }
         break;
@@ -220,9 +200,9 @@ namespace ontologenius {
       auto* sub_expression = new ClassExpression();
       sub_expression->type_ = ClassExpressionType_e::class_expression_identifier;
       if(expression_leaf->data_usage == true)
-        sub_expression->datatype_involved_ = literal_graph_->findOrCreateType(expression_leaf->resource_value);
+        sub_expression->datatype_involved_ = graphs_->literals_.findOrCreateType(expression_leaf->resource_value);
       else
-        sub_expression->class_involved_ = class_graph_->findOrCreateBranch(expression_leaf->resource_value);
+        sub_expression->class_involved_ = graphs_->classes_.findOrCreateBranch(expression_leaf->resource_value);
       ano_element->sub_elements_.emplace_back(sub_expression);
     }
   }
@@ -241,7 +221,7 @@ namespace ontologenius {
     new_branch->steady_dictionary_ = old_branch->steady_dictionary_;
 
     // fisrt we find the equivalent ClassBranch that has been copied by the ClassGraph, even if hidden
-    auto* equiv_class = class_graph_->container_.find(old_branch->class_equiv_->value());
+    auto* equiv_class = graphs_->classes_.container_.find(old_branch->class_equiv_->value());
     // we then link this equivalent class with our new anonymous class in both directions
     new_branch->class_equiv_ = equiv_class;
     equiv_class->equiv_anonymous_class_ = new_branch;
@@ -283,22 +263,22 @@ namespace ontologenius {
     new_node->type_ = old_node->type_;
 
     if(new_node->literal_involved_ != nullptr)
-      new_node->literal_involved_ = literal_graph_->find(old_node->literal_involved_->value());
+      new_node->literal_involved_ = graphs_->literals_.find(old_node->literal_involved_->value());
 
     if(new_node->datatype_involved_ != nullptr)
-      new_node->datatype_involved_ = literal_graph_->findOrCreateType(old_node->datatype_involved_->value());
+      new_node->datatype_involved_ = graphs_->literals_.findOrCreateType(old_node->datatype_involved_->value());
 
     if(old_node->object_property_involved_ != nullptr)
-      new_node->object_property_involved_ = object_property_graph_->container_.find(old_node->object_property_involved_->value());
+      new_node->object_property_involved_ = graphs_->object_properties_.container_.find(old_node->object_property_involved_->value());
 
     if(old_node->data_property_involved_ != nullptr)
-      new_node->data_property_involved_ = data_property_graph_->container_.find(old_node->data_property_involved_->value());
+      new_node->data_property_involved_ = graphs_->data_properties_.container_.find(old_node->data_property_involved_->value());
 
     if(old_node->individual_involved_ != nullptr)
-      new_node->individual_involved_ = individual_graph_->container_.find(old_node->individual_involved_->value());
+      new_node->individual_involved_ = graphs_->individuals_.container_.find(old_node->individual_involved_->value());
     
     if(old_node->class_involved_ != nullptr)
-      new_node->class_involved_ = class_graph_->container_.find(old_node->class_involved_->value());
+      new_node->class_involved_ = graphs_->classes_.container_.find(old_node->class_involved_->value());
 
     return new_node;
   }

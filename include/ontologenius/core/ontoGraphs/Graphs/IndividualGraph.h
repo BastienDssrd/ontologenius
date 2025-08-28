@@ -32,17 +32,13 @@ namespace ontologenius {
     std::map<std::string, std::vector<std::string>> muted_dictionary_;
   };
 
-  // for graphs usage
-  class ClassGraph;
-  class ObjectPropertyGraph;
-  class DataPropertyGraph;
-  class LiteralGraph;
+  class OntologyGraphs;
 
   class IndividualGraph : public Graph<IndividualBranch>
   {
   public:
-    IndividualGraph(LiteralGraph* literal_graph, ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph);
-    IndividualGraph(const IndividualGraph& other, LiteralGraph* literal_graph, ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph);
+    IndividualGraph(OntologyGraphs* graphs);
+    IndividualGraph(const IndividualGraph& other, OntologyGraphs* graphs);
     ~IndividualGraph() override = default;
 
     void deepCopy(const IndividualGraph& other);
@@ -141,10 +137,7 @@ namespace ontologenius {
     void getSame(IndividualBranch* individual, std::unordered_set<IndividualBranch*>& res);
 
   private:
-    LiteralGraph* literal_graph_;
-    ClassGraph* class_graph_;
-    ObjectPropertyGraph* object_property_graph_;
-    DataPropertyGraph* data_property_graph_;
+    OntologyGraphs* graphs_;
 
     std::vector<IndividualBranch*> ordered_individuals_; // contains the individuals ordered wrt their index
                                                          // unused indexes have nullptr in

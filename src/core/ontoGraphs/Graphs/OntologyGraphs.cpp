@@ -10,21 +10,21 @@
 
 namespace ontologenius {
 
-OntologyGraphs::OntologyGraphs() : anonymous_classes_(&literals_, &classes_, &object_properties_, &data_properties_, &individuals_),
-                                   classes_(&individuals_, &literals_, &object_properties_, &data_properties_),
-                                   data_properties_(&individuals_, &literals_, &classes_),
-                                   individuals_(&literals_, &classes_, &object_properties_, &data_properties_),
-                                   object_properties_(&individuals_, &classes_),
-                                   rules_(&literals_, &classes_, &object_properties_, &data_properties_, &individuals_, &anonymous_classes_)
+OntologyGraphs::OntologyGraphs() : anonymous_classes_(this),
+                                   classes_(this),
+                                   data_properties_(this),
+                                   individuals_(this),
+                                   object_properties_(this),
+                                   rules_(this)
 {}
 
-OntologyGraphs::OntologyGraphs(const OntologyGraphs& other) : anonymous_classes_(other.anonymous_classes_, &literals_, &classes_, &object_properties_, &data_properties_, &individuals_),
-                                                              classes_(other.classes_, &individuals_, &literals_, &object_properties_, &data_properties_),
-                                                              data_properties_(other.data_properties_, &individuals_, &literals_, &classes_),
-                                                              individuals_(other.individuals_, &literals_, &classes_, &object_properties_, &data_properties_),
+OntologyGraphs::OntologyGraphs(const OntologyGraphs& other) : anonymous_classes_(other.anonymous_classes_, this),
+                                                              classes_(other.classes_, this),
+                                                              data_properties_(other.data_properties_, this),
+                                                              individuals_(other.individuals_, this),
                                                               literals_(other.literals_),
-                                                              object_properties_(other.object_properties_, &individuals_, &classes_),
-                                                              rules_(other.rules_, &literals_, &classes_, &object_properties_, &data_properties_, &individuals_, &anonymous_classes_)
+                                                              object_properties_(other.object_properties_, this),
+                                                              rules_(other.rules_, this)
 {
   literals_.deepCopy(other.literals_);
   classes_.deepCopy(other.classes_);

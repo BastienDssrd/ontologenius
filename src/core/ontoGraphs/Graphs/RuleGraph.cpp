@@ -13,41 +13,20 @@
 #include "ontologenius/core/ontoGraphs/Branchs/ClassBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/LiteralNode.h"
 #include "ontologenius/core/ontoGraphs/Branchs/RuleBranch.h"
-#include "ontologenius/core/ontoGraphs/Graphs/AnonymousClassGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 #include "ontologenius/core/ontoGraphs/Graphs/Graph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/IndividualGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/LiteralGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
 #include "ontologenius/utils/String.h"
 
 // #define DEBUG
 
 namespace ontologenius {
 
-  RuleGraph::RuleGraph(LiteralGraph* literal_graph, ClassGraph* class_graph,
-                       ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph,
-                       IndividualGraph* individual_graph, AnonymousClassGraph* anonymous_graph) : literal_graph_(literal_graph),
-                                                                                                  class_graph_(class_graph),
-                                                                                                  object_property_graph_(object_property_graph),
-                                                                                                  data_property_graph_(data_property_graph),
-                                                                                                  individual_graph_(individual_graph),
-                                                                                                  anonymous_graph_(anonymous_graph)
+  RuleGraph::RuleGraph(OntologyGraphs* graphs) : graphs_(graphs)
   {}
 
-  RuleGraph::RuleGraph(const RuleGraph& other, LiteralGraph* literal_graph,
-                       ClassGraph* class_graph,
-                       ObjectPropertyGraph* object_property_graph,
-                       DataPropertyGraph* data_property_graph,
-                       IndividualGraph* individual_graph,
-                       AnonymousClassGraph* anonymous_graph) : // Graph copy constructor is not called as RuleBranch need more advanced copy
-                                                               literal_graph_(literal_graph),
-                                                               class_graph_(class_graph),
-                                                               object_property_graph_(object_property_graph),
-                                                               data_property_graph_(data_property_graph),
-                                                               individual_graph_(individual_graph),
-                                                               anonymous_graph_(anonymous_graph)
+  RuleGraph::RuleGraph(const RuleGraph& other,
+                       OntologyGraphs* graphs) : // Graph copy constructor is not called as RuleBranch need more advanced copy
+                                                 graphs_(graphs)
   {
     all_branchs_.reserve(other.all_branchs_.size());
     for(auto* branch : other.all_branchs_)
@@ -102,13 +81,13 @@ namespace ontologenius {
       if(is_head)
         rule_branch->involves_data_property = true;
 
-      rule_triplet.data_predicate = data_property_graph_->findOrCreateBranch(rule_atom.resource_value);
+      rule_triplet.data_predicate = graphs_->data_properties_.findOrCreateBranch(rule_atom.resource_value);
       break;
     case RuleAtomType_e::rule_atom_object:
       if(is_head)
         rule_branch->involves_object_property = true;
 
-      rule_triplet.object_predicate = object_property_graph_->findOrCreateBranch(rule_atom.resource_value);
+      rule_triplet.object_predicate = graphs_->object_properties_.findOrCreateBranch(rule_atom.resource_value);
       break;
     case RuleAtomType_e::rule_atom_class:
       if(is_head)
@@ -118,11 +97,11 @@ namespace ontologenius {
         EquivalentClassDescriptor_t class_descriptor;
         class_descriptor.class_name = rule_branch->value() + "_" + std::to_string(elem_id);
         class_descriptor.expression_members.push_back(rule_atom.class_expression);
-        rule_triplet.anonymous_element = anonymous_graph_->add(class_descriptor, true);     // returns the newly created ano branch
+        rule_triplet.anonymous_element = graphs_->anonymous_classes_.add(class_descriptor, true);     // returns the newly created ano branch
         rule_triplet.class_predicate = rule_triplet.anonymous_element->class_equiv_;
       }
       else
-        rule_triplet.class_predicate = class_graph_->findOrCreateBranch(rule_atom.resource_value); 
+        rule_triplet.class_predicate = graphs_->classes_.findOrCreateBranch(rule_atom.resource_value); 
       break;
     default:
       break;
@@ -141,14 +120,14 @@ namespace ontologenius {
     }
     else if(variable.datatype)
     {
-      LiteralNode* involved_datatype = literal_graph_->findOrCreate(variable.name);
+      LiteralNode* involved_datatype = graphs_->literals_.findOrCreate(variable.name);
       RuleArgument_t resource(involved_datatype);
       setVariableIndex(rule_branch, resource); // Todo, should be removed, but removing it raise an error in ReasonerRule
       return resource;
     }
     else
     {
-      IndividualBranch* involved_indiv = individual_graph_->findOrCreateBranch(variable.name);
+      IndividualBranch* involved_indiv = graphs_->individuals_.findOrCreateBranch(variable.name);
       RuleArgument_t resource(involved_indiv);
       setVariableIndex(rule_branch, resource); // Todo, should be removed, but removing it raise an error in ReasonerRule
       return resource;
@@ -201,16 +180,16 @@ namespace ontologenius {
     new_triplet.atom_type_ = old_triplet.atom_type_;
 
     if(old_triplet.class_predicate != nullptr)
-      new_triplet.class_predicate = class_graph_->container_.find(old_triplet.class_predicate->value());
+      new_triplet.class_predicate = graphs_->classes_.container_.find(old_triplet.class_predicate->value());
     
     if(old_triplet.anonymous_element != nullptr)
-      new_triplet.anonymous_element = anonymous_graph_->container_.find(old_triplet.anonymous_element->value());
+      new_triplet.anonymous_element = graphs_->anonymous_classes_.container_.find(old_triplet.anonymous_element->value());
 
     if(old_triplet.data_predicate != nullptr)
-      new_triplet.data_predicate = data_property_graph_->container_.find(old_triplet.data_predicate->value());
+      new_triplet.data_predicate = graphs_->data_properties_.container_.find(old_triplet.data_predicate->value());
 
     if(old_triplet.object_predicate != nullptr)
-      new_triplet.object_predicate = object_property_graph_->container_.find(old_triplet.object_predicate->value());
+      new_triplet.object_predicate = graphs_->object_properties_.container_.find(old_triplet.object_predicate->value());
 
     new_triplet.builtin = old_triplet.builtin;
 
@@ -221,9 +200,9 @@ namespace ontologenius {
       new_arg.variable_id = arg.variable_id;
       new_arg.is_variable = arg.is_variable;
       if(arg.indiv_value != nullptr)
-        new_arg.indiv_value = individual_graph_->container_.find(arg.indiv_value->value());
+        new_arg.indiv_value = graphs_->individuals_.container_.find(arg.indiv_value->value());
       if(arg.datatype_value != nullptr)
-        new_arg.datatype_value = literal_graph_->find(arg.datatype_value->value());
+        new_arg.datatype_value = graphs_->literals_.find(arg.datatype_value->value());
 
       new_triplet.arguments.push_back(new_arg);
 

@@ -194,8 +194,8 @@ namespace ontologenius {
         if(err.empty()) // We only want to take the first error but we need to insert all the classes
         {
           std::unordered_set<ClassBranch*> disjoints;
-          graphs_->rules_.class_graph_->getDisjoint(class_element.elem, disjoints);
-          ClassBranch* intersection = graphs_->rules_.class_graph_->firstIntersection(variables_classes, disjoints);
+          graphs_->classes_.getDisjoint(class_element.elem, disjoints);
+          ClassBranch* intersection = graphs_->classes_.firstIntersection(variables_classes, disjoints);
           if(intersection != nullptr)
             err = class_element.elem->value() + " and " + intersection->value();
         }

@@ -14,26 +14,18 @@
 #include "ontologenius/core/ontoGraphs/Branchs/LiteralNode.h"
 #include "ontologenius/core/ontoGraphs/Branchs/ValuedNode.h"
 #include "ontologenius/core/ontoGraphs/Branchs/WordTable.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/Graph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/LiteralGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 #include "ontologenius/core/ontoGraphs/Graphs/OntoGraph.h"
 
 namespace ontologenius {
 
-  DataPropertyGraph::DataPropertyGraph(IndividualGraph* individual_graph,
-                                       LiteralGraph* literal_graph,
-                                       ClassGraph* class_graph) : OntoGraph(individual_graph),
-                                                                  class_graph_(class_graph),
-                                                                  literal_graph_(literal_graph)
+  DataPropertyGraph::DataPropertyGraph(OntologyGraphs* graphs) : OntoGraph(&graphs->individuals_),
+                                                                 graphs_(graphs)
   {}
 
   DataPropertyGraph::DataPropertyGraph(const DataPropertyGraph& other,
-                                       IndividualGraph* individual_graph,
-                                       LiteralGraph* literal_graph,
-                                       ClassGraph* class_graph) : OntoGraph(other, individual_graph),
-                                                                  class_graph_(class_graph),
-                                                                  literal_graph_(literal_graph)
+                                       OntologyGraphs* graphs) : OntoGraph(other, &graphs->individuals_),
+                                                                 graphs_(graphs)
   {}
 
   DataPropertyBranch* DataPropertyGraph::add(const std::string& value, DataPropertyDescriptor_t& property_descriptor)
@@ -71,7 +63,7 @@ namespace ontologenius {
     // for all my domains
     for(auto& domain : property_descriptor.domains_)
     {
-      ClassBranch* domain_branch = class_graph_->findOrCreateBranch(domain.elem);
+      ClassBranch* domain_branch = graphs_->classes_.findOrCreateBranch(domain.elem);
 
       conditionalPushBack(me->domains_, ClassElement(domain_branch, domain.probability));
     }
@@ -82,7 +74,7 @@ namespace ontologenius {
     // for all my ranges
     for(const auto& range : property_descriptor.ranges_)
     {
-      LiteralType* literal_type = literal_graph_->findOrCreateType(range);
+      LiteralType* literal_type = graphs_->literals_.findOrCreateType(range);
       conditionalPushBack(me->ranges_, literal_type);
     }
 
@@ -149,7 +141,7 @@ namespace ontologenius {
         ClassBranch* range_branch = nullptr;
         for(auto& range : property_descriptor.ranges_)
         {
-          range_branch = class_graph_->container_.find(range);
+          range_branch = graphs_->classes_.container_.find(range);
           if(range_branch != nullptr)
             break;
         }
@@ -208,7 +200,7 @@ namespace ontologenius {
   void DataPropertyGraph::getDomain(DataPropertyBranch* branch, size_t depth, std::unordered_set<T>& res, std::unordered_set<DataPropertyBranch*>& up_trace)
   {
     for(auto& domain : branch->domains_)
-      class_graph_->getDown(domain.elem, res, depth);
+      graphs_->classes_.getDown(domain.elem, res, depth);
 
     for(auto& mother : branch->mothers_)
       if(up_trace.insert(mother.elem).second)
@@ -218,7 +210,7 @@ namespace ontologenius {
   void DataPropertyGraph::getDomainPtr(DataPropertyBranch* branch, size_t depth, std::unordered_set<ClassBranch*>& res, std::unordered_set<DataPropertyBranch*>& up_trace)
   {
     for(auto& domain : branch->domains_)
-      class_graph_->getDownPtr(domain.elem, res, (int)depth);
+      graphs_->classes_.getDownPtr(domain.elem, res, (int)depth);
 
     for(auto& mother : branch->mothers_)
       if(up_trace.insert(mother.elem).second)
@@ -284,10 +276,10 @@ namespace ontologenius {
       new_branch->mothers_.emplaceBack(mother, container_.find(mother.elem->value()));
 
     for(auto* range : old_branch->ranges_)
-      new_branch->ranges_.emplace_back(literal_graph_->findOrCreateType(range->value()));
+      new_branch->ranges_.emplace_back(graphs_->literals_.findOrCreateType(range->value()));
 
     for(const auto& domain : old_branch->domains_)
-      new_branch->domains_.emplace_back(domain, class_graph_->container_.find(domain.elem->value()));
+      new_branch->domains_.emplace_back(domain, graphs_->classes_.container_.find(domain.elem->value()));
 
     new_branch->properties_ = old_branch->properties_;
 

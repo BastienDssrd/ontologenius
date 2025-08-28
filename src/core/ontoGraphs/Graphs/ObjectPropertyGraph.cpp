@@ -15,21 +15,19 @@
 #include "ontologenius/core/ontoGraphs/Branchs/ObjectPropertyBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/ValuedNode.h"
 #include "ontologenius/core/ontoGraphs/Branchs/WordTable.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 #include "ontologenius/core/ontoGraphs/Graphs/Graph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/OntoGraph.h"
 
 namespace ontologenius {
 
-  ObjectPropertyGraph::ObjectPropertyGraph(IndividualGraph* individual_graph,
-                                           ClassGraph* class_graph) : OntoGraph(individual_graph),
-                                                                      class_graph_(class_graph)
+  ObjectPropertyGraph::ObjectPropertyGraph(OntologyGraphs* graphs) : OntoGraph(&graphs->individuals_),
+                                                                    graphs_(graphs)
   {}
 
   ObjectPropertyGraph::ObjectPropertyGraph(const ObjectPropertyGraph& other,
-                                           IndividualGraph* individual_graph,
-                                           ClassGraph* class_graph) : OntoGraph(other, individual_graph),
-                                                                      class_graph_(class_graph)
+                                           OntologyGraphs* graphs) : OntoGraph(other, &graphs->individuals_),
+                                                                    graphs_(graphs)
   {}
 
   ObjectPropertyBranch* ObjectPropertyGraph::add(const std::string& value, ObjectPropertyDescriptor_t& property_descriptor)
@@ -79,7 +77,7 @@ namespace ontologenius {
     // for all my domains
     for(auto& domain : property_descriptor.domains_)
     {
-      ClassBranch* domain_branch = class_graph_->findOrCreateBranch(domain.elem);
+      ClassBranch* domain_branch = graphs_->classes_.findOrCreateBranch(domain.elem);
 
       conditionalPushBack(me->domains_, ClassElement(domain_branch, domain.probability));
     }
@@ -90,7 +88,7 @@ namespace ontologenius {
     // for all my ranges
     for(auto& range : property_descriptor.ranges_)
     {
-      ClassBranch* range_branch = class_graph_->findOrCreateBranch(range.elem);
+      ClassBranch* range_branch = graphs_->classes_.findOrCreateBranch(range.elem);
 
       conditionalPushBack(me->ranges_, ClassElement(range_branch, range.probability));
     }
@@ -220,7 +218,7 @@ namespace ontologenius {
   void ObjectPropertyGraph::getDomain(ObjectPropertyBranch* branch, size_t depth, std::unordered_set<T>& res, std::unordered_set<ObjectPropertyBranch*>& up_trace)
   {
     for(auto& domain : branch->domains_)
-      class_graph_->getDown(domain.elem, res, depth);
+      graphs_->classes_.getDown(domain.elem, res, depth);
 
     for(auto& mother : branch->mothers_)
       if(up_trace.insert(mother.elem).second)
@@ -230,7 +228,7 @@ namespace ontologenius {
   void ObjectPropertyGraph::getDomainPtr(ObjectPropertyBranch* branch, size_t depth, std::unordered_set<ClassBranch*>& res, std::unordered_set<ObjectPropertyBranch*>& up_trace)
   {
     for(auto& domain : branch->domains_)
-      class_graph_->getDownPtr(domain.elem, res, (int)depth);
+      graphs_->classes_.getDownPtr(domain.elem, res, (int)depth);
 
     for(auto& mother : branch->mothers_)
       if(up_trace.insert(mother.elem).second)
@@ -274,7 +272,7 @@ namespace ontologenius {
   void ObjectPropertyGraph::getRange(ObjectPropertyBranch* branch, size_t depth, std::unordered_set<T>& res, std::unordered_set<ObjectPropertyBranch*>& up_trace)
   {
     for(auto& range : branch->ranges_)
-      class_graph_->getDown(range.elem, res, depth);
+      graphs_->classes_.getDown(range.elem, res, depth);
 
     for(auto& mother : branch->mothers_)
       if(up_trace.insert(mother.elem).second)
@@ -284,7 +282,7 @@ namespace ontologenius {
   void ObjectPropertyGraph::getRangePtr(ObjectPropertyBranch* branch, size_t depth, std::unordered_set<ClassBranch*>& res, std::unordered_set<ObjectPropertyBranch*>& up_trace)
   {
     for(auto& range : branch->ranges_)
-      class_graph_->getDownPtr(range.elem, res, (int)depth);
+      graphs_->classes_.getDownPtr(range.elem, res, (int)depth);
 
     for(auto& mother : branch->mothers_)
       if(up_trace.insert(mother.elem).second)
@@ -301,10 +299,10 @@ namespace ontologenius {
   void ObjectPropertyGraph::getDomainAndRangePtr(ObjectPropertyBranch* branch, size_t depth, std::unordered_set<ClassBranch*>& domains, std::unordered_set<ClassBranch*>& ranges, std::unordered_set<ObjectPropertyBranch*>& up_trace)
   {
     for(auto& domain : branch->domains_)
-      class_graph_->getDownPtr(domain.elem, domains, (int)depth);
+      graphs_->classes_.getDownPtr(domain.elem, domains, (int)depth);
 
     for(auto& range : branch->ranges_)
-      class_graph_->getDownPtr(range.elem, ranges, (int)depth);
+      graphs_->classes_.getDownPtr(range.elem, ranges, (int)depth);
 
     for(auto& mother : branch->mothers_)
       if(up_trace.insert(mother.elem).second)
@@ -436,10 +434,10 @@ namespace ontologenius {
       new_branch->mothers_.emplaceBack(mother, container_.find(mother.elem->value()));
 
     for(const auto& range : old_branch->ranges_)
-      new_branch->ranges_.emplace_back(range, class_graph_->container_.find(range.elem->value()));
+      new_branch->ranges_.emplace_back(range, graphs_->classes_.container_.find(range.elem->value()));
 
     for(const auto& domain : old_branch->domains_)
-      new_branch->domains_.emplace_back(domain, class_graph_->container_.find(domain.elem->value()));
+      new_branch->domains_.emplace_back(domain, graphs_->classes_.container_.find(domain.elem->value()));
 
     new_branch->properties_ = old_branch->properties_;
 

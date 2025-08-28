@@ -124,31 +124,20 @@ namespace ontologenius {
     std::vector<ClassExpressionDescriptor_t*> expression_members;
   };
 
-  class ObjectPropertyGraph;
-  class DataPropertyGraph;
-  class IndividualGraph;
-  class LiteralGraph;
-  class ClassGraph;
+  class OntologyGraphs;
 
   class AnonymousClassGraph : public Graph<AnonymousClassBranch>
   {
   public:
-    AnonymousClassGraph(LiteralGraph* literal_graph, ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph,
-                        DataPropertyGraph* data_property_graph, IndividualGraph* individual_graph);
-    AnonymousClassGraph(const AnonymousClassGraph& other, LiteralGraph* literal_graph,
-                        ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph,
-                        DataPropertyGraph* data_property_graph, IndividualGraph* individual_graph);
+    AnonymousClassGraph(OntologyGraphs* graphs);
+    AnonymousClassGraph(const AnonymousClassGraph& other, OntologyGraphs* graphs);
     ~AnonymousClassGraph() override = default;
 
     AnonymousClassBranch* add(EquivalentClassDescriptor_t& equivalence_descriptor, bool hidden_anonymous = false);
     void deepCopy(const AnonymousClassGraph& other);
 
   private:
-    LiteralGraph* literal_graph_;
-    ClassGraph* class_graph_;
-    ObjectPropertyGraph* object_property_graph_;
-    DataPropertyGraph* data_property_graph_;
-    IndividualGraph* individual_graph_;
+    OntologyGraphs* graphs_;
 
     AnonymousClassTree* createTree(ClassExpressionDescriptor_t* class_expression_descriptor);
     ClassExpression* createTreeNodes(ClassExpressionDescriptor_t* class_expression_descriptor, size_t& depth, AnonymousClassTree* related_tree, bool mark_tree_content = true);

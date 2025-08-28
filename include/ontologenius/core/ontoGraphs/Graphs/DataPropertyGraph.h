@@ -31,15 +31,13 @@ namespace ontologenius {
     DataPropertyDescriptor_t() : annotation_usage_(false) {}
   };
 
-  class IndividualGraph;
-  class LiteralGraph;
-  class ClassGraph;
+  class OntologyGraphs;
 
   class DataPropertyGraph : public OntoGraph<DataPropertyBranch>
   {
   public:
-    explicit DataPropertyGraph(IndividualGraph* individual_graph, LiteralGraph* literal_graph, ClassGraph* class_graph);
-    DataPropertyGraph(const DataPropertyGraph& other, IndividualGraph* individual_graph, LiteralGraph* literal_graph, ClassGraph* class_graph);
+    explicit DataPropertyGraph(OntologyGraphs* graphs);
+    DataPropertyGraph(const DataPropertyGraph& other, OntologyGraphs* graphs);
     ~DataPropertyGraph() override = default;
 
     void deepCopy(const DataPropertyGraph& other);
@@ -56,8 +54,7 @@ namespace ontologenius {
     void getRangePtr(DataPropertyBranch* branch, std::unordered_set<LiteralType*>& res);
 
   private:
-    ClassGraph* class_graph_;
-    LiteralGraph* literal_graph_;
+    OntologyGraphs* graphs_;
 
     template<typename T>
     void getDomain(DataPropertyBranch* branch, size_t depth, std::unordered_set<T>& res, std::unordered_set<DataPropertyBranch*>& up_trace);

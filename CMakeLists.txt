@@ -326,7 +326,7 @@ target_include_directories(ontologenius_reasoner_plugin
 )
 target_link_libraries(ontologenius_reasoner_plugin
   PUBLIC
-  ontologenius_plugin_lib ontologenius_ontoGraphs_lib ${pluginlib_LIBRARIES}
+  ontologenius_plugin_lib ontologenius_Graphs_lib ${pluginlib_LIBRARIES}
 )
 
 # # API

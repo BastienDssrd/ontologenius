@@ -97,30 +97,14 @@ namespace ontologenius {
       return res;
     }
   };
-
-  // for friend
-  class ObjectPropertyGraph;
-  class DataPropertyGraph;
-  class IndividualGraph;
-  class LiteralGraph;
-  class ClassGraph;
-  class AnonymousClassGraph;
-
-  class RuleChecker;
+ 
+  class OntologyGraphs;
 
   class RuleGraph : public Graph<RuleBranch>
   {
-    friend IndividualGraph;
-    friend ClassGraph;
-    friend AnonymousClassGraph;
-
-    friend RuleChecker;
-
   public:
-    RuleGraph(LiteralGraph* literal_graph, ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph,
-              DataPropertyGraph* data_property_graph, IndividualGraph* individual_graph, AnonymousClassGraph* anonymous_graph);
-    RuleGraph(const RuleGraph& other, LiteralGraph* literal_graph, ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph,
-              DataPropertyGraph* data_property_graph, IndividualGraph* individual_graph, AnonymousClassGraph* anonymous_graph);
+    RuleGraph(OntologyGraphs* graphs);
+    RuleGraph(const RuleGraph& other, OntologyGraphs* graphs);
     ~RuleGraph() override = default;
 
     RuleBranch* add(const RuleDescriptor_t& rule);
@@ -130,12 +114,7 @@ namespace ontologenius {
     const std::set<std::string>& getVariables() const { return variable_names_; }
 
   private:
-    LiteralGraph* literal_graph_;
-    ClassGraph* class_graph_;
-    ObjectPropertyGraph* object_property_graph_;
-    DataPropertyGraph* data_property_graph_;
-    IndividualGraph* individual_graph_;
-    AnonymousClassGraph* anonymous_graph_;
+    OntologyGraphs* graphs_;
 
     std::set<std::string> variable_names_; // only used to rewrite the variable fields
 
