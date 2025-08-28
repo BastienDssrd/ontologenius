@@ -1,12 +1,12 @@
 #include "ontologenius/core/ontoGraphs/Checkers/RuleChecker.h"
 
 #include <cstddef>
-#include <set>
+#include <cstdint>
 #include <shared_mutex>
-#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "ontologenius/core/ontoGraphs/Branchs/AnonymousClassBranch.h"
@@ -115,7 +115,7 @@ namespace ontologenius {
         if(anonymous_trees.empty() == false)
         {
           auto* anonymous_root = anonymous_trees.front()->root_node_;
-          //anonymous_root->
+          (void)anonymous_root; // Todo extract the classes from the class expression
         }
       }
       else
@@ -167,9 +167,9 @@ namespace ontologenius {
 
   void RuleChecker::checkBuiltinAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>>& variables_types)
   {
-    for(auto& argument : atom.arguments)
+    for(const auto& argument : atom.arguments)
     {
-      for(auto& again_argument : atom.arguments)
+      for(const auto& again_argument : atom.arguments)
       {
         if(again_argument.is_variable == false)
         {
