@@ -25,6 +25,7 @@ TEST(feature_branching, copy)
   EXPECT_TRUE(cpy != nullptr);
 
   cpy->close();
+  cpy->feeder.waitUpdate(1000);
 
   cpy->feeder.addConcept("table_1");
   cpy->feeder.addConcept("r1");
@@ -43,12 +44,14 @@ TEST(feature_branching, copy)
   cpy->feeder.commit("b20");
 
   cpy->feeder.addRelation("r1", "isOn", "table_1");
+  cpy->feeder.waitUpdate(1000);
 
   EXPECT_FALSE(cpy->feeder.compareCommits("b10", "b20"));
   EXPECT_TRUE(cpy->feeder.compareCommits("b11"));
 
   cpy->feeder.commit("b21");
   cpy->feeder.checkout("root");
+  cpy->feeder.waitUpdate(1000);
 
   EXPECT_TRUE(cpy->feeder.compareCommits("b11", "b21"));
 }
@@ -56,6 +59,8 @@ TEST(feature_branching, copy)
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "ontologenius_feature_branching_test");
+
+  std::thread ros_thread_([]() { std::cout << "SPIN ---------------" << std::endl; ros::spin(); });
 
   onto::OntologiesManipulator onto;
   onto_ptr = &onto;
