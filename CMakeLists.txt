@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.15)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 project(ontologenius)
 
@@ -553,6 +553,10 @@ if($ENV{ROS_VERSION} STREQUAL "1")
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
   install(TARGETS
+    ontologenius_Branches_lib
+    ontologenius_Graphs_lib
+    ontologenius_Checkers_lib
+    ontologenius_OntologyIO_lib
     ontologenius_lib
     ontologenius_interface
     ontologenius_compat
@@ -598,6 +602,10 @@ if($ENV{ROS_VERSION} STREQUAL "1")
 
 elseif($ENV{ROS_VERSION} STREQUAL "2")
   install(TARGETS
+    ontologenius_Branches_lib
+    ontologenius_Graphs_lib
+    ontologenius_Checkers_lib
+    ontologenius_OntologyIO_lib
     ontologenius_lib
     ontologenius_interface
     ontologenius_compat
