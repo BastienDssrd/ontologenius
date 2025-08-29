@@ -191,11 +191,11 @@ namespace ontologenius {
   {
     if(arg.datatype_value != nullptr)
       return "<" + key + " rdf:datatype=\"" + arg.datatype_value->type_->getNamespace() + "#" +arg.datatype_value->type_->value() + "\">" +
-            arg.datatype_value->data() + "</" + key + ">";
+            arg.datatype_value->data() + "</" + key + ">\n";
     else if(arg.indiv_value != nullptr)
-      return "<" + key + " " + getRdfResource(arg.indiv_value->value()) + "/>";
+      return "<" + key + " " + getRdfResource(arg.indiv_value->value()) + "/>\n";
     else
-      return "<" + key + " rdf:resource=\"urn:swrl:var#" + arg.name + "\"/>";
+      return "<" + key + " rdf:resource=\"urn:swrl:var#" + arg.name + "\"/>\n";
   }
 
   void RuleOwlWriter::writeVariable(const std::string& rule_variable)

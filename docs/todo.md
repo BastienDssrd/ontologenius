@@ -24,3 +24,4 @@
 [X] cardinality restriction -> add unqualified restriction (anonymous)
 [ ] adding variable property atom and indiv creation for dispositional match (swrl)
 [ ] convert CI to ROS2
+[ ] class expression not only for equivalence (chained axiom)
