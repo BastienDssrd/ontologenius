@@ -29,7 +29,11 @@ namespace ontologenius {
   {
     const std::shared_lock<std::shared_timed_mutex> lock(class_graph_->mutex_);
 
-    const std::vector<ClassBranch*> classes = class_graph_->get();
+    std::vector<ClassBranch*> classes = class_graph_->get();
+    std::sort(classes.begin(), classes.end(),
+              [](const ClassBranch* a, const ClassBranch* b) {
+                  return a->value() < b->value();
+              });
 
     for(auto* classe : classes)
       writeClass(classe);

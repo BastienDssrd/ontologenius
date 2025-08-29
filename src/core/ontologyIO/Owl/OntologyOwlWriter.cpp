@@ -44,10 +44,6 @@ namespace ontologenius {
     AnnotationOwlWriter annotations(&graphs_->object_properties_, &graphs_->data_properties_, file_, ns_);
     annotations.write();
 
-    writeBanner("Classes");
-    ClassOwlWriter classes(&graphs_->classes_, file_, ns_);
-    classes.write();
-
     writeBanner("Object Properties");
     ObjectPropertiesOwlWriter object_properties(&graphs_->object_properties_, file_, ns_);
     object_properties.write();
@@ -55,6 +51,10 @@ namespace ontologenius {
     writeBanner("Data properties");
     DataPropertiesOwlWriter data_properties(&graphs_->data_properties_, file_, ns_);
     data_properties.write();
+
+    writeBanner("Classes");
+    ClassOwlWriter classes(&graphs_->classes_, file_, ns_);
+    classes.write();
 
     writeBanner("Individuals");
     IndividualOwlWriter individuals(&graphs_->individuals_, file_, ns_);

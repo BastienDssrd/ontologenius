@@ -19,7 +19,12 @@ namespace ontologenius {
   {
     const std::shared_lock<std::shared_timed_mutex> lock(property_graph_->mutex_);
 
-    const std::vector<ObjectPropertyBranch*> properties = property_graph_->get();
+    std::vector<ObjectPropertyBranch*> properties = property_graph_->get();
+    std::sort(properties.begin(), properties.end(),
+              [](const ObjectPropertyBranch* a, const ObjectPropertyBranch* b) {
+                  return a->value() < b->value();
+              });
+
     for(auto* property : properties)
       writeProperty(property);
   }
@@ -38,11 +43,11 @@ namespace ontologenius {
 
     writeProperties(branch);
 
-    for(auto& range : branch->ranges_)
-      writeSingleResource("rdfs:range", range);
-
     for(auto& domain : branch->domains_)
       writeSingleResource("rdfs:domain", domain);
+
+    for(auto& range : branch->ranges_)
+      writeSingleResource("rdfs:range", range);
 
     writeChain(branch);
 

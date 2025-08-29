@@ -11,12 +11,13 @@ namespace ontologenius {
 
   void GraphOwlWriter::writeBranchStart(const std::string& value)
   {
-    writeString("<!-- " + ns_ + "#" + value + " -->\n\n<owl:" + key_ +" rdf:about=\"" + ns_ + "#" + value + "\">\n", 1);
+    writeString("<!-- " + ns_ + "#" + value + " -->\n\n", 1);
+    writeString("<" + key_ +" rdf:about=\"" + ns_ + "#" + value + "\">\n", 1);
   }
 
   void GraphOwlWriter::writeBranchEnd()
   {
-    writeString("</owl:DatatypeProperty>\n\n\n\n", 1);
+    writeString("</" + key_ + ">\n\n\n\n", 1);
   }
 
   std::string GraphOwlWriter::getRdfResource(const std::string& value)

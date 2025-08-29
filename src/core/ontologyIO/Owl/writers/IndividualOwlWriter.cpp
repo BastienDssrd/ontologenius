@@ -22,7 +22,11 @@ namespace ontologenius {
   {
     const std::shared_lock<std::shared_timed_mutex> lock(individual_graph_->mutex_);
 
-    const std::vector<IndividualBranch*> individuals = individual_graph_->get();
+    std::vector<IndividualBranch*> individuals = individual_graph_->get();
+    std::sort(individuals.begin(), individuals.end(),
+              [](const IndividualBranch* a, const IndividualBranch* b) {
+                  return a->value() < b->value();
+              });
     for(auto* individual : individuals)
       writeIndividual(individual);
   }

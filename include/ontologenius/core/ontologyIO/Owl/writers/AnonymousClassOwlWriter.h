@@ -31,6 +31,8 @@ namespace ontologenius {
     void writeCardinalityValue(ClassExpression* ano_elem, size_t level);
     void writeQualifier(ClassExpression* ano_element, size_t level);
     void writeCardinalityRange(ClassExpression* ano_elem, size_t level, bool is_data_prop);
+    void writeOneofDatatype(ClassExpression* ano_elem, size_t level);
+    void writeDatatypeList(ClassExpression* ano_elem, size_t level, size_t index = 0);
   };
 
 } // namespace ontologenius

@@ -28,7 +28,12 @@ namespace ontologenius {
       else if(ano_elem->type_ == class_expression_intersection_of)
         writeCollection(ano_elem, "owl:intersectionOf", level + 1, datatype);
       else if(ano_elem->type_ == class_expression_one_of)
-        writeCollection(ano_elem, "owl:oneOf", level + 1, datatype);
+      {
+        if(datatype)
+          writeOneofDatatype(ano_elem, level + 1);
+        else
+          writeCollection(ano_elem, "owl:oneOf", level + 1, datatype);
+      }
       else if(ano_elem->type_ == class_expression_complement_of)
         writeComplement(ano_elem, level + 1, datatype);
 
@@ -105,7 +110,7 @@ namespace ontologenius {
   //continue there
   void AnonymousClassOwlWriter::writeRestriction(ClassExpression* ano_elem, size_t level)
   {
-    writeRdfResource(ano_elem->sub_elements_.front(), "owl:onProperty", level);
+    writeRdfResource(ano_elem, "owl:onProperty", level); // error
 
     if(ano_elem->restriction_type_ == restriction_max_cardinality ||
        ano_elem->restriction_type_ == restriction_min_cardinality ||
@@ -158,7 +163,7 @@ namespace ontologenius {
       else
       {
         writeString("<" + field + ">\n", level);
-        writeClassExpression(ano_element->sub_elements_.front(), level + 1);
+        writeClassExpression(ano_element, level + 1);
         writeString("</" + field + ">\n", level);
       }
     }
@@ -170,7 +175,7 @@ namespace ontologenius {
       else
       {
         writeString("<" + field + ">\n", level);
-        writeClassExpression(ano_element->sub_elements_.front(), level + 1, true);
+        writeClassExpression(ano_element, level + 1, true);
         writeString("</" + field + ">\n", level);
       }
     }
@@ -179,6 +184,7 @@ namespace ontologenius {
   void AnonymousClassOwlWriter::writeCardinalityRange(ClassExpression* ano_elem, size_t level, bool is_data_prop)
   {
     std::string tmp, field;
+    ClassExpression* data_elem = ano_elem->sub_elements_.front();
 
     switch(ano_elem->restriction_type_)
     {
@@ -186,11 +192,11 @@ namespace ontologenius {
       field = "owl:hasValue";
       if(is_data_prop)
       {
-        tmp += "<" + field + " rdf" + getRdfDatatype(ano_elem->literal_involved_->type_) + ">" + ano_elem->literal_involved_->data();
+        tmp += "<" + field + " rdf" + getRdfDatatype(data_elem->literal_involved_->type_) + ">" + data_elem->literal_involved_->data();
         tmp += "</" + field + ">\n";
       }
       else
-        tmp += "<" + field + " " + getRdfResource(ano_elem->individual_involved_->value()) + "/>\n";
+        tmp += "<" + field + " " + getRdfResource(data_elem->individual_involved_->value()) + "/>\n";
       writeString(tmp, level);
       return;
     case restriction_all_values_from:
@@ -204,14 +210,43 @@ namespace ontologenius {
       break;
     }
 
-    if(ano_elem->sub_elements_.front()->type_ == ClassExpressionType_e::class_expression_identifier)
-      writeRdfResource(ano_elem->sub_elements_.front(), field, level);
+    if(data_elem->type_ == ClassExpressionType_e::class_expression_identifier)
+      writeRdfResource(data_elem, field, level);
     else
     {
       writeString("<" + field + ">\n", level);
-      writeClassExpression(ano_elem->sub_elements_.front(), level + 1, is_data_prop);
+      writeClassExpression(data_elem, level + 1, is_data_prop);
       writeString("</" + field + ">\n", level);
     }
+  }
+
+  void AnonymousClassOwlWriter::writeOneofDatatype(ClassExpression* ano_elem, size_t level)
+  {
+    writeString("<owl:oneOf>\n", level);
+    writeDatatypeList(ano_elem, level + 1);
+    writeString("</owl:oneOf>\n", level);
+  }
+
+  void AnonymousClassOwlWriter::writeDatatypeList(ClassExpression* ano_elem, size_t level, size_t index)
+  {
+    writeString("<rdf:Description>\n", level);
+    writeString("<rdf:type rdf:resource=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#List\"/>\n", level + 1);
+
+    auto* data_elem = ano_elem->sub_elements_.at(index);
+    std::string tmp = "<rdf:first rdf" + getRdfDatatype(data_elem->literal_involved_->type_) + ">" + data_elem->literal_involved_->data();
+    tmp += "</rdf:first>\n";
+    writeString(tmp, level + 1);
+
+    if(index + 1 < ano_elem->sub_elements_.size())
+    {
+      writeString("<rdf:rest>\n", level + 1);
+      writeDatatypeList(ano_elem, level + 2, index + 1);
+      writeString("</rdf:rest>\n", level + 1);
+    }
+    else
+      writeString("<rdf:rest rdf:resource=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#nil\"/>\n", level + 1);
+
+    writeString("</rdf:Description>\n", level);
   }
 
 } // namespace ontologenius
