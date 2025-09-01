@@ -228,7 +228,7 @@ namespace ontologenius {
     }
   }
 
-  void Reasoners::runPostReasoners()
+  void Reasoners::runPostReasoners(bool on_versionning)
   {
     size_t nb_updates = 0;
 
@@ -238,13 +238,28 @@ namespace ontologenius {
       {
         if(it.second != nullptr)
         {
-          it.second->postReason();
-          auto notif = it.second->getNotifications();
-          notifications_.insert(notifications_.end(), notif.begin(), notif.end());
-          auto explanations = it.second->getExplanations();
-          explanations_mutex_.lock();
-          explanations_.insert(explanations_.end(), explanations.begin(), explanations.end());
-          explanations_mutex_.unlock();
+          bool has_run = false;
+          if(it.second->implementPostReasoning())
+          {
+            it.second->postReason();
+            has_run = true;
+          }
+
+          if(on_versionning && it.second->implementPeriodicReasoning())
+          {
+            it.second->postBranchingReason();
+            has_run = true;
+          }
+
+          if(has_run == true)
+          {
+            auto notif = it.second->getNotifications();
+            notifications_.insert(notifications_.end(), notif.begin(), notif.end());
+            auto explanations = it.second->getExplanations();
+            explanations_mutex_.lock();
+            explanations_.insert(explanations_.end(), explanations.begin(), explanations.end());
+            explanations_mutex_.unlock();
+          }
         }
       }
       nb_updates = ReasonerInterface::getNbUpdates();

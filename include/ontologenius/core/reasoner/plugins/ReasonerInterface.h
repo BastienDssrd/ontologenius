@@ -84,6 +84,11 @@ namespace ontologenius {
     /// @brief This function is called at 100 Hz.
     virtual bool periodicReason() { return false; }
 
+    /// @brief This function is called avec performing a commit or a checkout.
+    /// It mainly aims at implementing periodic reasoning at once ensuring a correcte closure
+    /// of versionned instances
+    virtual void postBranchingReason() {}
+
     /// @brief This function has to be overloaded if the reasoner implements post-reasoning
     /// @return true if the reasoner implements post-reasoning
     virtual bool implementPostReasoning() { return false; }
