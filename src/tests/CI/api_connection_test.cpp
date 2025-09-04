@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <vector>
 
@@ -58,11 +58,14 @@ TEST(api_connection, reasoners_call)
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "ontologenius_api_connection_test");
+  testing::InitGoogleTest(&argc, argv);
+  rclcpp::init(argc, argv);
 
   onto::OntologyManipulator onto;
   onto_ptr = &onto;
 
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+  int res = RUN_ALL_TESTS();
+
+  rclcpp::shutdown();
+  return res;
 }
