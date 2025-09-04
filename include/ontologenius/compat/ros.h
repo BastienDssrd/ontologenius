@@ -198,7 +198,7 @@ namespace ontologenius::compat {
 
       Node(Node& other) = delete;
       Node(Node&& other) = delete;
-      ~Node() = default;
+      ~Node();
 
       static Node& get();
       static bool ok();
