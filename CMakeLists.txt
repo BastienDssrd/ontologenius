@@ -646,18 +646,6 @@ if($ENV{ROS_VERSION} STREQUAL "1")
   if(CATKIN_ENABLE_TESTING)
     find_package(rostest REQUIRED)
 
-    add_rostest_gtest(onto_api_inheritage_test test/api_inheritage.test src/tests/CI/api_inheritage_test.cpp)
-    target_include_directories(onto_api_inheritage_test PRIVATE ${catkin_INCLUDE_DIRS})
-    target_link_libraries(onto_api_inheritage_test ontologenius_lib ${catkin_LIBRARIES})
-
-    add_rostest_gtest(onto_api_relations_index_test test/api_relations_index.test src/tests/CI/api_relations_index_test.cpp)
-    target_include_directories(onto_api_relations_index_test PRIVATE ${catkin_INCLUDE_DIRS})
-    target_link_libraries(onto_api_relations_index_test ontologenius_lib ${catkin_LIBRARIES})
-
-    add_rostest_gtest(onto_api_relations_test test/api_relations.test src/tests/CI/api_relations_test.cpp)
-    target_include_directories(onto_api_relations_test PRIVATE ${catkin_INCLUDE_DIRS})
-    target_link_libraries(onto_api_relations_test ontologenius_lib ${catkin_LIBRARIES})
-
     add_rostest_gtest(onto_feature_branching_test test/feature_branching.test src/tests/CI/feature_branching_test.cpp)
     target_include_directories(onto_feature_branching_test PRIVATE ${catkin_INCLUDE_DIRS})
     target_link_libraries(onto_feature_branching_test ontologenius_lib ${catkin_LIBRARIES})
@@ -721,8 +709,19 @@ elseif($ENV{ROS_VERSION} STREQUAL "2")
 
     add_gtest_executable(onto_api_connection_test src/tests/CI/api_connection_test.cpp)
     target_link_libraries(onto_api_connection_test ontologenius_lib)
-
     add_launch_test(test/api_connection_test.py)
+
+    add_gtest_executable(onto_api_inheritage_test src/tests/CI/api_inheritage_test.cpp)
+    target_link_libraries(onto_api_inheritage_test ontologenius_lib)
+    add_launch_test(test/api_inheritage_test.py)
+
+    add_gtest_executable(onto_api_relations_index_test src/tests/CI/api_relations_index_test.cpp)
+    target_link_libraries(onto_api_relations_index_test ontologenius_lib)
+    add_launch_test(test/api_relations_index_test.py)
+
+    add_gtest_executable(onto_api_relations_test src/tests/CI/api_relations_test.cpp)
+    target_link_libraries(onto_api_relations_test ontologenius_lib)
+    add_launch_test(test/api_relations_test.py)
 
     #ament_add_gtest(feature_deep_copy_test src/tests/CI/feature_deep_copy_test.cpp TIMEOUT 10)
     #set_target_properties(feature_deep_copy_test PROPERTIES CXX_STANDARD 14 CXX_STANDARD_REQUIRED ON)

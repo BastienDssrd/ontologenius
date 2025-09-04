@@ -15,8 +15,8 @@ def generate_test_description():
 
     test_node = launch_ros.actions.Node(
         package='ontologenius',
-        executable='onto_api_connection_test',
-        name='api_connection_test',
+        executable='onto_api_relations_test',
+        name='api_relations_test',
         output='screen'
     )
 
