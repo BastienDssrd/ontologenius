@@ -1,9 +1,0 @@
-<launch>
-  <include file="$(find ontologenius)/launch/ontologenius_multi_empty.launch">
-    <arg name="intern_file" default="none"/>
-    <arg name="config_file" default="$(find ontologenius)/configuration/config_example.yaml"/>
-    <arg name="display" default="false"/>
-  </include>
-  <arg name='TESTDURATION' value='60' />
-  <test pkg="ontologenius" type="onto_feature_branching_test" test-name="feature_branching_test" time-limit="$(arg TESTDURATION)" retry="0" />
-</launch>

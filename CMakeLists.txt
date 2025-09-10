@@ -646,27 +646,6 @@ if($ENV{ROS_VERSION} STREQUAL "1")
   if(CATKIN_ENABLE_TESTING)
     find_package(rostest REQUIRED)
 
-    add_rostest_gtest(onto_feature_branching_test test/feature_branching.test src/tests/CI/feature_branching_test.cpp)
-    target_include_directories(onto_feature_branching_test PRIVATE ${catkin_INCLUDE_DIRS})
-    target_link_libraries(onto_feature_branching_test ontologenius_lib ${catkin_LIBRARIES})
-
-    add_rostest_gtest(onto_feature_deep_copy_test test/feature_deep_copy.test src/tests/CI/feature_deep_copy_test.cpp)
-    set_target_properties(onto_feature_deep_copy_test PROPERTIES CXX_STANDARD 14 CXX_STANDARD_REQUIRED ON)
-    target_include_directories(onto_feature_deep_copy_test PRIVATE ${catkin_INCLUDE_DIRS})
-    target_link_libraries(onto_feature_deep_copy_test ontologenius_lib ${catkin_LIBRARIES})
-
-    add_rostest_gtest(onto_feature_loading_test test/feature_loading.test src/tests/CI/feature_loading_test.cpp)
-    target_include_directories(onto_feature_loading_test PRIVATE ${catkin_INCLUDE_DIRS})
-    target_link_libraries(onto_feature_loading_test ontologenius_lib ${catkin_LIBRARIES})
-
-    add_rostest_gtest(onto_feature_multi_test test/feature_multi.test src/tests/CI/feature_multi_test.cpp)
-    target_include_directories(onto_feature_multi_test PRIVATE ${catkin_INCLUDE_DIRS})
-    target_link_libraries(onto_feature_multi_test ontologenius_lib ${catkin_LIBRARIES})
-
-    add_rostest_gtest(onto_feature_subscription_test test/feature_subscription.test src/tests/CI/feature_subscription_test.cpp)
-    target_include_directories(onto_feature_subscription_test PRIVATE ${catkin_INCLUDE_DIRS})
-    target_link_libraries(onto_feature_subscription_test ontologenius_lib ${catkin_LIBRARIES})
-
     add_rostest_gtest(onto_reasoning_anonymous_class_test test/reasoning_anonymous_class.test src/tests/CI/reasoning_anonymous_class_test.cpp)
     set_target_properties(onto_reasoning_anonymous_class_test PROPERTIES CXX_STANDARD 14 CXX_STANDARD_REQUIRED ON)
     target_include_directories(onto_reasoning_anonymous_class_test PRIVATE ${catkin_INCLUDE_DIRS})
@@ -723,10 +702,26 @@ elseif($ENV{ROS_VERSION} STREQUAL "2")
     target_link_libraries(onto_api_relations_test ontologenius_lib)
     add_launch_test(test/api_relations_test.py)
 
-    #ament_add_gtest(feature_deep_copy_test src/tests/CI/feature_deep_copy_test.cpp TIMEOUT 10)
-    #set_target_properties(feature_deep_copy_test PROPERTIES CXX_STANDARD 14 CXX_STANDARD_REQUIRED ON)
-    #target_include_directories(feature_deep_copy_test PRIVATE ${catkin_INCLUDE_DIRS})
-    #target_link_libraries(feature_deep_copy_test ontologenius_lib ${catkin_LIBRARIES})
+    add_gtest_executable(onto_feature_branching_test src/tests/CI/feature_branching_test.cpp)
+    target_link_libraries(onto_feature_branching_test ontologenius_lib)
+    add_launch_test(test/feature_branching_test.py)
+
+    ament_add_gtest(feature_deep_copy_test src/tests/CI/feature_deep_copy_test.cpp TIMEOUT 10)
+    target_include_directories(feature_deep_copy_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(feature_deep_copy_test gtest gtest_main pthread)
+    target_link_libraries(feature_deep_copy_test ontologenius_ontoGraphs_lib)
+
+    add_gtest_executable(onto_feature_loading_test src/tests/CI/feature_loading_test.cpp)
+    target_link_libraries(onto_feature_loading_test ontologenius_lib)
+    add_launch_test(test/feature_loading_test.py)
+
+    add_gtest_executable(onto_feature_multi_test src/tests/CI/feature_multi_test.cpp)
+    target_link_libraries(onto_feature_multi_test ontologenius_lib)
+    add_launch_test(test/feature_multi_test.py)
+
+    add_gtest_executable(onto_feature_subscription_test src/tests/CI/feature_subscription_test.cpp)
+    target_link_libraries(onto_feature_subscription_test ontologenius_lib)
+    add_launch_test(test/feature_subscription_test.py)
   endif()
 endif()
 

@@ -1,11 +1,11 @@
 #include <algorithm>
 #include <gtest/gtest.h>
-#include <ros/package.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <vector>
 
 #include "ontologenius/API/ontologenius/OntologyManipulator.h"
+#include "ontologenius/utils/Commands.h"
 
 onto::OntologyManipulator* onto_ptr;
 
@@ -37,7 +37,7 @@ TEST(feature_loading, reset)
     EXPECT_NE(res.front(), "Bird");
 
   EXPECT_TRUE(onto_ptr->actions.clear());
-  std::string path = ros::package::getPath("ontologenius");
+  std::string path = ontologenius::findPackage("ontologenius");
   path += "/files/objects.owl";
   EXPECT_TRUE(onto_ptr->actions.fadd(path));
 
@@ -59,7 +59,7 @@ TEST(feature_loading, language)
   std::vector<std::string> res;
 
   EXPECT_TRUE(onto_ptr->actions.clear());
-  std::string path = ros::package::getPath("ontologenius");
+  std::string path = ontologenius::findPackage("ontologenius");
   path += "/files/objects.owl";
   EXPECT_TRUE(onto_ptr->actions.fadd(path));
 
@@ -94,13 +94,15 @@ TEST(feature_loading, language)
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "ontologenius_feature_loading_test");
+  testing::InitGoogleTest(&argc, argv);
+  rclcpp::init(argc, argv);
 
   onto::OntologyManipulator onto;
   onto_ptr = &onto;
 
   onto.close();
 
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+  int res = RUN_ALL_TESTS();
+  rclcpp::shutdown();
+  return res;
 }
