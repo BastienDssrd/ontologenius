@@ -642,37 +642,7 @@ endif()
 # ##################################
 # #            Tests              ##
 # ##################################
-if($ENV{ROS_VERSION} STREQUAL "1")
-  if(CATKIN_ENABLE_TESTING)
-    find_package(rostest REQUIRED)
-
-    add_rostest_gtest(onto_reasoning_anonymous_class_test test/reasoning_anonymous_class.test src/tests/CI/reasoning_anonymous_class_test.cpp)
-    set_target_properties(onto_reasoning_anonymous_class_test PROPERTIES CXX_STANDARD 14 CXX_STANDARD_REQUIRED ON)
-    target_include_directories(onto_reasoning_anonymous_class_test PRIVATE ${catkin_INCLUDE_DIRS})
-    target_link_libraries(onto_reasoning_anonymous_class_test ontologenius_lib ${catkin_LIBRARIES})
-
-    add_rostest_gtest(onto_reasoning_chain_test test/reasoning_chain.test src/tests/CI/reasoning_chain_test.cpp)
-    set_target_properties(onto_reasoning_chain_test PROPERTIES CXX_STANDARD 14 CXX_STANDARD_REQUIRED ON)
-    target_include_directories(onto_reasoning_chain_test PRIVATE ${catkin_INCLUDE_DIRS})
-    target_link_libraries(onto_reasoning_chain_test ontologenius_lib ${catkin_LIBRARIES})
-
-    add_rostest_gtest(onto_reasoning_mechanism_test test/reasoning_mechanism.test src/tests/CI/reasoning_mechanism_test.cpp)
-    set_target_properties(onto_reasoning_mechanism_test PROPERTIES CXX_STANDARD 14 CXX_STANDARD_REQUIRED ON)
-    target_include_directories(onto_reasoning_mechanism_test PRIVATE ${catkin_INCLUDE_DIRS})
-    target_link_libraries(onto_reasoning_mechanism_test ontologenius_lib ${catkin_LIBRARIES})
-
-    add_rostest_gtest(onto_reasoning_transitivity_test test/reasoning_transitivity.test src/tests/CI/reasoning_transitivity_test.cpp)
-    set_target_properties(onto_reasoning_transitivity_test PROPERTIES CXX_STANDARD 14 CXX_STANDARD_REQUIRED ON)
-    target_include_directories(onto_reasoning_transitivity_test PRIVATE ${catkin_INCLUDE_DIRS})
-    target_link_libraries(onto_reasoning_transitivity_test ontologenius_lib ${catkin_LIBRARIES})
-
-    add_rostest_gtest(onto_reasoning_rule_test test/reasoning_rule.test src/tests/CI/reasoning_rule_test.cpp)
-    set_target_properties(onto_reasoning_rule_test PROPERTIES CXX_STANDARD 14 CXX_STANDARD_REQUIRED ON)
-    target_include_directories(onto_reasoning_rule_test PRIVATE ${catkin_INCLUDE_DIRS})
-    target_link_libraries(onto_reasoning_rule_test ontologenius_lib ${catkin_LIBRARIES})
-  endif()
-
-elseif($ENV{ROS_VERSION} STREQUAL "2")
+if($ENV{ROS_VERSION} STREQUAL "2")
   if(BUILD_TESTING)
     find_package(ament_lint_auto REQUIRED)
     find_package(ament_cmake_gtest REQUIRED)
@@ -722,6 +692,26 @@ elseif($ENV{ROS_VERSION} STREQUAL "2")
     add_gtest_executable(onto_feature_subscription_test src/tests/CI/feature_subscription_test.cpp)
     target_link_libraries(onto_feature_subscription_test ontologenius_lib)
     add_launch_test(test/feature_subscription_test.py)
+
+    add_gtest_executable(onto_reasoning_anonymous_class_test src/tests/CI/reasoning_anonymous_class_test.cpp)
+    target_link_libraries(onto_reasoning_anonymous_class_test ontologenius_lib)
+    add_launch_test(test/reasoning_anonymous_class_test.py)
+
+    add_gtest_executable(onto_reasoning_chain_test src/tests/CI/reasoning_chain_test.cpp)
+    target_link_libraries(onto_reasoning_chain_test ontologenius_lib)
+    add_launch_test(test/reasoning_chain_test.py)
+
+    add_gtest_executable(onto_reasoning_mechanism_test src/tests/CI/reasoning_mechanism_test.cpp)
+    target_link_libraries(onto_reasoning_mechanism_test ontologenius_lib)
+    add_launch_test(test/reasoning_mechanism_test.py)
+
+    add_gtest_executable(onto_reasoning_rule_test src/tests/CI/reasoning_rule_test.cpp)
+    target_link_libraries(onto_reasoning_rule_test ontologenius_lib)
+    add_launch_test(test/reasoning_rule_test.py)
+
+    add_gtest_executable(onto_reasoning_transitivity_test src/tests/CI/reasoning_transitivity_test.cpp)
+    target_link_libraries(onto_reasoning_transitivity_test ontologenius_lib)
+    add_launch_test(test/reasoning_transitivity_test.py)
   endif()
 endif()
 

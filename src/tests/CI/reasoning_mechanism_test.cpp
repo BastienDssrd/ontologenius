@@ -1,11 +1,11 @@
 #include <algorithm>
 #include <gtest/gtest.h>
-#include <ros/package.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <vector>
 
 #include "ontologenius/API/ontologenius/OntologyManipulator.h"
+#include "ontologenius/utils/Commands.h"
 
 onto::OntologyManipulator* onto_ptr;
 
@@ -54,7 +54,7 @@ TEST(reasoning_mechanism, reasoners_effect)
   EXPECT_TRUE(onto_ptr->reasoners.deactivate("ontologenius::ReasonerNone"));
   EXPECT_TRUE(onto_ptr->reasoners.deactivate("ontologenius::ReasonerSymmetric"));
 
-  std::string path_base = ros::package::getPath("ontologenius");
+  std::string path_base = ontologenius::findPackage("ontologenius");
   std::string path = path_base + "/files/attribute.owl";
   EXPECT_TRUE(onto_ptr->actions.fadd(path));
 
@@ -109,13 +109,15 @@ TEST(reasoning_mechanism, reasoners_effect)
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "ontologenius_reasoning_mechanism_test");
+  testing::InitGoogleTest(&argc, argv);
+  rclcpp::init(argc, argv);
 
   onto::OntologyManipulator onto;
   onto_ptr = &onto;
 
   onto.close();
 
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+  int res = RUN_ALL_TESTS();
+  rclcpp::shutdown();
+  return res;
 }

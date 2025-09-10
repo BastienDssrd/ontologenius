@@ -1,19 +1,10 @@
 #include <algorithm>
 #include <gtest/gtest.h>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <vector>
 
 #include "ontologenius/API/ontologenius/OntologyManipulator.h"
-
-/*
-│   ├──BinarySensor
-│   │   ├── + Sensor
-hasData allValuesFrom (oneOf ())=>
--0 data_prop(hasData) rest(0) 
- -1 
- c : 0 o : 0 d : 1 i : 0 cwa : 0
-│   │   ├── = hasData allValuesFrom (oneOf ())
-*/
 
 onto::OntologyManipulator* onto_ptr;
 
@@ -273,7 +264,8 @@ TEST(reasoning_anonymous_class, datatype)
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "ontologenius_reasoning_anonymous_class_test");
+  testing::InitGoogleTest(&argc, argv);
+  rclcpp::init(argc, argv);
 
   onto::OntologyManipulator onto;
   onto_ptr = &onto;
@@ -281,7 +273,9 @@ int main(int argc, char** argv)
   onto_ptr->reasoners.activate("ontologenius::ReasonerAnonymous");
   onto.close();
   onto.feeder.waitConnected();
+  onto.feeder.waitUpdate(1000);
 
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+  int res = RUN_ALL_TESTS();
+  rclcpp::shutdown();
+  return res;
 }

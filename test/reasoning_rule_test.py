@@ -10,13 +10,13 @@ def generate_test_description():
     ontologenius_launch = os.path.join(
         get_package_share_directory('ontologenius'),
         'launch',
-        'ontologenius_multi_empty.py'
+        'ontologenius.py'
     )
 
     test_node = launch_ros.actions.Node(
         package='ontologenius',
-        executable='onto_feature_branching_test',
-        name='feature_branching_test',
+        executable='onto_reasoning_rule_test',
+        name='reasoning_rule_test',
         output='screen'
     )
 
@@ -25,7 +25,7 @@ def generate_test_description():
             launch.launch_description_sources.PythonLaunchDescriptionSource(ontologenius_launch),
             launch_arguments={'intern_file': 'none',
                               'display': 'false',
-                              'config_file' : os.path.join(get_package_share_directory('ontologenius'), "configuration/config_example.yaml")
+                              'files' : os.path.join(get_package_share_directory('ontologenius'), "files/CI/test_swrl_rules.owl")
                               }.items(),
         ),
 

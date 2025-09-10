@@ -10,13 +10,13 @@ def generate_test_description():
     ontologenius_launch = os.path.join(
         get_package_share_directory('ontologenius'),
         'launch',
-        'ontologenius_multi_empty.py'
+        'ontologenius.py'
     )
 
     test_node = launch_ros.actions.Node(
         package='ontologenius',
-        executable='onto_feature_branching_test',
-        name='feature_branching_test',
+        executable='onto_reasoning_mechanism_test',
+        name='reasoning_mechanism_test',
         output='screen'
     )
 

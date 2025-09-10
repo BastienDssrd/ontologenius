@@ -4,8 +4,6 @@ import launch
 import launch_ros
 import launch_testing
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
-from launch.substitutions import TextSubstitution
 from ament_index_python.packages import get_package_share_directory
 
 def generate_test_description():
