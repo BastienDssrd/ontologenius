@@ -19,7 +19,7 @@
 
 namespace ontologenius {
 
-  struct IndividualVectors_t
+  struct IndividualDescriptor_t
   {
     std::vector<SingleElement<std::string>> is_a_;
 
@@ -32,28 +32,18 @@ namespace ontologenius {
     std::map<std::string, std::vector<std::string>> muted_dictionary_;
   };
 
-  // for friend
-  class IndividualChecker;
-  class AnonymousGraph;
-
-  // for graphs usage
-  class ClassGraph;
-  class ObjectPropertyGraph;
-  class DataPropertyGraph;
+  class OntologyGraphs;
 
   class IndividualGraph : public Graph<IndividualBranch>
   {
-    friend IndividualChecker;
-    friend AnonymousGraph;
-
   public:
-    IndividualGraph(ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph);
-    IndividualGraph(const IndividualGraph& other, ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph);
+    IndividualGraph(OntologyGraphs* graphs);
+    IndividualGraph(const IndividualGraph& other, OntologyGraphs* graphs);
     ~IndividualGraph() override = default;
 
     void deepCopy(const IndividualGraph& other);
 
-    IndividualBranch* add(const std::string& value, IndividualVectors_t& individual_vector);
+    IndividualBranch* add(const std::string& value, IndividualDescriptor_t& individual_descriptor);
     void add(std::vector<std::string>& distinct_);
 
     std::unordered_set<std::string> getSame(const std::string& individual); // C1
@@ -144,11 +134,10 @@ namespace ontologenius {
     void getSame(IndividualBranch* individual, std::unordered_set<std::string>& res);
     void getLowestSame(IndividualBranch* individual, std::unordered_set<index_t>& res);
     void getSame(IndividualBranch* individual, std::unordered_set<index_t>& res);
+    void getSame(IndividualBranch* individual, std::unordered_set<IndividualBranch*>& res);
 
   private:
-    ClassGraph* class_graph_;
-    ObjectPropertyGraph* object_property_graph_;
-    DataPropertyGraph* data_property_graph_;
+    OntologyGraphs* graphs_;
 
     std::vector<IndividualBranch*> ordered_individuals_; // contains the individuals ordered wrt their index
                                                          // unused indexes have nullptr in
@@ -213,7 +202,6 @@ namespace ontologenius {
     std::unordered_set<index_t> getSameId(const std::string& individual);
     std::unordered_set<index_t> getSameId(index_t individual);
     void getLowestSame(IndividualBranch* individual, std::unordered_set<IndividualBranch*>& res);
-    void getSame(IndividualBranch* individual, std::unordered_set<IndividualBranch*>& res);
     void getSame(IndividualBranch* individual, std::vector<IndividualBranch*>& res);
     std::unordered_set<std::string> getSame(IndividualBranch* individual);
     std::unordered_set<index_t> getSameId(IndividualBranch* individual);

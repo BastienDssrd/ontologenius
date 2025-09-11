@@ -21,5 +21,7 @@
 [ ] add SameAs, DifferentFrom atoms in the rules (mostly for consequent purposes) (swrl)
 [ ] add Builtins to perform computations between datatype values (swrl)
 [ ] reorganize the atoms in the antecedents for better performances (swrl)
-[ ] cardinality restriction -> add unqualified restriction (anonymous)
+[X] cardinality restriction -> add unqualified restriction (anonymous)
 [ ] adding variable property atom and indiv creation for dispositional match (swrl)
+[ ] convert CI to ROS2
+[ ] class expression not only for equivalence (chained axiom)

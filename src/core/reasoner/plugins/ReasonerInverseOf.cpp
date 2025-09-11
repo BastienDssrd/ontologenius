@@ -15,8 +15,8 @@ namespace ontologenius {
 
   void ReasonerInverseOf::postReason()
   {
-    const std::lock_guard<std::shared_timed_mutex> lock(ontology_->individual_graph_.mutex_);
-    for(const auto& indiv : ontology_->individual_graph_.get())
+    const std::lock_guard<std::shared_timed_mutex> lock(ontology_->individuals_.mutex_);
+    for(const auto& indiv : ontology_->individuals_.get())
       if(first_run_ ||
          (indiv->isUpdated() && (indiv->same_as_.isUpdated() || indiv->object_relations_.isUpdated())) ||
          indiv->hasUpdatedObjectRelation())
@@ -46,7 +46,7 @@ namespace ontologenius {
         if(it->first == inv_prop)
           return;
 
-        auto up_properties = ontology_->object_property_graph_.getUpPtrSafe(it->first);
+        auto up_properties = ontology_->object_properties_.getUpPtrSafe(it->first);
         if(up_properties.find(inv_prop) != up_properties.end())
           return;
       }
@@ -54,7 +54,7 @@ namespace ontologenius {
 
     try
     {
-      int index = ontology_->individual_graph_.addRelation(indiv_on, inv_prop, inv_indiv, 1.0, true, false);
+      int index = ontology_->individuals_.addRelation(indiv_on, inv_prop, inv_indiv, 1.0, true, false);
       indiv_on->object_relations_[index].explanation = {inv_indiv->value() + "|" + base_prop->value() + "|" + indiv_on->value()};
       indiv_on->nb_updates_++;
 

@@ -192,6 +192,8 @@ namespace onto {
     /// @return Returns false if the service call fails.
     bool exportToXml(const std::string& path);
     bool doVersioning();
+    size_t getNbUncommitedData();
+    std::string getCurrentCommit();
     bool compareCommits(const std::string& commit_from, const std::string& commit_to = "");
 
   private:

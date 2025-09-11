@@ -92,13 +92,13 @@ namespace ontologenius {
     if(onto_ != nullptr)
     {
       if(pattern.isSubjectUndefined() == false)
-        if(onto_->class_graph_.getUp(triplet.subject()).empty() == false)
+        if(onto_->classes_.getUp(triplet.subject()).empty() == false)
           pattern.setSubjectAsClass();
       if(pattern.isObjectUndefined() == false)
-        if(onto_->class_graph_.getUp(triplet.object()).empty() == false)
+        if(onto_->classes_.getUp(triplet.object()).empty() == false)
           pattern.setObjectAsClass();
       if(pattern.isPredicatUndefined() == false)
-        if(onto_->data_property_graph_.getUp(triplet.predicate()).empty() == false)
+        if(onto_->data_properties_.getUp(triplet.predicate()).empty() == false)
           pattern.setPredicatAsDataProperty();
     }
 
@@ -128,15 +128,15 @@ namespace ontologenius {
 
     if((pattern.isSubjectIndividual() == false) && !pattern.isSubjectUndefined())
     {
-      if(onto_->individual_graph_.isA(triplet.subject, pattern.subject()) == false)
+      if(onto_->individuals_.isA(triplet.subject, pattern.subject()) == false)
         return false;
     }
     // subject match
 
     if((pattern.isObjectIndividual() == false) && !pattern.isObjectUndefined())
     {
-      if((onto_->individual_graph_.isA(triplet.object, pattern.object()) == false) &&
-         (onto_->class_graph_.isA(triplet.object, pattern.object()) == false))
+      if((onto_->individuals_.isA(triplet.object, pattern.object()) == false) &&
+         (onto_->classes_.isA(triplet.object, pattern.object()) == false))
         return false;
     }
     // object match
@@ -145,12 +145,12 @@ namespace ontologenius {
     {
       if(pattern.isPredicatObjectProperty())
       {
-        if(onto_->object_property_graph_.isA(triplet.predicate, pattern.predicate()) == false)
+        if(onto_->object_properties_.isA(triplet.predicate, pattern.predicate()) == false)
           return false;
       }
       else
       {
-        if(onto_->data_property_graph_.isA(triplet.predicate, pattern.predicate()) == false)
+        if(onto_->data_properties_.isA(triplet.predicate, pattern.predicate()) == false)
           return false;
       }
     }

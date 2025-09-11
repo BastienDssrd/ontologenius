@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <string>
 
+#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 #include "ontologenius/core/ontoGraphs/Checkers/AnonymousClassChecker.h"
 #include "ontologenius/core/ontoGraphs/Checkers/ClassChecker.h"
 #include "ontologenius/core/ontoGraphs/Checkers/DataPropertyChecker.h"
@@ -14,40 +15,24 @@
 
 namespace ontologenius {
 
-  Ontology::Ontology(const std::string& language) : class_graph_(&individual_graph_, &object_property_graph_, &data_property_graph_),
-                                                    object_property_graph_(&individual_graph_, &class_graph_),
-                                                    data_property_graph_(&individual_graph_, &class_graph_),
-                                                    individual_graph_(&class_graph_, &object_property_graph_, &data_property_graph_),
-                                                    anonymous_graph_(&class_graph_, &object_property_graph_, &data_property_graph_, &individual_graph_),
-                                                    rule_graph_(&class_graph_, &object_property_graph_, &data_property_graph_, &individual_graph_, &anonymous_graph_),
-                                                    loader_((Ontology&)*this),
-                                                    writer_((Ontology&)*this),
+  Ontology::Ontology(const std::string& language) : loader_(this),
+                                                    writer_(this),
                                                     is_preloaded_(false),
                                                     is_init_(false)
   {
-    class_graph_.setLanguage(language);
-    object_property_graph_.setLanguage(language);
-    data_property_graph_.setLanguage(language);
-    individual_graph_.setLanguage(language);
+    classes_.setLanguage(language);
+    object_properties_.setLanguage(language);
+    data_properties_.setLanguage(language);
+    individuals_.setLanguage(language);
     writer_.setFileName("none");
   }
 
-  Ontology::Ontology(const Ontology& other) : class_graph_(other.class_graph_, &individual_graph_, &object_property_graph_, &data_property_graph_),
-                                              object_property_graph_(other.object_property_graph_, &individual_graph_, &class_graph_),
-                                              data_property_graph_(other.data_property_graph_, &individual_graph_, &class_graph_),
-                                              individual_graph_(other.individual_graph_, &class_graph_, &object_property_graph_, &data_property_graph_),
-                                              anonymous_graph_(other.anonymous_graph_, &class_graph_, &object_property_graph_, &data_property_graph_, &individual_graph_),
-                                              rule_graph_(other.rule_graph_, &class_graph_, &object_property_graph_, &data_property_graph_, &individual_graph_, &anonymous_graph_),
-                                              loader_((Ontology&)*this),
-                                              writer_((Ontology&)*this),
+  Ontology::Ontology(const Ontology& other) : OntologyGraphs(other),
+                                              loader_(this),
+                                              writer_(this),
                                               is_preloaded_(true),
                                               is_init_(true)
   {
-    class_graph_.deepCopy(other.class_graph_);
-    object_property_graph_.deepCopy(other.object_property_graph_);
-    data_property_graph_.deepCopy(other.data_property_graph_);
-    individual_graph_.deepCopy(other.individual_graph_);
-
     writer_.setFileName("none");
   }
 
@@ -61,12 +46,12 @@ namespace ontologenius {
     if(is_init_ == true)
       return true;
 
-    ClassChecker class_checker(&class_graph_);
-    ObjectPropertyChecker object_property_checker(&object_property_graph_);
-    DataPropertyChecker data_property_checker(&data_property_graph_);
-    IndividualChecker individual_checker(&individual_graph_);
-    AnonymousClassChecker ano_class_checker(&anonymous_graph_);
-    RuleChecker rule_checker(&rule_graph_);
+    ClassChecker class_checker(&classes_, this);
+    ObjectPropertyChecker object_property_checker(&object_properties_, this);
+    DataPropertyChecker data_property_checker(&data_properties_, this);
+    IndividualChecker individual_checker(&individuals_, this);
+    AnonymousClassChecker ano_class_checker(&anonymous_classes_, this);
+    RuleChecker rule_checker(&rules_, this);
 
     size_t err = class_checker.check();
     err += object_property_checker.check();
@@ -76,7 +61,6 @@ namespace ontologenius {
     {
       loader_.loadIndividuals();
 
-      individual_checker = IndividualChecker(&individual_graph_);
       err += individual_checker.check();
 
       is_init_ = true;
@@ -164,15 +148,15 @@ namespace ontologenius {
 
   void Ontology::setLanguage(const std::string& language)
   {
-    class_graph_.setLanguage(language);
-    object_property_graph_.setLanguage(language);
-    data_property_graph_.setLanguage(language);
-    individual_graph_.setLanguage(language);
+    classes_.setLanguage(language);
+    object_properties_.setLanguage(language);
+    data_properties_.setLanguage(language);
+    individuals_.setLanguage(language);
   }
 
   std::string Ontology::getLanguage() const
   {
-    return class_graph_.getLanguage();
+    return classes_.getLanguage();
   }
 
   void Ontology::setDisplay(bool display)

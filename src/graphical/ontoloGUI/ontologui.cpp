@@ -253,6 +253,8 @@ OntoloGUI::OntoloGUI(QWidget* parent) : QMainWindow(parent),
   QObject::connect(ui_->FeederDelButton, SIGNAL(clicked()), this, SLOT(feederDelSlot()));
   QObject::connect(ui_->FeederCommitButton, SIGNAL(clicked()), this, SLOT(feederCommitSlot()));
   QObject::connect(ui_->FeederCheckoutButton, SIGNAL(clicked()), this, SLOT(feederCheckoutSlot()));
+  QObject::connect(ui_->FeederGetCommitButton, SIGNAL(clicked()), this, SLOT(feederGetCommitSlot()));
+  QObject::connect(ui_->FeederGetNbUncommitButton, SIGNAL(clicked()), this, SLOT(feederGetNbUncommitSlot()));
 
   QObject::connect(ui_->OntologyNameAddDel, SIGNAL(textEdited(const QString&)), this, SLOT(ontologyNameAddDelChangedSlot(const QString&)));
   QObject::connect(ui_->OntologyName, SIGNAL(textEdited(const QString&)), this, SLOT(ontologyNameChangedSlot(const QString&)));
@@ -898,6 +900,32 @@ void OntoloGUI::feederCheckoutSlot()
   if(updateOntoPtr() == false)
     return;
   onto_->feeder.checkout(ui_->FeederCommitName->text().toStdString());
+}
+
+void OntoloGUI::feederGetCommitSlot()
+{
+  if(updateOntoPtr() == false)
+    return;
+  if(onto_->feeder.doVersioning())
+  {
+    std::string current_commit = onto_->feeder.getCurrentCommit();
+    ui_->ResultArea->setText(QString::fromStdString(current_commit));
+  }
+  else
+    displayErrorInfo("This instance has no versionning activated.");
+}
+
+void OntoloGUI::feederGetNbUncommitSlot()
+{
+  if(updateOntoPtr() == false)
+    return;
+  if(onto_->feeder.doVersioning())
+  {
+    size_t nb = onto_->feeder.getNbUncommitedData();
+    ui_->ResultArea->setText(QString::fromStdString(std::to_string(nb)));
+  }
+  else
+    displayErrorInfo("This instance has no versionning activated."); 
 }
 
 bool OntoloGUI::updateOntoPtr()

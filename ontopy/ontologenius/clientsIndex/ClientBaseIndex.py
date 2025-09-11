@@ -22,15 +22,15 @@ class ClientBaseIndex:
         self._client = Ontoros.createService('ontologenius/' + self._name, OntologeniusIndexService)
         self.error_code = 0
 
-    def nb(self):
+    def nb():
         """Gives the total number (int) of service calls from all ClientBaseIndex instances since the last reset."""
         return ClientBaseIndex._cpt
 
-    def resetNb(self):
+    def resetNb():
         """Reset Call Counter for all instances of ClientBaseIndex."""
         ClientBaseIndex._cpt = 0
 
-    def setVerbose(self, verbose):
+    def setVerbose(verbose):
         """If verbose(bool) is set to True, the clients will post messages about
            the failure to call the services and about their restoration.
         """

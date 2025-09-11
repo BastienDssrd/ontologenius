@@ -1,7 +1,7 @@
 <html lang="en_US">
 
 <head>
-  <title>FeederPublisher Class (python) | Ontologenius 0.4.5</title>
+  <title>FeederPublisher Class (python) | Ontologenius 0.4.6</title>
   <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
   <link href="../style/ontologenius_api.css" rel="stylesheet" type="text/css">
   <link href="../images/favicon.ico" rel="shortcut icon">
@@ -133,6 +133,10 @@
                 <td class="memItemLeft rightAlign topAlign"> Ros2 Package:</td>
                 <td class="memItemRight bottomAlign"> <span class="preprocessor">ontopy</span></td>
               </tr>
+              <tr>
+                <td class="memItemLeft rightAlign topAlign"> Inherits:</td>
+                <td class="memItemRight bottomAlign"> <a href="ClientBase.html">ClientBase</a></td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -161,6 +165,12 @@
               <tr><td class="memItemLeft rightAlign topAlign"> bool </td><td class="memItemRight bottomAlign"><b><a href="FeederPublisher.html#commit2">commit</a></b>(self, commit_name, timeout = 100000000)</td></tr>
               <tr><td class="memItemLeft rightAlign topAlign"> bool </td><td class="memItemRight bottomAlign"><b><a href="FeederPublisher.html#checkout">checkout</a></b>(self, commit_name, timeout = 100000000)</td></tr>
               <tr><td class="memItemLeft rightAlign topAlign"> </td><td class="memItemRight bottomAlign"><b><a href="FeederPublisher.html#registerNotificationCallback">registerNotificationCallback</a></b>(self, callback)</td></tr>
+
+              <tr><td class="memItemLeft rightAlign topAlign"> bool </td><td class="memItemRight bottomAlign"><b><a href="FeederPublisher.html#export">export</a></b>(self, path)</td></tr>
+              <tr><td class="memItemLeft rightAlign topAlign"> bool </td><td class="memItemRight bottomAlign"><b><a href="FeederPublisher.html#doVersioning">doVersioning</a></b>(self)</td></tr>
+              <tr><td class="memItemLeft rightAlign topAlign"> int </td><td class="memItemRight bottomAlign"><b><a href="FeederPublisher.html#getNbUncommitedData">getNbUncommitedData</a></b>(self)</td></tr>
+              <tr><td class="memItemLeft rightAlign topAlign"> str </td><td class="memItemRight bottomAlign"><b><a href="FeederPublisher.html#getCurrentCommit">getCurrentCommit</a></b>(self)</td></tr>
+              <tr><td class="memItemLeft rightAlign topAlign"> bool </td><td class="memItemRight bottomAlign"><b><a href="FeederPublisher.html#compareCommits">compareCommits</a></b>(self, commit_from, commit_to = "")</td></tr>
             </tbody>
           </table>
         </div>
@@ -267,6 +277,25 @@
           <h3 class="fn" id="registerNotificationCallback"><a name="registerNotificationCallback"></a><span class="name">registerNotificationCallback</span>(self, callback)</h3>
           <p>Register a callback function to get notifications from the reasoners.</p>
           <p>The parameter <i>callback</i> is the callback function taking a string.</p>
+
+          <h3 class="fn" id="export"><a name="export"></a><span class="name">export</span>(self, path)</h3>
+          <p>Exports the current modification tree in the absolute <i>path</i>(str) path. The <i>path</i> parameter must be of the form: my/path/to/file.xml</p>
+          <p>This function has no effect on non copied ontologies.</p>
+          <p>Returns False if the service call fails.</p>
+
+          <h3 class="fn" id="doVersioning"><a name="doVersioning"></a><span class="name">doVersioning</span>(self)</h3>
+          <p>Returns True if versionning is available on the given instance.</p>
+
+          <h3 class="fn" id="getNbUncommitedData"><a name="getNbUncommitedData"></a><span class="name">getNbUncommitedData</span>(self)</h3>
+          <p>On versionned instances, this function returns the number of uncomited data (data published since the last commit).</p>
+
+          <h3 class="fn" id="getCurrentCommit"><a name="getCurrentCommit"></a><span class="name">getCurrentCommit</span>(self)</h3>
+          <p>On versionned instances, this function returns the identifier of the current parent commit.</p>
+
+          <h3 class="fn" id="compareCommits"><a name="compareCommits"></a><span class="name">compareCommits</span>(self, commit_from, commit_to = "")</h3>
+          <p>On versionned instances, this function compares <i>commit_from</i>(str) and <i>commit_to</i>(str). 
+             If both commit have received the same modifications, the function return true.</p>
+          <p>If <i>commit_to</i> is not set, the current state will be use instead (with uncommited data).</p>
 
         </div>
       </div>

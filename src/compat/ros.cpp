@@ -80,4 +80,11 @@ namespace ontologenius::compat::onto_ros {
 #endif
   }
 
+  Node::~Node()
+  {
+#if ONTO_ROS_VERSION == 2
+    ros_thread_.join();
+#endif
+  }
+
 } // namespace ontologenius::compat::onto_ros

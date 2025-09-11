@@ -1,8 +1,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <gtest/gtest.h>
-#include <ros/package.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <vector>
 
 #include "ontologenius/API/ontologenius/OntologyManipulatorIndex.h"
@@ -750,13 +749,16 @@ TEST(api_relations_index, individual_getWith)
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "ontologenius_api_relations_index_test");
+  testing::InitGoogleTest(&argc, argv);
+  rclcpp::init(argc, argv);
 
   onto::OntologyManipulatorIndex onto;
   onto_ptr = &onto;
 
   onto.close();
 
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+  int res = RUN_ALL_TESTS();
+
+  rclcpp::shutdown();
+  return res;
 }

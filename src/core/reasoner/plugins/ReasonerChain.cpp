@@ -18,10 +18,10 @@ namespace ontologenius {
 
   void ReasonerChain::postReason()
   {
-    const std::lock_guard<std::shared_timed_mutex> lock(ontology_->individual_graph_.mutex_);
-    const std::shared_lock<std::shared_timed_mutex> lock_prop(ontology_->object_property_graph_.mutex_);
+    const std::lock_guard<std::shared_timed_mutex> lock(ontology_->individuals_.mutex_);
+    const std::shared_lock<std::shared_timed_mutex> lock_prop(ontology_->object_properties_.mutex_);
 
-    for(auto* indiv : ontology_->individual_graph_.get())
+    for(auto* indiv : ontology_->individuals_.get())
       if(first_run_ ||
          (indiv->isUpdated() && (indiv->same_as_.isUpdated() || indiv->object_relations_.isUpdated())) ||
          (indiv->flags_.find("chain") != indiv->flags_.end()) ||
@@ -50,12 +50,12 @@ namespace ontologenius {
                 local_used.emplace_back(indiv->value() + "|" + base_property->value() + "|" + indiv->object_relations_[rel_i].second->value(), indiv->object_relations_.has_induced_object_relations[rel_i]);
                 for(auto& used : end_indivs)
                 {
-                  if(ontology_->individual_graph_.relationExists(indiv, chain.back(), used.first) == false)
+                  if(ontology_->individuals_.relationExists(indiv, chain.back(), used.first) == false)
                   {
                     int index = -1;
                     try
                     {
-                      index = ontology_->individual_graph_.addRelation(indiv, chain.back(), used.first, 1.0, true, false);
+                      index = ontology_->individuals_.addRelation(indiv, chain.back(), used.first, 1.0, true, false);
                       indiv->nb_updates_++;
                     }
                     catch(GraphException& e)

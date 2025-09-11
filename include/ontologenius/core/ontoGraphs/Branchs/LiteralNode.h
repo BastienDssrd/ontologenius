@@ -8,56 +8,66 @@
 
 namespace ontologenius {
 
+  class LiteralType
+  {
+  public:
+    static WordTable table;
+
+    LiteralType(const std::string& value, const std::string& ns = "") : index_(table.add(value)),
+                                                                        namespace_(ns)
+    {}
+
+    const std::string& value() const { return table[index_]; }
+    index_t get() const { return index_; }
+    std::string getNamespace() const { return namespace_; }
+
+    bool operator==(const LiteralType& other) const
+    {
+      return (index_ == other.get());
+    }
+
+    bool operator!=(const LiteralType& other) const
+    {
+      return (index_ != other.get());
+    }
+
+    bool operator==(index_t other) const
+    {
+      return (get() == other);
+    }
+
+    // std::vector<LiteralType*> mothers_;
+
+  private:
+
+    index_t index_;
+    std::string namespace_;
+  };
+
   class LiteralNode
   {
   public:
-    std::string value_;
-    std::string type_;
+  static WordTable table;
 
-    static WordTable table;
+    LiteralType* type_;
 
-    LiteralNode(const std::string& type, const std::string& value) : value_(value), type_(type), index_(0)
-    {
-      index_ = table.add(type + "#" + value);
-    }
+    explicit LiteralNode(LiteralType* type, const std::string& value) : type_(type),
+                                                                        index_(table.add(type->value() + "#" + value)),
+                                                                        data_value_(value)
+    {}
 
-    explicit LiteralNode(const std::string& value) : index_(table.add(value))
-    {
-      set(value);
-    }
-
-    std::string getNs() const
-    {
-      if((type_ == "real") || (type_ == "rational"))
-        return "http://www.w3.org/2002/07/owl";
-      else if((type_ == "PlainLiteral") || (type_ == "XMLLiteral"))
-        return "http://www.w3.org/1999/02/22-rdf-syntax-ns";
-      else if(type_ == "Literal")
-        return "http://www.w3.org/2000/01/rdf-schema";
-      else if((type_ == "boolean") || (type_ == "string") || (type_ == "double") || (type_ == "integer"))
-        return "http://www.w3.org/2001/XMLSchema";
-      else
-        return "http://www.w3.org/2002/07/xsd"; // http://www.w3.org/2001/XMLSchema
-    }
-
-    std::string toString() const { return (type_ + "#" + value_); }
-    const std::string& value() const { return table[index_]; }
+    std::string value() const { return table[index_]; }
+    const std::string& data() const { return data_value_; }
     index_t get() const { return -index_; }
-    void set(const std::string& value)
-    {
-      size_t pose = value.find('#');
-      type_ = value.substr(0, pose);
-      value_ = value.substr(pose + 1);
-    }
 
     bool operator==(const LiteralNode& other) const
     {
-      return ((type_ == other.type_) && (value_ == other.value_));
+      return (index_ == other.index_);
     }
 
     bool operator!=(const LiteralNode& other) const
     {
-      return ((type_ != other.type_) || (value_ != other.value_));
+      return (index_ != other.index_);
     }
 
     bool operator==(const std::string& other) const
@@ -72,6 +82,7 @@ namespace ontologenius {
 
   private:
     index_t index_;
+    std::string data_value_;
   };
 
 } // namespace ontologenius

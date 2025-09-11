@@ -24,6 +24,7 @@ namespace ontologenius {
     VersionNode* getPrev() const { return prev_; }
     std::vector<VersionNode*> getNexts() const { return nexts_; }
 
+    size_t getNbData() const { return datas_.size(); }
     std::vector<Feed_t> getDatasDirect();
     std::vector<Feed_t> getDatasInvert();
 

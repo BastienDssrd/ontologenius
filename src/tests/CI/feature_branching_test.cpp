@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <gtest/gtest.h>
-#include <ros/package.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <vector>
 
@@ -25,6 +24,7 @@ TEST(feature_branching, copy)
   EXPECT_TRUE(cpy != nullptr);
 
   cpy->close();
+  cpy->feeder.waitUpdate(1000);
 
   cpy->feeder.addConcept("table_1");
   cpy->feeder.addConcept("r1");
@@ -43,25 +43,29 @@ TEST(feature_branching, copy)
   cpy->feeder.commit("b20");
 
   cpy->feeder.addRelation("r1", "isOn", "table_1");
+  cpy->feeder.waitUpdate(1000);
 
   EXPECT_FALSE(cpy->feeder.compareCommits("b10", "b20"));
   EXPECT_TRUE(cpy->feeder.compareCommits("b11"));
 
   cpy->feeder.commit("b21");
   cpy->feeder.checkout("root");
+  cpy->feeder.waitUpdate(1000);
 
   EXPECT_TRUE(cpy->feeder.compareCommits("b11", "b21"));
 }
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "ontologenius_feature_branching_test");
+  testing::InitGoogleTest(&argc, argv);
+  rclcpp::init(argc, argv);
 
   onto::OntologiesManipulator onto;
   onto_ptr = &onto;
 
   onto.waitInit();
 
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+  int res = RUN_ALL_TESTS();
+  rclcpp::shutdown();
+  return res;
 }

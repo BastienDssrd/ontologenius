@@ -31,7 +31,7 @@ namespace ontologenius {
     std::string getDescription(const std::string& plugin);
 
     void runPreReasoners(QueryOrigin_e origin, const std::string& action, const std::string& param);
-    void runPostReasoners();
+    void runPostReasoners(bool on_versionning = false);
     void runPeriodicReasoners();
 
     std::vector<std::pair<ReasonerNotificationStatus_e, std::string>> getNotifications()

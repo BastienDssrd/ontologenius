@@ -11,121 +11,81 @@
 
 namespace ontologenius {
 
-  enum CardType_e
+  enum RestrictionConstraintType_e
   {
-    cardinality_none,
-    cardinality_some,
-    cardinality_only,
-    cardinality_min,
-    cardinality_max,
-    cardinality_exactly,
-    cardinality_value,
-    cardinality_error
+    restriction_all_values_from,
+    restriction_some_values_from,
+    restriction_has_value,
+    restriction_max_cardinality,
+    restriction_min_cardinality,
+    restriction_cardinality,
+    restriction_unknown
   };
 
-  enum LogicalNodeType_e
+  enum ClassExpressionType_e
   {
-    logical_and,
-    logical_or,
-    logical_not,
-    logical_none
+    class_expression_identifier,      // type 1
+    class_expression_one_of,          // type 2
+    class_expression_restriction,     // type 3
+    class_expression_intersection_of, // type 4
+    class_expression_union_of,        // type 5
+    class_expression_complement_of,   // type 6
+    class_expression_unknown
   };
 
-  enum BuiltinType_e
-  {
-    builtin_none,
-    greater_than,
-    greater_than_or_equal,
-    less_than,
-    less_than_or_equal,
-    equal,
-    not_equal
-  };
+  class AnonymousClassTree;
 
-  struct Builtin_t
-  {
-    BuiltinType_e builtin_type_;
-    std::string builtin_str_;
-
-    Builtin_t() : builtin_type_(builtin_none) {}
-    Builtin_t(const BuiltinType_e& builtin_type, const std::string& builtin_str) : builtin_type_(builtin_type),
-                                                                                   builtin_str_(builtin_str)
-    {}
-
-    std::string builtinToString() const
-    {
-      std::string builtin_name;
-      switch(this->builtin_type_)
-      {
-      case greater_than:
-        builtin_name = "greaterThan";
-        break;
-      case greater_than_or_equal:
-        builtin_name = "greaterThanOrEqual";
-        break;
-      case less_than:
-        builtin_name = "lessThan";
-        break;
-      case less_than_or_equal:
-        builtin_name = "lessThanOrEqual";
-        break;
-      case equal:
-        builtin_name = "equal";
-        break;
-      case not_equal:
-        builtin_name = "notEqual";
-        break;
-      default:
-        break;
-      }
-
-      return builtin_name;
-    }
-  };
-
-  struct CardinalityElement_t
-  {
-    CardType_e card_type_ = cardinality_none;
-    size_t card_number_ = 0;
-    LiteralNode* card_range_ = nullptr;
-  };
-
-  class AnonymousClassElement : public InferenceRuleNode
+  class ClassExpression
   {
   public:
-    AnonymousClassElement(const std::string& rule) : InferenceRuleNode(rule),
-                                                     logical_type_(logical_none), oneof(false), is_complex(false), root_node_(nullptr),
-                                                     involves_class(false), involves_object_property(false), involves_data_property(false), involves_individual(false),
-                                                     class_involved_(nullptr), object_property_involved_(nullptr), data_property_involved_(nullptr), individual_involved_(nullptr)
+    ClassExpression() : type_(class_expression_unknown),
+                        class_involved_(nullptr), object_property_involved_(nullptr), 
+                        data_property_involved_(nullptr), individual_involved_(nullptr),
+                        literal_involved_(nullptr), datatype_involved_(nullptr),
+                        restriction_type_(restriction_unknown), cardinality_value_(0)
     {}
 
-    LogicalNodeType_e logical_type_;
-    bool oneof; // true = OneOf element
-    bool is_complex;
-
-    AnonymousClassElement* root_node_;
-
-    bool involves_class;
-    bool involves_object_property;
-    bool involves_data_property;
-    bool involves_individual;
+    ClassExpressionType_e type_;
 
     // pointers to the concepts used in the equivalence relation
     ClassBranch* class_involved_;
     ObjectPropertyBranch* object_property_involved_;
     DataPropertyBranch* data_property_involved_;
     IndividualBranch* individual_involved_;
+    LiteralNode* literal_involved_;
+    LiteralType* datatype_involved_;
 
-    CardinalityElement_t card_;
+    RestrictionConstraintType_e restriction_type_;
+    size_t cardinality_value_;
 
-    std::vector<AnonymousClassElement*> sub_elements_;
-    std::string ano_name;
+    std::vector<ClassExpression*> sub_elements_;
+  };
+
+  class AnonymousClassTree : public InferenceRuleNode
+  {
+  public:
+    AnonymousClassTree(const std::string& rule) : InferenceRuleNode(rule),
+                                                  involves_class(false), involves_object_property(false), involves_data_property(false), involves_individual(false),
+                                                  involves_close_world_assumption(false), root_node_(nullptr), depth_(0)
+    {}
+
+    bool involves_class;
+    bool involves_object_property;
+    bool involves_data_property;
+    bool involves_individual;
+    bool involves_close_world_assumption;
+
+    ClassExpression* root_node_;
+    size_t depth_;
+
+    std::string id;
 
     std::string involvesToString() const
     {
       std::string involves_res;
-      involves_res = " c : " + std::to_string(int(root_node_->involves_class)) + " o : " + std::to_string(int(root_node_->involves_object_property)) +
-                     " d : " + std::to_string(int(root_node_->involves_data_property)) + " i : " + std::to_string(int(root_node_->involves_individual));
+      involves_res = " c : " + std::to_string(int(involves_class)) + " o : " + std::to_string(int(involves_object_property)) +
+                     " d : " + std::to_string(int(involves_data_property)) + " i : " + std::to_string(int(involves_individual)) +
+                     " cwa : " + std::to_string(int(involves_close_world_assumption));
       return involves_res;
     }
   };
@@ -133,11 +93,16 @@ namespace ontologenius {
   class AnonymousClassBranch : public ValuedNode
   {
   public:
-    explicit AnonymousClassBranch(const std::string& value, bool hidden = false) : ValuedNode(value, hidden), class_equiv_(nullptr), depth_(0) {}
+    explicit AnonymousClassBranch(const std::string& value, bool hidden = false) : ValuedNode(value, hidden), class_equiv_(nullptr) {}
+    AnonymousClassBranch(const AnonymousClassBranch& other) = delete;
+    ~AnonymousClassBranch()
+    {
+      for(auto* tree : ano_trees_)
+        delete tree;
+    }
 
     ClassBranch* class_equiv_;
-    std::vector<AnonymousClassElement*> ano_elems_;
-    size_t depth_;
+    std::vector<AnonymousClassTree*> ano_trees_;
   };
 
 } // namespace ontologenius

@@ -199,6 +199,16 @@ namespace onto {
     return callNR("export", path);
   }
 
+  std::string FeederPublisher::getCurrentCommit()
+  {
+    return callStr("currentCommit", "");
+  }
+
+  size_t FeederPublisher::getNbUncommitedData()
+  {
+    return strtoul(callStr("nbUncommitData", "").c_str(), nullptr, 0);
+  }
+
   bool FeederPublisher::doVersioning()
   {
     return callStr("versioning", "") == "true";

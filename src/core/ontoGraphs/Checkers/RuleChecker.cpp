@@ -1,11 +1,12 @@
 #include "ontologenius/core/ontoGraphs/Checkers/RuleChecker.h"
 
 #include <cstddef>
-#include <set>
+#include <cstdint>
 #include <shared_mutex>
-#include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "ontologenius/core/ontoGraphs/Branchs/AnonymousClassBranch.h"
@@ -16,13 +17,19 @@
 #include "ontologenius/core/ontoGraphs/Branchs/RuleBranch.h"
 #include "ontologenius/core/ontoGraphs/Graphs/RuleGraph.h"
 
+#define USE_NONE       0
+#define USE_INDIVIDUAL 1<<0
+#define USE_DATATYPE   1<<1
+#define USE_BOTH       (USE_INDIVIDUAL | USE_DATATYPE)
+
 namespace ontologenius {
 
   size_t RuleChecker::check()
   {
-    const std::shared_lock<std::shared_timed_mutex> lock(rule_graph_->mutex_);
+    const std::shared_lock<std::shared_timed_mutex> lock(graphs_->rules_.mutex_);
 
-    checkDisjoint();
+    for(auto* rule : graphs_->rules_.all_branchs_)
+      checkRuleDisjoint(rule);
 
     is_analysed = true;
     printStatus();
@@ -30,433 +37,201 @@ namespace ontologenius {
     return getErrors();
   }
 
-  void RuleChecker::checkDisjoint()
+  void RuleChecker::checkRuleDisjoint(RuleBranch* branch)
   {
-    for(RuleBranch* rule_branch : graph_vect_)
+    current_rule_ = branch->getRule();
+
+    std::unordered_map<std::string, uint8_t> all_arguments;
+    std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>> variables_types;
+    for(auto& atom : branch->rule_body_)
+      checkAtom(atom, variables_types, all_arguments);
+
+    for(auto& atom : branch->rule_head_)
+      checkAtom(atom, variables_types, all_arguments);
+
+    for(auto& arg : all_arguments)
     {
-      current_rule_ = rule_branch->value();
-      std::unordered_map<std::string, std::vector<std::vector<ClassElement>>> mapping_var_classes;
-      // usage [c1, [c2, [obj_prop1, objprop2]]] ... then check for objprop_n that they are not disjoint
-      std::unordered_map<std::string, std::unordered_map<std::string, std::vector<ObjectPropertyBranch*>>> mapping_var_obj;
-      std::unordered_map<std::string, std::unordered_map<std::string, std::vector<DataPropertyBranch*>>> mapping_var_data;
-      // usage [var1][LiteralNode->type1 ,...,LiteralNode->type2]
-      // [integer#18][integer]
-      std::unordered_map<std::string, std::vector<LiteralNode*>> mapping_var_builtin;
-      std::set<std::string> keys_variables;
-
-      checkAtomList(rule_branch->rule_body_, mapping_var_classes, mapping_var_obj, mapping_var_data, mapping_var_builtin, keys_variables);
-      checkAtomList(rule_branch->rule_head_, mapping_var_classes, mapping_var_obj, mapping_var_data, mapping_var_builtin, keys_variables);
-
-      // ========== check the mapping between variables in the rule ==========
-      checkVariableMappings(mapping_var_classes, keys_variables);
-      checkObjectPropertyDisjointess(mapping_var_obj, keys_variables);
-      checkDataPropertyDisjointess(mapping_var_data, keys_variables);
+      if(arg.second == USE_BOTH)
+      {
+        const std::string err_base = "In rule " + current_rule_ + ": error related to variable " + arg.first + " because ";
+        printError(err_base + " it is used both as an individual and a data value.");
+      }
     }
   }
 
-  void RuleChecker::checkVariableMappings(std::unordered_map<std::string, std::vector<std::vector<ClassElement>>>& mapping_var_classes, std::set<std::string>& keys_variables)
+  void RuleChecker::checkAtom(const RuleTriplet_t& atom,
+                              std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>>& variables_types,
+                              std::unordered_map<std::string, uint8_t>& all_arguments)
   {
-    for(const auto& var : keys_variables) // loop over each variable in the rules
+    switch(atom.atom_type_)
     {
-      auto& var_classes = mapping_var_classes[var];
-      for(size_t i = 0; i < var_classes.size(); i++)
+    case rule_atom_class:
+      checkClassAtom(atom, variables_types);
+      setArgument(atom.arguments.at(0), all_arguments, true);
+      break;
+    case rule_atom_object:
+      checkObjectPropertyAtom(atom, variables_types);
+      setArgument(atom.arguments.at(0), all_arguments, true);
+      setArgument(atom.arguments.at(1), all_arguments, true);
+      break;
+    case rule_atom_data:
+      checkDataPropertyAtom(atom, variables_types);
+      setArgument(atom.arguments.at(0), all_arguments, true);
+      setArgument(atom.arguments.at(1), all_arguments, false);
+      break;
+    case rule_atom_builtin:
+      checkBuiltinAtom(atom, variables_types);
+      for(const auto& arg : atom.arguments)
+        setArgument(arg, all_arguments, false);
+      break;
+    default:
+      break;
+    }
+  }
+
+  void RuleChecker::setArgument(const RuleArgument_t& arg, std::unordered_map<std::string, uint8_t>& all_arguments, bool individual_usage)
+  {
+    auto arg_it = all_arguments.find(arg.name);
+    if(arg_it == all_arguments.end())
+    {
+      arg_it = all_arguments.emplace(arg.name, USE_NONE).first;
+    }
+
+    if(arg.datatype_value != nullptr)
+      arg_it->second |= USE_DATATYPE;
+    if(arg.indiv_value != nullptr)
+      arg_it->second |= USE_INDIVIDUAL;
+
+    arg_it->second |= (individual_usage ? USE_INDIVIDUAL : USE_DATATYPE);
+  }
+
+  void RuleChecker::checkClassAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>>& variables_types)
+  {
+    if(atom.class_predicate != nullptr)
+    {
+      if(atom.anonymous_element != nullptr)
       {
-        for(size_t j = i + 1; j < var_classes.size(); j++)
+        const auto& anonymous_trees = atom.anonymous_element->ano_trees_;
+        if(anonymous_trees.empty() == false)
         {
-          std::vector<std::string> errs;
-          errs = checkClassesVectorDisjointness(var_classes[i], var_classes[j]);
-          if(errs.empty() == false)
-          {
-            const std::string err_base = "In rule " + current_rule_ + ": error over variable " + var + " because of ";
-            for(const auto& err : errs)
-              printError(err_base + err);
-          }
+          auto* anonymous_root = anonymous_trees.front()->root_node_;
+          (void)anonymous_root; // Todo extract the classes from the class expression
         }
       }
-    }
-  }
-
-  void RuleChecker::checkAtomList(std::vector<RuleTriplet_t>& atoms_list, std::unordered_map<std::string, std::vector<std::vector<ClassElement>>>& mapping_var_classes,
-                                  std::unordered_map<std::string, std::unordered_map<std::string, std::vector<ObjectPropertyBranch*>>>& mapping_var_obj,
-                                  std::unordered_map<std::string, std::unordered_map<std::string, std::vector<DataPropertyBranch*>>>& mapping_var_data,
-                                  std::unordered_map<std::string, std::vector<LiteralNode*>>& mapping_var_builtin,
-                                  std::set<std::string>& keys_variables)
-  {
-    for(auto& atom : atoms_list)
-    {
-      switch(atom.atom_type_)
+      else
       {
-      case class_atom:
-        resolveClassTriplet(atom, mapping_var_classes, keys_variables);
-        break;
-      case object_atom:
-        resolveObjectTriplet(atom, mapping_var_classes, mapping_var_obj, keys_variables);
-        break;
-      case data_atom:
-        resolveDataTriplet(atom, mapping_var_classes, mapping_var_data, mapping_var_builtin, keys_variables);
-        break;
-      case builtin_atom:
-        resolveBuiltinTriplet(atom, mapping_var_builtin);
-        break;
-      default:
-        break;
+        const auto& classes = atom.class_predicate->mothers_.relations;
+        std::string err_inheritance = check(classes, variables_types[atom.arguments.at(0).name].first);
+
+        if(err_inheritance.empty() == false)
+          raiseError(atom.arguments.at(0), " using class " + atom.class_predicate->value() + ", whcih is disjoint with other constraints (disjointness between " + err_inheritance + ").");
       }
     }
   }
 
-  void RuleChecker::resolveClassTriplet(RuleTriplet_t& class_atom, std::unordered_map<std::string, std::vector<std::vector<ClassElement>>>& mapping_var_classes, std::set<std::string>& keys_variables)
+  void RuleChecker::checkObjectPropertyAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>>& variables_types)
   {
-    std::vector<std::string> errs;
-
-    if(class_atom.subject.is_variable)
+    if(atom.object_predicate != nullptr)
     {
-      keys_variables.insert(class_atom.subject.name);
-      if(class_atom.class_element != nullptr)
+      const auto& domains = atom.object_predicate->domains_;
+      const auto& ranges = atom.object_predicate->ranges_;
+
+      std::string err_domain = check(domains, variables_types[atom.arguments.at(0).name].first);
+      std::string err_range = check(ranges, variables_types[atom.arguments.at(1).name].first);
+
+      if(err_domain.empty() == false)
+        raiseError(atom.arguments.at(0), " using property " + atom.object_predicate->value() + ", its domain is disjoint with other constraints (disjointness between " + err_domain + ").");
+
+      if(err_range.empty() == false)
+        raiseError(atom.arguments.at(1), " using property " + atom.object_predicate->value() + ", its range is disjoint with other constraints (disjointness between " + err_domain + ").");
+    }
+  }
+
+  void RuleChecker::checkDataPropertyAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>>& variables_types)
+  {
+    if(atom.data_predicate != nullptr)
+    {
+      const auto& domains = atom.data_predicate->domains_;
+      const auto& ranges = atom.data_predicate->ranges_;
+
+      std::string err_domain = check(domains, variables_types[atom.arguments.at(0).name].first);
+      std::string err_range = check(ranges, variables_types[atom.arguments.at(1).name].second);
+
+      if(err_domain.empty() == false)
+        raiseError(atom.arguments.at(0), " using property " + atom.data_predicate->value() + ", its domain is disjoint with other constraints (disjointness between " + err_domain + ").");
+
+      if(err_range.empty() == false)
+        raiseError(atom.arguments.at(0), " using property " + atom.data_predicate->value() + ", its range is disjoint with other constraints (disjointness between " + err_domain + ").");
+    }
+  }
+
+  void RuleChecker::checkBuiltinAtom(const RuleTriplet_t& atom, std::unordered_map<std::string, std::pair<std::unordered_set<ClassBranch*>, std::unordered_set<LiteralType*>>>& variables_types)
+  {
+    for(const auto& argument : atom.arguments)
+    {
+      for(const auto& again_argument : atom.arguments)
       {
-        if(class_atom.class_element->logical_type_ != logical_none || class_atom.class_element->oneof == true || class_atom.class_element->is_complex == true) // class expression
+        if(again_argument.is_variable == false)
         {
-          std::vector<ClassElement> expression_domains;
-          getUpperLevelDomains(class_atom.class_element, expression_domains);
-          mapping_var_classes[class_atom.subject.name].push_back(expression_domains);
-        }
-        else if(class_atom.class_element->object_property_involved_ != nullptr) // single object restriction
-          mapping_var_classes[class_atom.subject.name].push_back(class_atom.class_element->object_property_involved_->domains_);
-        else if(class_atom.class_element->data_property_involved_ != nullptr) // single data restriction
-          mapping_var_classes[class_atom.subject.name].push_back(class_atom.class_element->data_property_involved_->domains_);
-      }
-      else // class only restriction
-      {
-        std::vector<ClassElement> class_elem;
-        class_elem.emplace_back(class_atom.class_predicate);
-        mapping_var_classes[class_atom.subject.name].push_back(class_elem);
-      }
-    }
-    else
-    {
-      errs = resolveInstantiatedClass(class_atom.class_predicate, class_atom.subject.indiv_value);
-      if(errs.empty() == false)
-      {
-        const std::string err_base = "In rule " + current_rule_ + ": error over instantiated class atom " +
-                                     class_atom.class_predicate->value() + "(" + class_atom.subject.indiv_value->value() + ")" + " because of ";
-        for(const auto& err : errs)
-          printError(err_base + err);
-      }
-    }
-  }
-
-  void RuleChecker::resolveObjectTriplet(RuleTriplet_t& object_atom, std::unordered_map<std::string, std::vector<std::vector<ClassElement>>>& mapping_var_classes,
-                                         std::unordered_map<std::string, std::unordered_map<std::string, std::vector<ObjectPropertyBranch*>>>& mapping_var_obj, std::set<std::string>& keys_variables)
-  {
-    std::vector<std::string> errs;
-    if(object_atom.subject.is_variable)
-    {
-      keys_variables.insert(object_atom.subject.name);
-      mapping_var_classes[object_atom.subject.name].push_back(object_atom.object_predicate->domains_);
-    }
-    else if(object_atom.subject.indiv_value != nullptr)
-    {
-      if(errs.empty() == false)
-      {
-        errs = resolveInstantiatedObjectProperty(object_atom.object_predicate, object_atom.subject.indiv_value, nullptr);
-        const std::string err_base = "In rule " + current_rule_ + ": error over instantiated object property atom " + object_atom.toString() + " on subject " + object_atom.subject.indiv_value->value() + " because of ";
-        for(const auto& err : errs)
-          printError(err_base + err);
-      }
-    }
-
-    if(object_atom.object.is_variable)
-    {
-      keys_variables.insert(object_atom.object.name);
-      mapping_var_classes[object_atom.object.name].push_back(object_atom.object_predicate->ranges_);
-    }
-    else if(object_atom.object.indiv_value != nullptr)
-    {
-      if(errs.empty() == false)
-      {
-        errs = resolveInstantiatedObjectProperty(object_atom.object_predicate, nullptr, object_atom.object.indiv_value);
-        const std::string err_base = "In rule " + current_rule_ + ": error over instantiated object property atom " + object_atom.toString() + " on object " + object_atom.object.indiv_value->value() + " because of ";
-        for(const auto& err : errs)
-          printError(err_base + err);
-      }
-    }
-
-    if(object_atom.subject.is_variable && object_atom.object.is_variable)
-      mapping_var_obj[object_atom.subject.name][object_atom.object.name].push_back(object_atom.object_predicate);
-  }
-
-  void RuleChecker::resolveDataTriplet(RuleTriplet_t& data_atom, std::unordered_map<std::string, std::vector<std::vector<ClassElement>>>& mapping_var_classes,
-                                       std::unordered_map<std::string, std::unordered_map<std::string, std::vector<DataPropertyBranch*>>>& mapping_var_data,
-                                       std::unordered_map<std::string, std::vector<LiteralNode*>> mapping_var_builtin, std::set<std::string>& keys_variables)
-  {
-    std::vector<std::string> errs;
-
-    if(data_atom.subject.is_variable)
-    {
-      keys_variables.insert(data_atom.subject.name);
-      mapping_var_classes[data_atom.subject.name].push_back(data_atom.data_predicate->domains_);
-    }
-    else if(data_atom.subject.indiv_value != nullptr)
-    {
-      if(errs.empty() == false)
-      {
-        errs = resolveInstantiatedDataProperty(data_atom.data_predicate, data_atom.subject.indiv_value);
-        const std::string err_base = "In rule " + current_rule_ + ": error over instantiated data property atom " + data_atom.toString() +
-                                     " on subject " + data_atom.subject.indiv_value->value() + " because of ";
-        for(const auto& err : errs)
-          printError(err_base + err);
-      }
-    }
-
-    if(data_atom.object.is_variable)
-    {
-      keys_variables.insert(data_atom.object.name);
-      for(auto* range_elem : data_atom.data_predicate->ranges_)
-        mapping_var_builtin[data_atom.object.name].push_back(range_elem);
-    }
-    else if(data_atom.object.datatype_value != nullptr)
-    {
-      std::string err;
-      const std::string err_base = "In rule " + current_rule_ + ": error over instantiated data property atom " + data_atom.toString() +
-                                   " on object " + data_atom.object.datatype_value->value() + " because of ";
-      err = checkDataRange(data_atom.object.datatype_value);
-      mapping_var_builtin[data_atom.object.name].push_back(data_atom.object.datatype_value);
-      if(err.empty() == false)
-        printError(err_base + err);
-    }
-
-    if(data_atom.subject.is_variable && data_atom.object.is_variable)
-      mapping_var_data[data_atom.subject.name][data_atom.object.name].push_back(data_atom.data_predicate);
-  }
-
-  void RuleChecker::resolveBuiltinTriplet(RuleTriplet_t& builtin_atom, std::unordered_map<std::string, std::vector<LiteralNode*>> mapping_var_builtin)
-  {
-    std::string err;
-    const std::string err_base = "In rule " + current_rule_ + ": error over builtin atom" + " because of ";
-
-    if(!builtin_atom.subject.is_variable)
-      mapping_var_builtin[builtin_atom.subject.name].emplace_back(builtin_atom.subject.datatype_value);
-
-    if(!builtin_atom.object.is_variable)
-      mapping_var_builtin[builtin_atom.object.name].emplace_back(builtin_atom.object.datatype_value);
-
-    for(auto* range_elem_subject : mapping_var_builtin[builtin_atom.subject.name])
-    {
-      for(auto* range_elem_object : mapping_var_builtin[builtin_atom.object.name])
-      {
-        if(range_elem_subject->type_ != "string" && range_elem_object->type_ != "string")
-        {
-          if(!range_elem_subject->value_.empty() && !range_elem_object->value_.empty())
-          {
-            try
-            {
-              const double sub_val = std::stod(range_elem_subject->value_);
-              const double obj_val = std::stod(range_elem_object->value_);
-              (void)sub_val;
-              (void)obj_val;
-            }
-            catch(std::invalid_argument const& ex)
-            {
-              err = "Incompatibility between datatypes : " + range_elem_subject->type_ + " and " + range_elem_object->type_;
-              printError(err_base + err);
-            }
-          }
-        }
-        else if(range_elem_subject->type_ != range_elem_object->type_)
-          printWarning("Dataypes " + range_elem_subject->type_ + " and " + range_elem_object->type_ + "are different, cannot ensure proper functioning");
-      }
-    }
-  }
-
-  std::vector<std::string> RuleChecker::resolveInstantiatedClass(ClassBranch* class_branch, IndividualBranch* indiv)
-  {
-    std::vector<std::string> errs;
-    std::string err;
-
-    // check for the same as
-    if(indiv->same_as_.empty() == false)
-    {
-      for(auto& same_elem : indiv->same_as_)
-      {
-        for(auto& is_a_elem : same_elem.elem->is_a_)
-        {
-          err = checkBranchDisjointness(class_branch, is_a_elem.elem, rule_graph_->class_graph_);
+          std::string err = check({again_argument.datatype_value->type_}, variables_types[argument.name].second);
           if(err.empty() == false)
-            errs.push_back(err);
-        }
-      }
-    }
-    else
-    {
-      // check for the indiv
-      for(auto& is_a_elem : indiv->is_a_)
-      {
-        err = checkBranchDisjointness(class_branch, is_a_elem.elem, rule_graph_->class_graph_);
-        if(err.empty() == false)
-          errs.push_back(err);
-      }
-    }
-
-    return errs;
-  }
-
-  std::vector<std::string> RuleChecker::resolveInstantiatedObjectProperty(ObjectPropertyBranch* property_branch, IndividualBranch* indiv_from, IndividualBranch* indiv_on)
-  {
-    std::vector<std::string> err;
-
-    if(indiv_from != nullptr)
-      err = checkClassesVectorDisjointness(indiv_from->is_a_.relations, property_branch->domains_);
-    else if(indiv_on != nullptr)
-      err = checkClassesVectorDisjointness(indiv_on->is_a_.relations, property_branch->ranges_);
-    return err;
-  }
-
-  std::vector<std::string> RuleChecker::resolveInstantiatedDataProperty(DataPropertyBranch* property_branch, IndividualBranch* indiv_from)
-  {
-    std::vector<std::string> err;
-
-    if(indiv_from != nullptr)
-      err = checkClassesVectorDisjointness(indiv_from->is_a_.relations, property_branch->domains_);
-    return err;
-  }
-
-  void RuleChecker::getUpperLevelDomains(AnonymousClassElement* class_expression, std::vector<ClassElement>& expression_domains)
-  {
-    // get to the first level which is not a logical node to get the domains of properties or the classes involved.
-    // ((hasCamera some Camera) needs to return the domain of hasCamera)
-
-    if(class_expression->logical_type_ == logical_and || class_expression->logical_type_ == logical_or)
-    {
-      for(auto* sub_elem : class_expression->sub_elements_)
-        getUpperLevelDomains(sub_elem, expression_domains);
-    }
-    else if(class_expression->object_property_involved_ != nullptr)
-      for(auto& obj_dom : class_expression->object_property_involved_->domains_)
-        expression_domains.push_back(obj_dom);
-    else if(class_expression->data_property_involved_ != nullptr)
-      for(auto& data_dom : class_expression->data_property_involved_->domains_)
-        expression_domains.push_back(data_dom);
-    else if(class_expression->class_involved_ != nullptr)
-      expression_domains.emplace_back(class_expression->class_involved_);
-    else
-      return;
-  }
-
-  std::vector<std::string> RuleChecker::checkClassesVectorDisjointness(const std::vector<ClassElement>& classes_left, const std::vector<ClassElement>& class_right)
-  {
-    std::vector<std::string> errs;
-    for(const auto& elem_right : class_right)
-    {
-      for(const auto& elem_left : classes_left)
-      {
-        const std::string err = checkBranchDisjointness(elem_left.elem, elem_right.elem, rule_graph_->class_graph_);
-        if(err.empty() == false)
-          errs.push_back(err);
-      }
-    }
-    return errs;
-  }
-
-  void RuleChecker::checkObjectPropertyDisjointess(std::unordered_map<std::string, std::unordered_map<std::string, std::vector<ObjectPropertyBranch*>>>& mapping_var_obj, std::set<std::string>& keys_variables)
-  {
-    std::string err;
-    const std::string err_base = "In rule " + current_rule_ + ": error over object property atom" + " because of ";
-    // map is [var1][var2][obj_prop1, ..., objpropn]
-    //               ...
-    //              [varn][obj_prop1, ..., objpropn]
-    //        [var2][var1][obj_prop1, ..., objpropn]
-
-    for(const auto& var_elem1 : keys_variables) // loop over variables in map
-    {
-      for(const auto& var_elem2 : keys_variables) // loop 2nd time over variables in map
-      {
-        auto& obj_elems = mapping_var_obj[var_elem1][var_elem2];
-        for(size_t i = 0; i < obj_elems.size(); i++)
-        {
-          for(size_t j = i + 1; j < obj_elems.size(); j++)
           {
-            err = checkBranchDisjointness(obj_elems[i], obj_elems[j], rule_graph_->object_property_graph_);
-            if(err.empty() == false)
-              printError(err_base + err);
+            raiseError(argument, " using builtin " + atom.builtinToString() + ", its arguments are disjoint with other constraints (disjointness between " + err + ").");
+            return;
           }
         }
       }
     }
   }
 
-  void RuleChecker::checkDataPropertyDisjointess(std::unordered_map<std::string, std::unordered_map<std::string, std::vector<DataPropertyBranch*>>>& mapping_var_data, std::set<std::string>& keys_variables)
+  std::string RuleChecker::check(const std::vector<ClassElement>& classes, std::unordered_set<ClassBranch*>& variables_classes)
   {
     std::string err;
-    const std::string err_base = "In rule  " + current_rule_ + ": error over data property atom" + " because of ";
-    // map is [var1][var2][data_prop1, ..., datapropn]
-    //               ...
-    //              [varn][data_prop1, ..., datapropn]
-    //        [var2][var1][data_prop1, ..., datapropn]
-
-    for(const auto& var_elem1 : keys_variables) // loop over variables in map
+    for(const auto& class_element : classes)
     {
-      for(const auto& var_elem2 : keys_variables) // loop 2nd time over variables in map
+      if(variables_classes.insert(class_element.elem).second)
       {
-        auto& data_elems = mapping_var_data[var_elem1][var_elem2];
-        for(size_t i = 0; i < data_elems.size(); i++)
+        if(err.empty()) // We only want to take the first error but we need to insert all the classes
         {
-          for(size_t j = i + 1; j < data_elems.size(); j++)
-          {
-            err = checkBranchDisjointness(data_elems[i], data_elems[j], rule_graph_->data_property_graph_);
-            if(err.empty() == false)
-              printError(err_base + err);
-          }
+          std::unordered_set<ClassBranch*> disjoints;
+          graphs_->classes_.getDisjoint(class_element.elem, disjoints);
+          ClassBranch* intersection = graphs_->classes_.firstIntersection(variables_classes, disjoints);
+          if(intersection != nullptr)
+            err = class_element.elem->value() + " and " + intersection->value();
         }
       }
     }
+    return err;
   }
 
-  std::string RuleChecker::checkDataRange(LiteralNode* datatype_involved) // au niveau de LiteralNode
+  std::string RuleChecker::check(const std::vector<LiteralType*>& types, std::unordered_set<LiteralType*>& variables_types) // todo: use a proper comparison of data types
   {
-    std::string error;
+    if(variables_types.empty())
+    {
+      for(auto* type : types)
+        variables_types.insert(type);
+    }
+    else
+    {
+      for(auto* type : types)
+      {
+        auto type_it = variables_types.find(type);
+        if(type_it == variables_types.end())
+        {
+          std::string err = type->value() + " and ";
+          for(auto* err_type : variables_types)
+            err += err_type->value();
+          return err;
+        }
+      }
+    }
+    return "";
+  }
 
-    if(datatype_involved->type_ == "boolean")
-    {
-      if((datatype_involved->value_ != "false") && (datatype_involved->value_ != "true"))
-        error = " unmatching data type " + datatype_involved->type_ + " and data value " + datatype_involved->value_;
-    }
-    else if(datatype_involved->type_ == "integer")
-    {
-      try
-      {
-        const int conv_val = std::stoi(datatype_involved->value_);
-        (void)conv_val;
-      }
-      catch(std::invalid_argument const& ex)
-      {
-        error = " unmatching data type " + datatype_involved->type_ + " and data value " + datatype_involved->value_;
-      }
-    }
-    else if(datatype_involved->type_ == "real")
-    {
-      try
-      {
-        const float conv_val = std::stof(datatype_involved->value_);
-        (void)conv_val;
-      }
-      catch(std::invalid_argument const& ex)
-      {
-        error = " unmatching data type " + datatype_involved->type_ + " and data value " + datatype_involved->value_;
-      }
-    }
-    else if(datatype_involved->type_ == "double")
-    {
-      try
-      {
-        const double conv_val = std::stod(datatype_involved->value_);
-        (void)conv_val;
-      }
-      catch(std::invalid_argument const& ex)
-      {
-        error = " unmatching data type " + datatype_involved->type_ + " and data value " + datatype_involved->value_;
-      }
-    }
-
-    return error;
+  void RuleChecker::raiseError(const RuleArgument_t& var, const std::string& msg)
+  {
+    const std::string err_base = "In rule " + current_rule_ + ": error related to variable " + var.name + " because ";
+    printError(err_base + msg);
   }
 
 } // namespace ontologenius

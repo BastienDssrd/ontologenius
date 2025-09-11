@@ -1,19 +1,22 @@
 #ifndef ONTOLOGENIUS_ANONYMOUSCLASSCHECKER_H
 #define ONTOLOGENIUS_ANONYMOUSCLASSCHECKER_H
 
+#include <unordered_set>
 #include <vector>
 
 #include "ontologenius/core/ontoGraphs/Branchs/AnonymousClassBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/ClassBranch.h"
 #include "ontologenius/core/ontoGraphs/Checkers/ValidityChecker.h"
 #include "ontologenius/core/ontoGraphs/Graphs/AnonymousClassGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 
 namespace ontologenius {
 
   class AnonymousClassChecker : public ValidityChecker<AnonymousClassBranch>
   {
   public:
-    explicit AnonymousClassChecker(AnonymousClassGraph* graph) : ValidityChecker(graph), ano_class_graph_(graph) {}
+    explicit AnonymousClassChecker(AnonymousClassGraph* graph,
+                                   OntologyGraphs* all_graphs) : ValidityChecker(graph, all_graphs) {}
     ~AnonymousClassChecker() override = default;
 
     size_t check() override;
@@ -25,28 +28,18 @@ namespace ontologenius {
     }
 
   private:
-    AnonymousClassGraph* ano_class_graph_;
     std::string current_ano_;
 
-    std::vector<std::string> resolveTree(AnonymousClassElement* ano_elem, const std::vector<ClassElement>& ranges);
-    std::vector<std::string> resolveTreeDataTypes(AnonymousClassElement* ano_elem); // Err
+    std::vector<std::string> resolveTreeDisjoint(ClassExpression* ano_elem, std::unordered_set<ClassBranch*>& disjoints, std::unordered_set<ClassBranch*>& uppers, bool complement_mode);
+    std::vector<std::string> resolveTreeDisjoint(ClassExpression* ano_elem, std::unordered_set<LiteralType*>& data_ranges);
 
-    std::vector<std::string> checkPropertyDisjointness(AnonymousClassElement* ano_elem, const std::vector<ClassElement>& ranges);
-    void checkIntersectionDomainsDisjointess(AnonymousClassElement* ano_elem);
-    std::vector<std::string> checkRangeDomainDisjointness(AnonymousClassElement* ano_elem, const std::vector<ClassElement>& ranges);
+    std::vector<std::string> checkIdentifier(ClassExpression* ano_elem, std::unordered_set<ClassBranch*>& disjoints, std::unordered_set<ClassBranch*>& uppers, bool complement_mode);
+    std::vector<std::string> checkIdentifier(ClassExpression* ano_elem, std::unordered_set<LiteralType*>& data_ranges);
+    std::vector<std::string> checkOneOf(ClassExpression* ano_elem, std::unordered_set<ClassBranch*>& disjoints, std::unordered_set<ClassBranch*>& uppers, bool complement_mode);
+    std::vector<std::string> checkOneOf(ClassExpression* ano_elem, std::unordered_set<LiteralType*>& data_ranges);
+    std::vector<std::string> checkRestriction(ClassExpression* ano_elem, std::unordered_set<ClassBranch*>& disjoints, std::unordered_set<ClassBranch*>& uppers, bool complement_mode);
 
-    std::vector<std::string> checkExpressionDisjointess(AnonymousClassElement* ano_elem, const std::vector<ClassElement>& ranges);
-    void checkObjectPropertyRangeDisjointness(AnonymousClassElement* ano_elem);
-    void checkDataPropertyRangeDisjointness(AnonymousClassElement* ano_elem);
-
-    std::string checkClassesDisjointness(ClassBranch* class_left, ClassBranch* class_right); // Err
-    std::vector<std::string> checkClassesVectorDisjointness(const std::vector<ClassElement>& classes_left, const std::vector<ClassElement>& class_right);
-
-    template<typename T>
-    std::vector<std::string> checkPropertyDomainDisjointness(const T& property, const std::vector<ClassElement>& ranges)
-    {
-      return checkClassesVectorDisjointness(property->domains_, ranges);
-    }
+    std::vector<std::string> resolveTreeDataTypes(ClassExpression* ano_elem, std::unordered_set<LiteralType*>& data_ranges); // Err
   };
 
 } // namespace ontologenius

@@ -1,7 +1,7 @@
 <html lang="en_US">
 
 <head>
-  <title>FeederPublisher Class (cpp) | Ontologenius 0.4.5</title>
+  <title>FeederPublisher Class (cpp) | Ontologenius 0.4.6</title>
   <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
   <link href="../style/ontologenius_api.css" rel="stylesheet" type="text/css">
   <link href="../images/favicon.ico" rel="shortcut icon">
@@ -134,6 +134,12 @@
                 <td class="memItemLeft rightAlign topAlign"> Header:</td>
                 <td class="memItemRight bottomAlign"> <span class="preprocessor">#include
                     &quot;ontologenius/FeederPublisher.h&quot;</span>
+                </td>
+              </tr>
+              <tr>
+                <td class="memItemLeft rightAlign topAlign"> Inherits:</td>
+                <td class="memItemRight bottomAlign"> <a href="ClientBase.html">ClientBase</a></td>
+              </tr>
               <tr>
                 <td class="memItemLeft rightAlign topAlign"> Namespace:</td>
                 <td class="memItemRight bottomAlign"> onto</td>
@@ -168,6 +174,11 @@
               <tr><td class="memItemLeft rightAlign topAlign"> bool </td><td class="memItemRight bottomAlign"><b><a href="FeederPublisher.html#checkout">checkout</a></b>(const std::string&amp; <i>commit_name</i>, int32_t <i>timeout</i> = -1)</td></tr>
               <tr><td class="memItemLeft rightAlign topAlign"> </td><td class="memItemRight bottomAlign"><b><a href="FeederPublisher.html#registerFeederNotificationCallback">registerFeederNotificationCallback</a></b>(const std::function&lt;void(const std::string&amp;)&gt;&amp; <i>callback</i>)</td></tr>
               <tr><td class="memItemLeft rightAlign topAlign"> </td><td class="memItemRight bottomAlign"><b><a href="FeederPublisher.html#registerReasonersNotificationCallback">registerReasonersNotificationCallback</a></b>(const std::function&lt;void(const std::string&amp;)&gt;&amp; <i>callback</i>)</td></tr>
+              <tr><td class="memItemLeft rightAlign topAlign"> bool </td><td class="memItemRight bottomAlign"><b><a href="FeederPublisher.html#exportToXml">exportToXml</a></b>(const std::string&amp; <i>path</i>)</td></tr>
+              <tr><td class="memItemLeft rightAlign topAlign"> bool </td><td class="memItemRight bottomAlign"><b><a href="FeederPublisher.html#doVersioning">doVersioning</a></b>()</td></tr>
+              <tr><td class="memItemLeft rightAlign topAlign"> size_t </td><td class="memItemRight bottomAlign"><b><a href="FeederPublisher.html#getNbUncommitedData">getNbUncommitedData</a></b>()</td></tr>
+              <tr><td class="memItemLeft rightAlign topAlign"> std::string </td><td class="memItemRight bottomAlign"><b><a href="FeederPublisher.html#getCurrentCommit">getCurrentCommit</a></b>()</td></tr>
+              <tr><td class="memItemLeft rightAlign topAlign"> bool </td><td class="memItemRight bottomAlign"><b><a href="FeederPublisher.html#compareCommits">compareCommits</a></b>(const std::string&amp; <i>commit_from</i>, const std::string&amp; <i>commit_to</i> = "")</td></tr>
             </tbody>
           </table>
         </div>
@@ -407,6 +418,25 @@
                   class="type">std::string</span>&amp;)&gt;&amp; <i>callback</i>)</h3>
           <p>Register a callback function to get notifications from the reasoners.</p>
           <p>The parameter <i>callback</i> is the callback function taking a string.</p>
+
+          <h3 class="fn" id="exportToXml"><a name="exportToXml"></a><span class="type">bool</span> FeederPublisher::<span class="name">exportToXml</span>(const <span class="type">std::string</span>&amp; <i>path</i>)</h3>
+          <p>Exports the current modification tree in the absolute <i>path</i> path. The <i>path</i> parameter must be of the form: my/path/to/file.xml</p>
+          <p>This function has no effect on non copied ontologies.</p>
+          <p>Returns false if the service call fails.</p>
+
+          <h3 class="fn" id="doVersioning"><a name="doVersioning"></a><span class="type">bool</span> FeederPublisher::<span class="name">doVersioning</span>()</h3>
+          <p>Returns true if versionning is available on the given instance.</p>
+
+          <h3 class="fn" id="getNbUncommitedData"><a name="getNbUncommitedData"></a><span class="type">size_t</span> FeederPublisher::<span class="name">getNbUncommitedData</span>()</h3>
+          <p>On versionned instances, this function returns the number of uncomited data (data published since the last commit).</p>
+
+          <h3 class="fn" id="getCurrentCommit"><a name="getCurrentCommit"></a><span class="type">std::string</span> FeederPublisher::<span class="name">getCurrentCommit</span>()</h3>
+          <p>On versionned instances, this function returns the identifier of the current parent commit.</p>
+
+          <h3 class="fn" id="compareCommits"><a name="compareCommits"></a><span class="type">bool</span> FeederPublisher::<span class="name">compareCommits</span>(const <span class="type">std::string</span>&amp; <i>commit_from</i>, const <span class="type">std::string</span>&amp; <i>commit_to</i> = "")</h3>
+          <p>On versionned instances, this function compares <i>commit_from</i> and <i>commit_to</i>. 
+             If both commit have received the same modifications, the function return true.</p>
+          <p>If <i>commit_to</i> is not set, the current state will be use instead (with uncommited data).</p>
 
         </div>
       </div>

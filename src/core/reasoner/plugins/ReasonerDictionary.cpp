@@ -24,29 +24,29 @@ namespace ontologenius {
   void ReasonerDictionary::postReason()
   {
     {
-      const std::lock_guard<std::shared_timed_mutex> lock(ontology_->individual_graph_.mutex_);
-      const std::vector<IndividualBranch*> indivs = ontology_->individual_graph_.get();
+      const std::lock_guard<std::shared_timed_mutex> lock(ontology_->individuals_.mutex_);
+      const std::vector<IndividualBranch*> indivs = ontology_->individuals_.get();
       for(auto* elem : indivs)
         updateDictionary(elem);
     }
 
     {
-      const std::vector<ClassBranch*> classes = ontology_->class_graph_.getSafe();
-      const std::lock_guard<std::shared_timed_mutex> lock(ontology_->class_graph_.mutex_);
+      const std::vector<ClassBranch*> classes = ontology_->classes_.getSafe();
+      const std::lock_guard<std::shared_timed_mutex> lock(ontology_->classes_.mutex_);
       for(auto* elem : classes)
         updateDictionary(elem);
     }
 
     {
-      const std::vector<DataPropertyBranch*> data_properties = ontology_->data_property_graph_.getSafe();
-      const std::lock_guard<std::shared_timed_mutex> lock(ontology_->data_property_graph_.mutex_);
+      const std::vector<DataPropertyBranch*> data_properties = ontology_->data_properties_.getSafe();
+      const std::lock_guard<std::shared_timed_mutex> lock(ontology_->data_properties_.mutex_);
       for(auto* elem : data_properties)
         updateDictionary(elem);
     }
 
     {
-      const std::vector<ObjectPropertyBranch*> object_properties = ontology_->object_property_graph_.getSafe();
-      const std::lock_guard<std::shared_timed_mutex> lock(ontology_->object_property_graph_.mutex_);
+      const std::vector<ObjectPropertyBranch*> object_properties = ontology_->object_properties_.getSafe();
+      const std::lock_guard<std::shared_timed_mutex> lock(ontology_->object_properties_.mutex_);
       for(auto* elem : object_properties)
         updateDictionary(elem);
     }

@@ -32,19 +32,19 @@ TEST(feature_deep_copy, copy)
 
   const std::string indiv = "red_cube";
 
-  EXPECT_EQ(onto1.individual_graph_.getUp(indiv).size(), 11);
-  EXPECT_EQ(onto2.individual_graph_.getUp(indiv).size(), 11);
+  EXPECT_EQ(onto1.individuals_.getUp(indiv).size(), 11);
+  EXPECT_EQ(onto2.individuals_.getUp(indiv).size(), 11);
 
   std::string type = "Cube";
-  onto2.individual_graph_.removeInheritage(indiv, type);
+  onto2.individuals_.removeInheritage(indiv, type);
   type = "Object";
-  onto2.individual_graph_.addInheritage(indiv, type);
+  onto2.individuals_.addInheritage(indiv, type);
 
-  std::cout << "onto1 " << onto1.individual_graph_.getUp(indiv).size() << std::endl;
-  std::cout << "onto2 " << onto2.individual_graph_.getUp(indiv).size() << std::endl;
+  std::cout << "onto1 " << onto1.individuals_.getUp(indiv).size() << std::endl;
+  std::cout << "onto2 " << onto2.individuals_.getUp(indiv).size() << std::endl;
 
-  EXPECT_EQ(onto1.individual_graph_.getUp(indiv).size(), 11);
-  EXPECT_EQ(onto2.individual_graph_.getUp(indiv).size(), 7);
+  EXPECT_EQ(onto1.individuals_.getUp(indiv).size(), 11);
+  EXPECT_EQ(onto2.individuals_.getUp(indiv).size(), 7);
 }
 
 int main(int argc, char** argv)

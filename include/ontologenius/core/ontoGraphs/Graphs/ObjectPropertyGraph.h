@@ -16,7 +16,7 @@
 
 namespace ontologenius {
 
-  struct ObjectPropertyVectors_t
+  struct ObjectPropertyDescriptor_t
   {
     std::vector<SingleElement<std::string>> mothers_;
     std::vector<SingleElement<std::string>> disjoints_;
@@ -29,32 +29,21 @@ namespace ontologenius {
     std::map<std::string, std::vector<std::string>> muted_dictionary_;
     bool annotation_usage_;
 
-    ObjectPropertyVectors_t() : annotation_usage_(false) {}
+    ObjectPropertyDescriptor_t() : annotation_usage_(false) {}
   };
 
-  // for friend
-  class ObjectPropertyDrawer;
-  class IndividualGraph;
-  class AnonymousClassGraph;
-
-  // for graphs usage
-  class ClassGraph;
+  class OntologyGraphs;
 
   class ObjectPropertyGraph : public OntoGraph<ObjectPropertyBranch>
   {
-    friend ObjectPropertyDrawer;
-    friend IndividualGraph;
-    friend ClassGraph;
-    friend AnonymousClassGraph;
-
   public:
-    explicit ObjectPropertyGraph(IndividualGraph* individual_graph, ClassGraph* class_graph);
-    ObjectPropertyGraph(const ObjectPropertyGraph& other, IndividualGraph* individual_graph, ClassGraph* class_graph);
+    explicit ObjectPropertyGraph(OntologyGraphs* graphs);
+    ObjectPropertyGraph(const ObjectPropertyGraph& other, OntologyGraphs* graphs);
     ~ObjectPropertyGraph() override = default;
 
     void deepCopy(const ObjectPropertyGraph& other);
 
-    ObjectPropertyBranch* add(const std::string& value, ObjectPropertyVectors_t& property_vectors);
+    ObjectPropertyBranch* add(const std::string& value, ObjectPropertyDescriptor_t& property_descriptor);
     void add(std::vector<std::string>& disjoints);
 
     std::unordered_set<std::string> getInverse(const std::string& value);
@@ -76,7 +65,7 @@ namespace ontologenius {
     bool isAsymetric(ObjectPropertyBranch* prop);
 
   private:
-    ClassGraph* class_graph_;
+    OntologyGraphs* graphs_;
 
     template<typename T>
     void getDomain(ObjectPropertyBranch* branch, size_t depth, std::unordered_set<T>& res, std::unordered_set<ObjectPropertyBranch*>& up_trace);

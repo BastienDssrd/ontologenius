@@ -6,10 +6,7 @@
 #include <utility>
 #include <vector>
 
-#include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/IndividualGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 #include "ontologenius/core/ontologyIO/Owl/OntologyOwlReader.h"
 #include "ontologenius/core/ontologyIO/Turtle/OntologyTtlReader.h"
 
@@ -20,8 +17,7 @@ namespace ontologenius {
   class OntologyLoader
   {
   public:
-    OntologyLoader(ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph, IndividualGraph* individual_graph, AnonymousClassGraph* anonymous_graph, RuleGraph* rule_graph);
-    explicit OntologyLoader(Ontology& onto);
+    explicit OntologyLoader(OntologyGraphs* graphs);
     ~OntologyLoader() = default;
 
     int loadFile(std::string file);

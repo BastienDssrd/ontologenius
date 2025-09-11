@@ -42,3 +42,4 @@ class OntologyManipulatorIndex:
         """If verbose is set to True, the clients will post messages about the failure to call the services and about their restoration."""
         ClientBase.setVerbose(verbose)
         ClientBaseIndex.setVerbose(verbose)
+        ConversionClient.setVerbose(verbose)

@@ -11,12 +11,7 @@
 #include "ontologenius/core/ontoGraphs/Branchs/Elements.h"
 #include "ontologenius/core/ontoGraphs/Branchs/LiteralNode.h"
 #include "ontologenius/core/ontoGraphs/Branchs/PropertyBranch.h"
-#include "ontologenius/core/ontoGraphs/Graphs/AnonymousClassGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/IndividualGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/RuleGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 #include "ontologenius/core/ontoGraphs/Ontology.h"
 #include "ontologenius/core/ontologyIO/OntologyReader.h"
 #include "ontologenius/core/utility/error_code.h"
@@ -24,30 +19,14 @@
 
 namespace ontologenius {
 
-  OntologyOwlReader::OntologyOwlReader(ClassGraph* class_graph,
-                                       ObjectPropertyGraph* object_property_graph,
-                                       DataPropertyGraph* data_property_graph,
-                                       IndividualGraph* individual_graph,
-                                       AnonymousClassGraph* anonymous_graph,
-                                       RuleGraph* rule_graph) : OntologyReader(class_graph, object_property_graph, data_property_graph, individual_graph, anonymous_graph, rule_graph),
-                                                                card_map_{
+  OntologyOwlReader::OntologyOwlReader(OntologyGraphs* graphs) : OntologyReader(graphs),
+                                                                 card_map_{
                                                                   {"owl:someValuesFrom",          "some"   },
                                                                   {"owl:allValuesFrom",           "only"   },
                                                                   {"owl:minQualifiedCardinality", "min"    },
                                                                   {"owl:maxQualifiedCardinality", "max"    },
                                                                   {"owl:qualifiedCardinality",    "exactly"},
                                                                   {"owl:hasValue",                "value"  }
-  }
-  {}
-
-  OntologyOwlReader::OntologyOwlReader(Ontology& onto) : OntologyReader(onto),
-                                                         card_map_{
-                                                           {"owl:someValuesFrom",          "some"   },
-                                                           {"owl:allValuesFrom",           "only"   },
-                                                           {"owl:minQualifiedCardinality", "min"    },
-                                                           {"owl:maxQualifiedCardinality", "max"    },
-                                                           {"owl:qualifiedCardinality",    "exactly"},
-                                                           {"owl:hasValue",                "value"  }
   }
   {}
 
@@ -155,14 +134,6 @@ namespace ontologenius {
       }
 
       if(display_)
-        std::cout << "├── Class" << std::endl;
-      for(tinyxml2::XMLElement* elem = rdf->FirstChildElement("owl:Class"); elem != nullptr; elem = elem->NextSiblingElement("owl:Class"))
-        readClass(elem);
-      if(display_)
-        std::cout << "├── Description" << std::endl;
-      for(tinyxml2::XMLElement* elem = rdf->FirstChildElement("rdf:Description"); elem != nullptr; elem = elem->NextSiblingElement("rdf:Description"))
-        readDescription(elem);
-      if(display_)
         std::cout << "├── Object property" << std::endl;
       for(tinyxml2::XMLElement* elem = rdf->FirstChildElement("owl:ObjectProperty"); elem != nullptr; elem = elem->NextSiblingElement("owl:ObjectProperty"))
         readObjectProperty(elem);
@@ -170,6 +141,14 @@ namespace ontologenius {
         std::cout << "├── Data property" << std::endl;
       for(tinyxml2::XMLElement* elem = rdf->FirstChildElement("owl:DatatypeProperty"); elem != nullptr; elem = elem->NextSiblingElement("owl:DatatypeProperty"))
         readDataProperty(elem);
+      if(display_)
+        std::cout << "├── Class" << std::endl;
+      for(tinyxml2::XMLElement* elem = rdf->FirstChildElement("owl:Class"); elem != nullptr; elem = elem->NextSiblingElement("owl:Class"))
+        readClass(elem);
+      if(display_)
+        std::cout << "├── Description" << std::endl;
+      for(tinyxml2::XMLElement* elem = rdf->FirstChildElement("rdf:Description"); elem != nullptr; elem = elem->NextSiblingElement("rdf:Description"))
+        readDescription(elem);
       if(display_)
         std::cout << "├── Annotation property" << std::endl;
       for(tinyxml2::XMLElement* elem = rdf->FirstChildElement("owl:AnnotationProperty"); elem != nullptr; elem = elem->NextSiblingElement("owl:AnnotationProperty"))
@@ -220,8 +199,8 @@ namespace ontologenius {
   void OntologyOwlReader::readClass(tinyxml2::XMLElement* elem)
   {
     std::string node_name;
-    ObjectVectors_t object_vector;
-    AnonymousClassVectors_t ano_vector;
+    ClassDescriptor_t class_descriptor;
+    EquivalentClassDescriptor_t anonymous_descriptor;
     const char* attr = elem->Attribute("rdf:about");
     if(attr != nullptr)
     {
@@ -235,15 +214,15 @@ namespace ontologenius {
         const float probability = getProbability(sub_elem);
 
         if(sub_elem_name == "rdfs:subClassOf")
-          push(object_vector.mothers_, sub_elem, probability, "+");
+          push(class_descriptor.mothers_, sub_elem, probability, "+");
         else if(sub_elem_name == "owl:disjointWith")
-          push(object_vector.disjoints_, sub_elem, probability, "-");
+          push(class_descriptor.disjoints_, sub_elem, probability, "-");
         else if(sub_elem_name == "rdfs:label")
-          pushLang(object_vector.dictionary_, sub_elem);
+          pushLang(class_descriptor.dictionary_, sub_elem);
         else if(sub_elem_name == "onto:label")
-          pushLang(object_vector.muted_dictionary_, sub_elem);
+          pushLang(class_descriptor.muted_dictionary_, sub_elem);
         else if(sub_elem_name == "owl:equivalentClass")
-          readEquivalentClass(ano_vector, sub_elem, attr);
+          anonymous_descriptor.expression_members.emplace_back(readEquivalentClass(sub_elem));
         else
         {
           const std::string ns = sub_elem_name.substr(0, sub_elem_name.find(':'));
@@ -251,36 +230,34 @@ namespace ontologenius {
           {
             const std::string property = sub_elem_name.substr(sub_elem_name.find(':') + 1);
             if(testAttribute(sub_elem, "rdf:resource"))
-              OntologyReader::push(object_vector.object_relations_, PairElement<std::string, std::string>(property, toString(sub_elem), probability), "$", "^");
+              OntologyReader::push(class_descriptor.object_relations_, PairElement<std::string, std::string>(property, toString(sub_elem), probability), "$", "^");
             else if(testAttribute(sub_elem, "rdf:datatype"))
             {
               const char* value = sub_elem->GetText();
               if(value != nullptr)
-              {
-                const LiteralNode data(toString(sub_elem, "rdf:datatype"), std::string(value));
-                OntologyReader::push(object_vector.data_relations_, PairElement<std::string, std::string>(property, data.value(), probability), "$", "^");
-              }
+                OntologyReader::push(class_descriptor.data_relations_, PairElement<std::string, std::string>(property, toString(sub_elem, "rdf:datatype") + "#" + std::string(value), probability), "$", "^");
             }
           }
         }
       }
     }
 
-    if(ano_vector.equivalence_trees.empty() == false)
+    if(anonymous_descriptor.expression_members.empty() == false)
     {
-      anonymous_graph_->add(node_name, ano_vector);
-      for(auto& str_elem : ano_vector.str_equivalences)
-        push(object_vector.equivalences_, str_elem, "=");
+      anonymous_descriptor.class_name = node_name;
+      graphs_->anonymous_classes_.add(anonymous_descriptor);
+      for(auto* expression_elem : anonymous_descriptor.expression_members)
+        push(class_descriptor.equivalences_, expression_elem->toString(), "=");
     }
 
-    class_graph_->add(node_name, object_vector);
+    graphs_->classes_.add(node_name, class_descriptor);
     nb_loaded_elem_++;
   }
 
   void OntologyOwlReader::readIndividual(tinyxml2::XMLElement* elem)
   {
     std::string node_name;
-    IndividualVectors_t individual_vector;
+    IndividualDescriptor_t individual_descriptor;
     const char* attr = elem->Attribute("rdf:about");
     if(attr != nullptr)
     {
@@ -293,13 +270,13 @@ namespace ontologenius {
         const float probability = getProbability(sub_elem);
 
         if(sub_elem_name == "rdf:type")
-          push(individual_vector.is_a_, sub_elem, probability, "+");
+          push(individual_descriptor.is_a_, sub_elem, probability, "+");
         else if(sub_elem_name == "owl:sameAs")
-          push(individual_vector.same_as_, sub_elem, probability, "=");
+          push(individual_descriptor.same_as_, sub_elem, probability, "=");
         else if(sub_elem_name == "rdfs:label")
-          pushLang(individual_vector.dictionary_, sub_elem);
+          pushLang(individual_descriptor.dictionary_, sub_elem);
         else if(sub_elem_name == "onto:label")
-          pushLang(individual_vector.muted_dictionary_, sub_elem);
+          pushLang(individual_descriptor.muted_dictionary_, sub_elem);
         else
         {
           const std::string ns = sub_elem_name.substr(0, sub_elem_name.find(':'));
@@ -307,21 +284,18 @@ namespace ontologenius {
           {
             const std::string property = sub_elem_name.substr(sub_elem_name.find(':') + 1);
             if(testAttribute(sub_elem, "rdf:resource"))
-              OntologyReader::push(individual_vector.object_relations_, PairElement<std::string, std::string>(property, toString(sub_elem), probability), "$", "^");
+              OntologyReader::push(individual_descriptor.object_relations_, PairElement<std::string, std::string>(property, toString(sub_elem), probability), "$", "^");
             else if(testAttribute(sub_elem, "rdf:datatype"))
             {
               const char* value = sub_elem->GetText();
               if(value != nullptr)
-              {
-                const LiteralNode data(toString(sub_elem, "rdf:datatype"), std::string(value));
-                OntologyReader::push(individual_vector.data_relations_, PairElement<std::string, std::string>(property, data.toString(), probability), "$", "^");
-              }
+                OntologyReader::push(individual_descriptor.data_relations_, PairElement<std::string, std::string>(property, toString(sub_elem, "rdf:datatype") + "#"  + std::string(value), probability), "$", "^");
             }
           }
         }
       }
     }
-    individual_graph_->add(node_name, individual_vector);
+    graphs_->individuals_.add(node_name, individual_descriptor);
     nb_loaded_elem_++;
   }
 
@@ -344,14 +318,12 @@ namespace ontologenius {
 
   void OntologyOwlReader::readSwrlRule(tinyxml2::XMLElement* elem)
   {
-    Rule_t rule;
-    readRuleDescription(rule, elem);
+    RuleDescriptor_t rule = readRuleDescription(elem);
     if(!rule.rule_str.empty()) // check if the str expression is not empty, to make sure that the rule exists
     {
-      std::size_t rule_id = rule_graph_->all_branchs_.size() + 1;
-      rule_graph_->add(rule_id, rule);
+      graphs_->rules_.add(rule);
       if(display_)
-        std::cout << "│   ├── " + rule.rule_str << std::endl; // mal fait je pense, à mieux intégrer
+        std::cout << "│   ├── " + rule.rule_str << std::endl; // todo: mal fait je pense, à mieux intégrer
     }
   }
 
@@ -370,9 +342,9 @@ namespace ontologenius {
           readCollection(disjoints, member_elem, "-");
 
         if(is_class)
-          class_graph_->add(disjoints);
+          graphs_->classes_.add(disjoints);
         else
-          object_property_graph_->add(disjoints);
+          graphs_->object_properties_.add(disjoints);
       }
     }
   }
@@ -401,14 +373,14 @@ namespace ontologenius {
       }
     }
     if(is_distinct_all)
-      individual_graph_->add(distincts);
+      graphs_->individuals_.add(distincts);
     distincts.clear();
   }
 
   void OntologyOwlReader::readObjectProperty(tinyxml2::XMLElement* elem)
   {
     std::string node_name;
-    ObjectPropertyVectors_t property_vector;
+    ObjectPropertyDescriptor_t property_vector;
     property_vector.annotation_usage_ = false;
     const char* attr = elem->Attribute("rdf:about");
     if(attr != nullptr)
@@ -446,14 +418,14 @@ namespace ontologenius {
       }
     }
 
-    object_property_graph_->add(node_name, property_vector);
+    graphs_->object_properties_.add(node_name, property_vector);
     nb_loaded_elem_++;
   }
 
   void OntologyOwlReader::readDataProperty(tinyxml2::XMLElement* elem)
   {
     std::string node_name;
-    DataPropertyVectors_t property_vector;
+    DataPropertyDescriptor_t property_vector;
     property_vector.annotation_usage_ = false;
     const char* attr = elem->Attribute("rdf:about");
     if(attr != nullptr)
@@ -481,14 +453,14 @@ namespace ontologenius {
       }
     }
 
-    data_property_graph_->add(node_name, property_vector);
+    graphs_->data_properties_.add(node_name, property_vector);
     nb_loaded_elem_++;
   }
 
   void OntologyOwlReader::readAnnotationProperty(tinyxml2::XMLElement* elem)
   {
     std::string node_name;
-    DataPropertyVectors_t property_vector; // we use a DataPropertyVectors_t that is sufficient to represent an annotation property
+    DataPropertyDescriptor_t property_vector; // we use a DataPropertyDescriptor_t that is sufficient to represent an annotation property
     property_vector.annotation_usage_ = true;
     std::vector<SingleElement<std::string>> ranges;
     const char* attr = elem->Attribute("rdf:about");
@@ -521,9 +493,9 @@ namespace ontologenius {
     }
 
     // data_property_graph_ will return false if no data property is found with this name
-    if(data_property_graph_->addAnnotation(node_name, property_vector) == false)
+    if(graphs_->data_properties_.addAnnotation(node_name, property_vector) == false)
     {
-      ObjectPropertyVectors_t object_property_vector;
+      ObjectPropertyDescriptor_t object_property_vector;
       object_property_vector.mothers_ = property_vector.mothers_;
       object_property_vector.disjoints_ = property_vector.disjoints_;
       object_property_vector.domains_ = property_vector.domains_;
@@ -532,7 +504,7 @@ namespace ontologenius {
       object_property_vector.muted_dictionary_ = property_vector.muted_dictionary_;
       object_property_vector.annotation_usage_ = true;
 
-      object_property_graph_->add(node_name, object_property_vector);
+      graphs_->object_properties_.add(node_name, object_property_vector);
       // if no data property is found, the annotation will be setted as an object property by default
     }
 

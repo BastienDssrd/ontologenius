@@ -13,12 +13,7 @@
 #include "ontologenius/core/ontoGraphs/Branchs/Elements.h"
 #include "ontologenius/core/ontoGraphs/Branchs/PropertyBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/RuleBranch.h"
-#include "ontologenius/core/ontoGraphs/Graphs/AnonymousClassGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/IndividualGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
-#include "ontologenius/core/ontoGraphs/Graphs/RuleGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 #include "ontologenius/core/ontologyIO/OntologyReader.h"
 
 namespace ontologenius {
@@ -28,8 +23,7 @@ namespace ontologenius {
   class OntologyOwlReader : public OntologyReader
   {
   public:
-    OntologyOwlReader(ClassGraph* class_graph, ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph, IndividualGraph* individual_graph, AnonymousClassGraph* anonymous_graph, RuleGraph* rule_graph);
-    explicit OntologyOwlReader(Ontology& onto);
+    explicit OntologyOwlReader(OntologyGraphs* graphs);
     ~OntologyOwlReader() = default;
 
     int readFromUri(std::string content, const std::string& uri, bool individual = false);
@@ -67,56 +61,31 @@ namespace ontologenius {
 
     std::unordered_map<std::string, std::string> card_map_;
 
-    void readEquivalentClass(AnonymousClassVectors_t& ano, tinyxml2::XMLElement* elem, const std::string& class_name);
-    ExpressionMember_t* readAnonymousRestriction(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readAnonymousClassExpression(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readAnonymousDatatypeExpression(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readAnonymousIntersection(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readAnonymousUnion(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readAnonymousOneOf(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readAnonymousComplement(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readAnonymousComplexDescription(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readAnonymousResource(tinyxml2::XMLElement* elem, const std::string& attribute_name = "rdf:resource");
-
-    void addAnonymousChildMember(ExpressionMember_t* parent, ExpressionMember_t* child, tinyxml2::XMLElement* used_elem);
-
-    bool readAnonymousCardinalityRange(tinyxml2::XMLElement* elem, ExpressionMember_t* exp);
-    void readAnonymousCardinalityValue(tinyxml2::XMLElement* elem, ExpressionMember_t* exp);
+    ClassExpressionDescriptor_t* readEquivalentClass(tinyxml2::XMLElement* elem, bool force_datatype = false, bool is_instanciated = false, bool take_child = true);
+    void readEquivalentClass(tinyxml2::XMLElement* elem, ClassExpressionDescriptor_t* class_expression);
+    void readAnonymousRestriction(tinyxml2::XMLElement* elem, ClassExpressionDescriptor_t* class_expression);
+    void readAnonymousClassExpression(tinyxml2::XMLElement* elem, ClassExpressionDescriptor_t* class_expression);
+    void readDatatypeEnumeration(tinyxml2::XMLElement* elem, ClassExpressionDescriptor_t* class_expression);
+    bool getResourceValue(tinyxml2::XMLElement* elem, ClassExpressionDescriptor_t* class_expression, bool is_instanciated);
 
     /**********************
      *   SWRL Rule Reader  *
      **********************/
-    void readRuleDescription(Rule_t& rule, tinyxml2::XMLElement* elem);
-
-    ExpressionMember_t* readRuleRestriction(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readRuleClassExpression(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readRuleDatatypeExpression(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readRuleIntersection(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readRuleUnion(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readRuleOneOf(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readRuleComplement(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readRuleComplexDescription(tinyxml2::XMLElement* elem);
-    ExpressionMember_t* readRuleResource(tinyxml2::XMLElement* elem, const std::string& attribute_name = "rdf:resource");
-
-    void addRuleChildMember(ExpressionMember_t* parent, ExpressionMember_t* child, tinyxml2::XMLElement* used_elem);
-
-    bool readRuleCardinalityRange(tinyxml2::XMLElement* elem, ExpressionMember_t* exp);
-    void readRuleCardinalityValue(tinyxml2::XMLElement* elem, ExpressionMember_t* exp);
-
-    void readRuleCollection(tinyxml2::XMLElement* elem, std::vector<std::pair<ExpressionMember_t*, std::vector<Variable_t>>>& exp_vect);
     void readSwrlRule(tinyxml2::XMLElement* elem);
-    std::pair<ExpressionMember_t*, std::vector<Variable_t>> readRuleAtom(tinyxml2::XMLElement* elem, const std::string& type_atom);
-    std::pair<ExpressionMember_t*, std::vector<Variable_t>> readRuleClassAtom(tinyxml2::XMLElement* elem);
-    std::pair<ExpressionMember_t*, std::vector<Variable_t>> readRuleObjectPropertyAtom(tinyxml2::XMLElement* elem);
-    std::pair<ExpressionMember_t*, std::vector<Variable_t>> readRuleDataPropertyAtom(tinyxml2::XMLElement* elem);
-    std::pair<ExpressionMember_t*, std::vector<Variable_t>> readRuleBuiltinAtom(tinyxml2::XMLElement* elem);
+    RuleDescriptor_t readRuleDescription(tinyxml2::XMLElement* elem);
 
-    void readRestAtom(tinyxml2::XMLElement* elem, std::vector<std::pair<ExpressionMember_t*, std::vector<Variable_t>>>& exp_vect);
-    void readFirstAtom(tinyxml2::XMLElement* elem, std::vector<std::pair<ExpressionMember_t*, std::vector<Variable_t>>>& exp_vect);
-    Variable_t getRuleArgument(tinyxml2::XMLElement* elem);
-    std::vector<Variable_t> readRuleBuiltinArguments(tinyxml2::XMLElement* elem);
-    void readSimpleBuiltinArguments(tinyxml2::XMLElement* elem, std::vector<Variable_t>& variables);
-    void readComplexBuiltinArguments(tinyxml2::XMLElement* elem, std::vector<Variable_t>& variables);
+    void readRuleCollection(tinyxml2::XMLElement* elem, std::vector<std::pair<RuleAtomDescriptor_t, std::vector<RuleVariableDescriptor_t>>>& atoms);
+    void readAtomList(tinyxml2::XMLElement* elem, std::vector<std::pair<RuleAtomDescriptor_t, std::vector<RuleVariableDescriptor_t>>>& atoms);
+    void readClassAtom(tinyxml2::XMLElement* elem, std::vector<std::pair<RuleAtomDescriptor_t, std::vector<RuleVariableDescriptor_t>>>& atoms);
+    void readIndividualPropertyAtom(tinyxml2::XMLElement* elem, std::vector<std::pair<RuleAtomDescriptor_t, std::vector<RuleVariableDescriptor_t>>>& atoms);
+    void readDatavaluedPropertyAtom(tinyxml2::XMLElement* elem, std::vector<std::pair<RuleAtomDescriptor_t, std::vector<RuleVariableDescriptor_t>>>& atoms);
+    void readBuiltinAtom(tinyxml2::XMLElement* elem, std::vector<std::pair<RuleAtomDescriptor_t, std::vector<RuleVariableDescriptor_t>>>& atoms);
+
+    void readRuleVariables(tinyxml2::XMLElement* elem, std::vector<RuleVariableDescriptor_t>& variables);
+    RuleVariableDescriptor_t getRuleArgument(tinyxml2::XMLElement* elem);
+    void readRuleBuiltinArguments(tinyxml2::XMLElement* elem, std::vector<RuleVariableDescriptor_t>& variables);
+    void readBuiltinArgumentsCollection(tinyxml2::XMLElement* elem, std::vector<RuleVariableDescriptor_t>& variables);
+    void readBuiltinArgumentsList(tinyxml2::XMLElement* elem, std::vector<RuleVariableDescriptor_t>& variables);
 
     /**********************
      *        inline       *

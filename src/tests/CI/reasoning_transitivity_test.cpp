@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <gtest/gtest.h>
-#include <ros/package.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <vector>
 
@@ -222,14 +221,17 @@ TEST(reasoning_transitivity, transitivity_deletion_inheritage)
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "ontologenius_reasoning_transitivity_test");
+  testing::InitGoogleTest(&argc, argv);
+  rclcpp::init(argc, argv);
 
   onto::OntologyManipulator onto;
   onto_ptr = &onto;
 
   onto.close();
   onto.feeder.waitConnected();
+  onto.feeder.waitUpdate(1000);
 
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+  int res = RUN_ALL_TESTS();
+  rclcpp::shutdown();
+  return res;
 }
