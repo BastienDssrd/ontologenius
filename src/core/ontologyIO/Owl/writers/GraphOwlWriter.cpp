@@ -3,24 +3,24 @@
 #include <cstddef>
 #include <cstdio>
 #include <string>
-#include <vector>
 
+#include "ontologenius/core/ontoGraphs/Branchs/LiteralNode.h"
 #include "ontologenius/core/ontoGraphs/Branchs/ValuedNode.h"
 
 namespace ontologenius {
 
-  void GraphOwlWriter::writeBranchStart(const std::string& value)
+  void GraphOwlWriter::writeBranchStart(const std::string& value) const
   {
     writeString("<!-- " + ns_ + "#" + value + " -->\n\n", 1);
-    writeString("<" + key_ +" rdf:about=\"" + ns_ + "#" + value + "\">\n", 1);
+    writeString("<" + key_ + " rdf:about=\"" + ns_ + "#" + value + "\">\n", 1);
   }
 
-  void GraphOwlWriter::writeBranchEnd()
+  void GraphOwlWriter::writeBranchEnd() const
   {
     writeString("</" + key_ + ">\n\n\n\n", 1);
   }
 
-  std::string GraphOwlWriter::getRdfResource(const std::string& value)
+  std::string GraphOwlWriter::getRdfResource(const std::string& value) const
   {
     return "rdf:resource=\"" + ns_ + "#" + value + "\"";
   }

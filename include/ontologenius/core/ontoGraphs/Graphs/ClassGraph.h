@@ -114,7 +114,7 @@ namespace ontologenius {
     void getRelationFrom(ClassBranch* class_branch, std::unordered_set<T>& res, int depth);
     template<typename T>
     void getRelationOnObjectProperties(const std::string& class_name, std::unordered_set<T>& res, int depth);
-    
+
     template<typename T>
     void dataGetRelatedWith(ClassBranch* class_branch, index_t property, LiteralNode* data, std::unordered_set<T>& res, std::unordered_set<index_t>& do_not_take);
     template<typename T>

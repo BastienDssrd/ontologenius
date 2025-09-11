@@ -13,7 +13,6 @@
 #include "ontologenius/core/ontoGraphs/Branchs/LiteralNode.h"
 #include "ontologenius/core/ontoGraphs/Graphs/Graph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
-#include "ontologenius/utils/String.h"
 
 namespace ontologenius {
 
@@ -90,7 +89,7 @@ namespace ontologenius {
     ClassExpression* ano_element = new ClassExpression();
     ano_element->type_ = expression_leaf->type;
 
-    switch (expression_leaf->type)
+    switch(expression_leaf->type)
     {
     case ClassExpressionType_e::class_expression_identifier:
       if(expression_leaf->data_usage)
@@ -143,7 +142,7 @@ namespace ontologenius {
       }
 
       ano_element->restriction_type_ = expression_leaf->restriction_type;
-      switch (expression_leaf->restriction_type)
+      switch(expression_leaf->restriction_type)
       {
       case RestrictionConstraintType_e::restriction_all_values_from:
         setCardRange(ano_element, expression_leaf);
@@ -276,7 +275,7 @@ namespace ontologenius {
 
     if(old_node->individual_involved_ != nullptr)
       new_node->individual_involved_ = graphs_->individuals_.container_.find(old_node->individual_involved_->value());
-    
+
     if(old_node->class_involved_ != nullptr)
       new_node->class_involved_ = graphs_->classes_.container_.find(old_node->class_involved_->value());
 

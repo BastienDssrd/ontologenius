@@ -10,6 +10,7 @@
 #include "ontologenius/core/ontoGraphs/Branchs/ObjectPropertyBranch.h"
 #include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
+#include "ontologenius/core/ontologyIO/Owl/writers/GraphOwlWriter.h"
 
 namespace ontologenius {
 
@@ -49,10 +50,10 @@ namespace ontologenius {
     for(auto& mother : branch->mothers_)
       writeSingleResource("rdfs:subPropertyOf", mother);
 
-    for(auto range : branch->ranges_)
+    for(const auto& range : branch->ranges_)
       writeSingleResource("rdfs:range", range);
 
-    for(auto domain : branch->domains_)
+    for(const auto& domain : branch->domains_)
       writeSingleResource("rdfs:domain", domain);
 
     writeBranchEnd();
@@ -62,17 +63,16 @@ namespace ontologenius {
   {
     writeBranchStart(branch->value());
 
-    for(auto& mother : branch->mothers_)
+    for(const auto& mother : branch->mothers_)
       writeString("<rdfs:subPropertyOf" + getProba(mother) + " " + getRdfResource(mother.elem->value()) + "/>\n", 2);
 
     writeRange(branch->ranges_);
 
-    for(auto domain : branch->domains_)
+    for(const auto& domain : branch->domains_)
       writeSingleResource("rdfs:domain", domain);
 
     writeBranchEnd();
   }
-
 
   void AnnotationOwlWriter::writeRange(const std::vector<LiteralType*>& ranges)
   {

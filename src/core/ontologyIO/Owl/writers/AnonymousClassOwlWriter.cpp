@@ -1,7 +1,8 @@
 #include "ontologenius/core/ontologyIO/Owl/writers/AnonymousClassOwlWriter.h"
 
-#include <string>
 #include <cstddef>
+#include <iostream>
+#include <string>
 
 #include "ontologenius/core/ontoGraphs/Branchs/AnonymousClassBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/IndividualBranch.h"
@@ -107,7 +108,7 @@ namespace ontologenius {
     }
   }
 
-  //continue there
+  // continue there
   void AnonymousClassOwlWriter::writeRestriction(ClassExpression* ano_elem, size_t level)
   {
     writeRdfResource(ano_elem, "owl:onProperty", level); // error

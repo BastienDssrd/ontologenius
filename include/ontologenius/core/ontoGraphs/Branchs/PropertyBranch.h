@@ -25,7 +25,7 @@ namespace ontologenius {
                      symetric_property_(false),
                      antisymetric_property_(false),
                      reflexive_property_(false),
-                     irreflexive_property_(false){};
+                     irreflexive_property_(false) {}
 
     void apply(const Properties_t& other)
     {

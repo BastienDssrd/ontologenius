@@ -17,10 +17,10 @@
 #include "ontologenius/core/ontoGraphs/Branchs/RuleBranch.h"
 #include "ontologenius/core/ontoGraphs/Graphs/RuleGraph.h"
 
-#define USE_NONE       0
-#define USE_INDIVIDUAL 1<<0
-#define USE_DATATYPE   1<<1
-#define USE_BOTH       (USE_INDIVIDUAL | USE_DATATYPE)
+#define USE_NONE 0
+#define USE_INDIVIDUAL 1 << 0
+#define USE_DATATYPE 1 << 1
+#define USE_BOTH (USE_INDIVIDUAL | USE_DATATYPE)
 
 namespace ontologenius {
 

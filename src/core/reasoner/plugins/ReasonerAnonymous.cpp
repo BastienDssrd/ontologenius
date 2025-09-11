@@ -1,22 +1,25 @@
 #include "ontologenius/core/reasoner/plugins/ReasonerAnonymous.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <mutex>
 #include <pluginlib/class_list_macros.hpp>
 #include <shared_mutex>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
 #include "ontologenius/core/ontoGraphs/Branchs/AnonymousClassBranch.h"
+#include "ontologenius/core/ontoGraphs/Branchs/ClassBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/LiteralNode.h"
 #include "ontologenius/core/ontoGraphs/Branchs/ObjectPropertyBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/RelationsWithInductions.h"
 #include "ontologenius/core/reasoner/plugins/ReasonerInterface.h"
 #include "ontologenius/graphical/Display.h"
 
-//#define DEBUG
+// #define DEBUG
 
 namespace ontologenius {
 
@@ -29,7 +32,7 @@ namespace ontologenius {
       standard_mode_ = true;
   }
 
- void ReasonerAnonymous::postReason()
+  void ReasonerAnonymous::postReason()
   {
     const std::lock_guard<std::shared_timed_mutex> lock(ontology_->individuals_.mutex_);
     const std::shared_lock<std::shared_timed_mutex> lock_class(ontology_->classes_.mutex_);
@@ -67,7 +70,7 @@ namespace ontologenius {
 #endif
               std::string equiv_flag = "equiv_" + anonymous_tree->id;
               bool should_be_evaluated = true;
-              
+
               if(is_already_a)
               {
                 const bool inferred_by_me = std::any_of(indiv->is_a_.cbegin(), indiv->is_a_.cend(), [anonymous_branch, anonymous_tree](const auto& is_a) {
@@ -87,12 +90,12 @@ namespace ontologenius {
               if(should_be_evaluated)
               {
                 if((indiv->flags_.find(equiv_flag) != indiv->flags_.end()) || // has been proven to use other individuals
-                  ((indiv->isUpdated() == true) &&
+                   ((indiv->isUpdated() == true) &&
                     ((anonymous_tree->involves_class && indiv->is_a_.isUpdated()) ||
-                    (anonymous_tree->involves_object_property && indiv->object_relations_.isUpdated()) ||
-                    (anonymous_tree->involves_data_property && indiv->data_relations_.isUpdated()) ||
-                    (anonymous_tree->involves_individual && (indiv->same_as_.isUpdated() || first_run_)) ||
-                    (anonymous_tree->involves_close_world_assumption)))) // improve this condition to make it more specific
+                     (anonymous_tree->involves_object_property && indiv->object_relations_.isUpdated()) ||
+                     (anonymous_tree->involves_data_property && indiv->data_relations_.isUpdated()) ||
+                     (anonymous_tree->involves_individual && (indiv->same_as_.isUpdated() || first_run_)) ||
+                     (anonymous_tree->involves_close_world_assumption)))) // improve this condition to make it more specific
                 {
                   has_involved_other_individual_ = false; // reset the flag before running resolveTree
                   used.clear();
@@ -181,12 +184,12 @@ namespace ontologenius {
 
   bool ReasonerAnonymous::resolveTree(LiteralNode* literal, ClassExpression* expession, std::vector<std::pair<std::string, InheritedRelationTriplets*>>& used)
   {
-    switch (expession->type_)
+    switch(expession->type_)
     {
-    case ClassExpressionType_e::class_expression_identifier:      // Type 1
+    case ClassExpressionType_e::class_expression_identifier: // Type 1
       return resolveIdentifier(literal, expession, used);
 
-    case ClassExpressionType_e::class_expression_one_of:          // Type 2
+    case ClassExpressionType_e::class_expression_one_of:     // Type 2
       return resolveOneOfDatatype(literal, expession, used); // can be returned directly as `used` if not filled if false
 
     case ClassExpressionType_e::class_expression_intersection_of: // Type 4
@@ -199,19 +202,19 @@ namespace ontologenius {
         }
       }
       return true;
-    
-    case ClassExpressionType_e::class_expression_union_of:        // Type 5
+
+    case ClassExpressionType_e::class_expression_union_of: // Type 5
       for(auto* elem : expession->sub_elements_)
         if(resolveTree(literal, elem, used))
           return true;
       break;
-    
-    case ClassExpressionType_e::class_expression_complement_of:   //Type 6
+
+    case ClassExpressionType_e::class_expression_complement_of: // Type 6
       if(resolveTree(literal, expession->sub_elements_.front(), used) == false)
         return true;
       break;
 
-    default:                                                      // Type 3 is not applicable to datatype
+    default: // Type 3 is not applicable to datatype
       break;
     }
 
@@ -227,7 +230,7 @@ namespace ontologenius {
       return (literal->type_ == expession->literal_involved_->type_);
     else if(expession->datatype_involved_ != nullptr)
       return (literal->type_ == expession->datatype_involved_);
-    else 
+    else
       return false;
   }
 
@@ -261,15 +264,15 @@ namespace ontologenius {
   {
     has_involved_other_individual_ = has_involved_other_individual_ || (indiv != current_individual_);
 
-    switch (expession->type_)
+    switch(expession->type_)
     {
-    case ClassExpressionType_e::class_expression_identifier:      // Type 1
+    case ClassExpressionType_e::class_expression_identifier: // Type 1
       return resolveIdentifier(indiv, expession, used);      // can be returned directly as `used` if not filled if false
 
-    case ClassExpressionType_e::class_expression_one_of:          // Type 2
+    case ClassExpressionType_e::class_expression_one_of:     // Type 2
       return resolveOneOfIndividual(indiv, expession, used); // can be returned directly as `used` if not filled if false
 
-    case ClassExpressionType_e::class_expression_restriction:     // Type 3
+    case ClassExpressionType_e::class_expression_restriction: // Type 3
       return resolveRestriction(indiv, expession, used);
 
     case ClassExpressionType_e::class_expression_intersection_of: // Type 4
@@ -282,14 +285,14 @@ namespace ontologenius {
         }
       }
       return true;
-    
-    case ClassExpressionType_e::class_expression_union_of:        // Type 5
+
+    case ClassExpressionType_e::class_expression_union_of: // Type 5
       for(auto* elem : expession->sub_elements_)
         if(resolveTree(indiv, elem, used))
           return true;
       break;
-    
-    case ClassExpressionType_e::class_expression_complement_of:   //Type 6
+
+    case ClassExpressionType_e::class_expression_complement_of: // Type 6
       if(standard_mode_ == true)
         return resolveDisjunctionTree(indiv, expession->sub_elements_.front());
       else if(resolveTree(indiv, expession->sub_elements_.front(), used) == false)
@@ -413,7 +416,7 @@ namespace ontologenius {
     {
       for(size_t i = 0; i < indiv->same_as_.size(); i++)
       {
-        if((indiv->same_as_[i].elem != indiv) && 
+        if((indiv->same_as_[i].elem != indiv) &&
            (indiv->same_as_[i].elem == other))
         {
           used.emplace_back(indiv->value() + "|sameAs|" + other->value(),

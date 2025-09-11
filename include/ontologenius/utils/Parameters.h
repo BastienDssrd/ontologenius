@@ -53,7 +53,7 @@ namespace ontologenius {
 
     bool testOption(const std::string& option)
     {
-      return std::any_of(options_.begin(), options_.end(), [option](auto op) { return option == op; });
+      return std::any_of(options_.begin(), options_.end(), [option](const auto& op) { return option == op; });
     }
 
     void display() const

@@ -9,10 +9,14 @@
 #include <vector>
 
 #include "ontologenius/core/ontoGraphs/Branchs/Elements.h"
-#include "ontologenius/core/ontoGraphs/Branchs/LiteralNode.h"
 #include "ontologenius/core/ontoGraphs/Branchs/PropertyBranch.h"
+#include "ontologenius/core/ontoGraphs/Graphs/AnonymousClassGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/IndividualGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
-#include "ontologenius/core/ontoGraphs/Ontology.h"
+#include "ontologenius/core/ontoGraphs/Graphs/RuleGraph.h"
 #include "ontologenius/core/ontologyIO/OntologyReader.h"
 #include "ontologenius/core/utility/error_code.h"
 #include "ontologenius/graphical/Display.h"
@@ -21,12 +25,12 @@ namespace ontologenius {
 
   OntologyOwlReader::OntologyOwlReader(OntologyGraphs* graphs) : OntologyReader(graphs),
                                                                  card_map_{
-                                                                  {"owl:someValuesFrom",          "some"   },
-                                                                  {"owl:allValuesFrom",           "only"   },
-                                                                  {"owl:minQualifiedCardinality", "min"    },
-                                                                  {"owl:maxQualifiedCardinality", "max"    },
-                                                                  {"owl:qualifiedCardinality",    "exactly"},
-                                                                  {"owl:hasValue",                "value"  }
+                                                                   {"owl:someValuesFrom",          "some"   },
+                                                                   {"owl:allValuesFrom",           "only"   },
+                                                                   {"owl:minQualifiedCardinality", "min"    },
+                                                                   {"owl:maxQualifiedCardinality", "max"    },
+                                                                   {"owl:qualifiedCardinality",    "exactly"},
+                                                                   {"owl:hasValue",                "value"  }
   }
   {}
 
@@ -289,7 +293,7 @@ namespace ontologenius {
             {
               const char* value = sub_elem->GetText();
               if(value != nullptr)
-                OntologyReader::push(individual_descriptor.data_relations_, PairElement<std::string, std::string>(property, toString(sub_elem, "rdf:datatype") + "#"  + std::string(value), probability), "$", "^");
+                OntologyReader::push(individual_descriptor.data_relations_, PairElement<std::string, std::string>(property, toString(sub_elem, "rdf:datatype") + "#" + std::string(value), probability), "$", "^");
             }
           }
         }

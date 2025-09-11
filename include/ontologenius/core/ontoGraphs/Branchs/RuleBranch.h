@@ -54,7 +54,7 @@ namespace ontologenius {
 
     std::string toString() const
     {
-      return (is_variable ? "?" : "" ) + name;
+      return (is_variable ? "?" : "") + name;
     }
   };
 
@@ -96,13 +96,13 @@ namespace ontologenius {
     {
       switch(builtin)
       {
-      case builtin_greater_than:          return "greaterThan";
+      case builtin_greater_than: return "greaterThan";
       case builtin_greater_than_or_equal: return "greaterThanOrEqual";
-      case builtin_less_than:             return "lessThan";
-      case builtin_less_than_or_equal:    return "lessThanOrEqual";
-      case builtin_equal:                 return "equal";
-      case builtin_not_equal:             return "notEqual";
-      default:                            return "unsupported builtin";
+      case builtin_less_than: return "lessThan";
+      case builtin_less_than_or_equal: return "lessThanOrEqual";
+      case builtin_equal: return "equal";
+      case builtin_not_equal: return "notEqual";
+      default: return "unsupported builtin";
       }
     }
 

@@ -10,8 +10,8 @@
 #include <utility>
 #include <vector>
 
-#include "ontologenius/core/ontoGraphs/Branchs/LiteralNode.h"
 #include "ontologenius/core/ontoGraphs/BranchContainer/BranchContainerSet.h"
+#include "ontologenius/core/ontoGraphs/Branchs/LiteralNode.h"
 
 namespace ontologenius {
 

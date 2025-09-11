@@ -3,13 +3,13 @@
 #include <cstddef>
 #include <string>
 
-#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 #include "ontologenius/core/ontoGraphs/Checkers/AnonymousClassChecker.h"
 #include "ontologenius/core/ontoGraphs/Checkers/ClassChecker.h"
 #include "ontologenius/core/ontoGraphs/Checkers/DataPropertyChecker.h"
 #include "ontologenius/core/ontoGraphs/Checkers/IndividualChecker.h"
 #include "ontologenius/core/ontoGraphs/Checkers/ObjectPropertyChecker.h"
 #include "ontologenius/core/ontoGraphs/Checkers/RuleChecker.h"
+#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 #include "ontologenius/core/utility/error_code.h"
 #include "ontologenius/graphical/Display.h"
 

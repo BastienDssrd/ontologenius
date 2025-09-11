@@ -13,8 +13,8 @@
 #include "ontologenius/core/ontoGraphs/Branchs/ClassBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/LiteralNode.h"
 #include "ontologenius/core/ontoGraphs/Branchs/RuleBranch.h"
-#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 #include "ontologenius/core/ontoGraphs/Graphs/Graph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 #include "ontologenius/utils/String.h"
 
 // #define DEBUG
@@ -72,7 +72,7 @@ namespace ontologenius {
       rule_triplet.arguments.push_back(getRuleArgument(rule_branch, variable));
 
     rule_triplet.atom_type_ = rule_atom.type;
-    switch (rule_atom.type)
+    switch(rule_atom.type)
     {
     case RuleAtomType_e::rule_atom_builtin:
       rule_triplet.builtin = rule_atom.builtin;
@@ -97,11 +97,11 @@ namespace ontologenius {
         EquivalentClassDescriptor_t class_descriptor;
         class_descriptor.class_name = rule_branch->value() + "_" + std::to_string(elem_id);
         class_descriptor.expression_members.push_back(rule_atom.class_expression);
-        rule_triplet.anonymous_element = graphs_->anonymous_classes_.add(class_descriptor, true);     // returns the newly created ano branch
+        rule_triplet.anonymous_element = graphs_->anonymous_classes_.add(class_descriptor, true); // returns the newly created ano branch
         rule_triplet.class_predicate = rule_triplet.anonymous_element->class_equiv_;
       }
       else
-        rule_triplet.class_predicate = graphs_->classes_.findOrCreateBranch(rule_atom.resource_value); 
+        rule_triplet.class_predicate = graphs_->classes_.findOrCreateBranch(rule_atom.resource_value);
       break;
     default:
       break;
@@ -179,7 +179,7 @@ namespace ontologenius {
 
     if(old_triplet.class_predicate != nullptr)
       new_triplet.class_predicate = graphs_->classes_.container_.find(old_triplet.class_predicate->value());
-    
+
     if(old_triplet.anonymous_element != nullptr)
       new_triplet.anonymous_element = graphs_->anonymous_classes_.container_.find(old_triplet.anonymous_element->value());
 

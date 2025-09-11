@@ -1,17 +1,26 @@
 #include "ontologenius/core/reasoner/plugins/ReasonerRule.h"
 
+#include <algorithm>
 #include <cstddef>
+#include <cstdint>
+#include <iostream>
 #include <mutex>
 #include <pluginlib/class_list_macros.hpp>
+#include <shared_mutex>
+#include <stdexcept>
+#include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
-#include "ontologenius/core/ontoGraphs/Branchs/AnonymousClassBranch.h"
+#include "ontologenius/core/ontoGraphs/Branchs/ClassBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/LiteralNode.h"
 #include "ontologenius/core/ontoGraphs/Branchs/ObjectPropertyBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/RelationsWithInductions.h"
 #include "ontologenius/core/ontoGraphs/Branchs/RuleBranch.h"
+#include "ontologenius/core/ontoGraphs/Branchs/WordTable.h"
+#include "ontologenius/core/reasoner/plugins/ReasonerInterface.h"
 
 namespace ontologenius {
 
@@ -99,7 +108,7 @@ namespace ontologenius {
   {
     IndividualBranch* involved_indiv = nullptr;
 
-    auto& subject = triplet.arguments[0];
+    const auto& subject = triplet.arguments[0];
 
     if(subject.is_variable && (solution.assigned_result.at(subject.variable_id) != 0))
       involved_indiv = ontology_->individuals_.findBranch(solution.assigned_result.at(subject.variable_id));
@@ -147,8 +156,8 @@ namespace ontologenius {
     IndividualBranch* involved_indiv_from = nullptr;
     IndividualBranch* involved_indiv_on = nullptr;
 
-    auto& subject = triplet.arguments[0];
-    auto& object = triplet.arguments[1];
+    const auto& subject = triplet.arguments[0];
+    const auto& object = triplet.arguments[1];
 
     if(subject.is_variable && (solution.assigned_result.at(subject.variable_id) != 0))
       involved_indiv_from = ontology_->individuals_.findBranch(solution.assigned_result[subject.variable_id]);
@@ -193,8 +202,8 @@ namespace ontologenius {
     IndividualBranch* involved_indiv_from = nullptr;
     LiteralNode* involved_literal_on = nullptr;
 
-    auto& subject = triplet.arguments[0];
-    auto& object = triplet.arguments[1];
+    const auto& subject = triplet.arguments[0];
+    const auto& object = triplet.arguments[1];
 
     if(subject.is_variable && (solution.assigned_result.at(subject.variable_id) != 0))
       involved_indiv_from = ontology_->individuals_.findBranch(solution.assigned_result[subject.variable_id]);
@@ -320,7 +329,7 @@ namespace ontologenius {
 
   void ReasonerRule::resolveClassAtom(const RuleTriplet_t& triplet, std::vector<index_t>& accu, int64_t& var_index, std::vector<IndivResult_t>& values)
   {
-    auto& subject = triplet.arguments[0];
+    const auto& subject = triplet.arguments[0];
     var_index = subject.variable_id;
     if(subject.is_variable == true)
     {
@@ -472,7 +481,7 @@ namespace ontologenius {
   std::vector<IndivResult_t> ReasonerRule::getFromObject(const RuleTriplet_t& triplet)
   {
     std::vector<IndivResult_t> res;
-    auto& object = triplet.arguments[1];
+    const auto& object = triplet.arguments[1];
 
     if(object.indiv_value->same_as_.empty())
     {
@@ -531,7 +540,7 @@ namespace ontologenius {
     IndividualBranch* selector_ptr = nullptr;
     if(selector != 0)
       selector_ptr = ontology_->individuals_.findBranch(selector);
-    
+
     if(indiv->same_as_.empty())
     {
       const auto& relations = indiv->object_relations_;

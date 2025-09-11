@@ -11,9 +11,8 @@
 #include <vector>
 
 #include "ontologenius/core/ontoGraphs/Branchs/Elements.h"
-#include "ontologenius/core/ontoGraphs/Branchs/LiteralNode.h"
+#include "ontologenius/core/ontoGraphs/Graphs/IndividualGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
-#include "ontologenius/core/ontoGraphs/Ontology.h"
 #include "ontologenius/core/ontologyIO/OntologyReader.h"
 #include "ontologenius/core/utility/error_code.h"
 #include "ontologenius/graphical/Display.h"

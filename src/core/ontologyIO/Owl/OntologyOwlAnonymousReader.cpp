@@ -5,7 +5,6 @@
 #include "ontologenius/core/ontoGraphs/Branchs/AnonymousClassBranch.h"
 #include "ontologenius/core/ontoGraphs/Graphs/AnonymousClassGraph.h"
 #include "ontologenius/core/ontologyIO/Owl/OntologyOwlReader.h"
-#include "ontologenius/utils/String.h"
 
 namespace ontologenius {
 
@@ -83,7 +82,7 @@ namespace ontologenius {
       {
         bool instanciated = (class_expression->restriction_type == RestrictionConstraintType_e::restriction_has_value);
         if(getResourceValue(sub_elem, class_expression, instanciated) == false)
-          class_expression->sub_expressions.push_back(readEquivalentClass(sub_elem)); 
+          class_expression->sub_expressions.push_back(readEquivalentClass(sub_elem));
       }
       else if((class_expression->restriction_type == RestrictionConstraintType_e::restriction_max_cardinality) ||
               (class_expression->restriction_type == RestrictionConstraintType_e::restriction_min_cardinality) ||
@@ -136,7 +135,7 @@ namespace ontologenius {
           return;
         }
       }
-      
+
       if(class_expression->type != ClassExpressionType_e::class_expression_unknown)
       {
         bool is_instanciated = (class_expression->type == ClassExpressionType_e::class_expression_one_of);

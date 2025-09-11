@@ -1,11 +1,11 @@
 #include "ontologenius/core/ontoGraphs/Graphs/LiteralGraph.h"
 
-#include <string>
 #include <cstddef>
+#include <string>
 #include <vector>
-#include <iostream>
 
 #include "ontologenius/core/ontoGraphs/Branchs/LiteralNode.h"
+#include "ontologenius/core/ontoGraphs/Branchs/WordTable.h"
 
 namespace ontologenius {
 

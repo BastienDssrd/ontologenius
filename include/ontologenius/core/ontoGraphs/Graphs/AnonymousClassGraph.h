@@ -13,7 +13,7 @@ namespace ontologenius {
   struct ClassExpressionDescriptor_t
   {
     ClassExpressionType_e type;
-    std::string resource_value;                     // resource_value should be used as an end node to represent a specific URI (individual, class, datatype)
+    std::string resource_value; // resource_value should be used as an end node to represent a specific URI (individual, class, datatype)
     std::string restriction_property;
     RestrictionConstraintType_e restriction_type;
     std::string cardinality_value;

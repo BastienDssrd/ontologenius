@@ -15,19 +15,19 @@
 #include "ontologenius/core/ontoGraphs/Branchs/ObjectPropertyBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/ValuedNode.h"
 #include "ontologenius/core/ontoGraphs/Branchs/WordTable.h"
-#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 #include "ontologenius/core/ontoGraphs/Graphs/Graph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/OntoGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 
 namespace ontologenius {
 
   ObjectPropertyGraph::ObjectPropertyGraph(OntologyGraphs* graphs) : OntoGraph(&graphs->individuals_),
-                                                                    graphs_(graphs)
+                                                                     graphs_(graphs)
   {}
 
   ObjectPropertyGraph::ObjectPropertyGraph(const ObjectPropertyGraph& other,
                                            OntologyGraphs* graphs) : OntoGraph(other, &graphs->individuals_),
-                                                                    graphs_(graphs)
+                                                                     graphs_(graphs)
   {}
 
   ObjectPropertyBranch* ObjectPropertyGraph::add(const std::string& value, ObjectPropertyDescriptor_t& property_descriptor)

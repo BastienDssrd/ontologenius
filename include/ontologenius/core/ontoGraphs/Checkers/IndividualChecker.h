@@ -2,9 +2,9 @@
 #define ONTOLOGENIUS_INDIVIDUALCHECKER_H
 
 #include "ontologenius/core/ontoGraphs/Checkers/ValidityChecker.h"
-#include "ontologenius/core/ontoGraphs/Graphs/IndividualGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/IndividualGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
 
 namespace ontologenius {

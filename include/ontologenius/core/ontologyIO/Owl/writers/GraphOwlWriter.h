@@ -25,10 +25,10 @@ namespace ontologenius {
     std::string ns_;
     std::string key_;
 
-    void writeBranchStart(const std::string& value);
-    void writeBranchEnd();
+    void writeBranchStart(const std::string& value) const;
+    void writeBranchEnd() const;
 
-    std::string getRdfResource(const std::string& value);
+    std::string getRdfResource(const std::string& value) const;
     std::string getRdfDatatype(LiteralType* type);
 
     template<typename T>

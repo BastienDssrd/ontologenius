@@ -50,13 +50,13 @@ namespace ontologenius {
     {
       switch(atom.builtin)
       {
-      case builtin_greater_than:          return "greaterThan";
+      case builtin_greater_than: return "greaterThan";
       case builtin_greater_than_or_equal: return "greaterThanOrEqual";
-      case builtin_less_than:             return "lessThan";
-      case builtin_less_than_or_equal:    return "lessThanOrEqual";
-      case builtin_equal:                 return "equal";
-      case builtin_not_equal:             return "notEqual";
-      default:                            return "unsupported builtin";
+      case builtin_less_than: return "lessThan";
+      case builtin_less_than_or_equal: return "lessThanOrEqual";
+      case builtin_equal: return "equal";
+      case builtin_not_equal: return "notEqual";
+      default: return "unsupported builtin";
       }
     }
 
@@ -68,7 +68,7 @@ namespace ontologenius {
         if(res.empty() == false)
           res += ", ";
 
-        switch (atom.first.type)
+        switch(atom.first.type)
         {
         case RuleAtomType_e::rule_atom_data:
         case RuleAtomType_e::rule_atom_object:
@@ -97,7 +97,7 @@ namespace ontologenius {
       return res;
     }
   };
- 
+
   class OntologyGraphs;
 
   class RuleGraph : public Graph<RuleBranch>

@@ -2463,7 +2463,7 @@ namespace ontologenius {
   }
 
   std::vector<std::pair<std::string, std::string>> IndividualGraph::removeRelation(const std::string& indiv_from, const std::string& property, const std::string& type, const std::string& data)
-  {  
+  {
     std::vector<std::pair<std::string, std::string>> explanations;
     IndividualBranch* branch_from = findBranchSafe(indiv_from);
     if(branch_from != nullptr)

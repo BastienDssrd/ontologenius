@@ -1,11 +1,9 @@
 #include "ontologenius/core/ontoGraphs/Checkers/AnonymousClassChecker.h"
 
-#include <algorithm>
 #include <cstddef>
 #include <shared_mutex>
 #include <string>
 #include <unordered_set>
-#include <utility>
 #include <vector>
 
 #include "ontologenius/core/ontoGraphs/Branchs/AnonymousClassBranch.h"
@@ -383,7 +381,7 @@ namespace ontologenius {
       if(types.size() > 1)
       {
         std::string exp;
-        for(auto& type : types)
+        for(const auto& type : types)
         {
           if(exp.empty() == false)
             exp += ", ";

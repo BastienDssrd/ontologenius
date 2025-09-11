@@ -1,8 +1,6 @@
 #include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
 
-#include <algorithm>
 #include <cstddef>
-#include <iterator>
 #include <mutex>
 #include <shared_mutex>
 #include <string>
@@ -14,8 +12,9 @@
 #include "ontologenius/core/ontoGraphs/Branchs/LiteralNode.h"
 #include "ontologenius/core/ontoGraphs/Branchs/ValuedNode.h"
 #include "ontologenius/core/ontoGraphs/Branchs/WordTable.h"
-#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
+#include "ontologenius/core/ontoGraphs/Graphs/Graph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/OntoGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
 
 namespace ontologenius {
 

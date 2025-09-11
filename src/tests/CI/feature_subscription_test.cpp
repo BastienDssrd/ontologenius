@@ -17,16 +17,19 @@ std::atomic<int> done_any;
 
 void callbackAdd(const std::string& fact)
 {
+  (void)fact;
   done_add++;
 }
 
 void callbackDel(const std::string& fact)
 {
+  (void)fact;
   done_del++;
 }
 
 void callbackAny(const std::string& fact)
 {
+  (void)fact;
   done_any++;
 }
 

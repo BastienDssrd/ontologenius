@@ -22,7 +22,7 @@ namespace ontologenius {
     std::vector<DataPropertyBranch*> properties = property_graph_->get();
     std::sort(properties.begin(), properties.end(),
               [](const DataPropertyBranch* a, const DataPropertyBranch* b) {
-                  return a->value() < b->value();
+                return a->value() < b->value();
               });
 
     for(auto* property : properties)
@@ -52,7 +52,7 @@ namespace ontologenius {
   void DataPropertiesOwlWriter::writeRange(DataPropertyBranch* branch)
   {
     for(auto& range : branch->ranges_)
-      writeString("<rdfs:range rdf:resource=\"" + range->getNamespace() +  "#" + range->value() + +"\"/>\n", 2);
+      writeString("<rdfs:range rdf:resource=\"" + range->getNamespace() + "#" + range->value() + +"\"/>\n", 2);
   }
 
 } // namespace ontologenius

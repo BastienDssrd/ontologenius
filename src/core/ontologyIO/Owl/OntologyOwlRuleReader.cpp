@@ -5,9 +5,7 @@
 #include <utility>
 #include <vector>
 
-#include "ontologenius/core/ontoGraphs/Branchs/AnonymousClassBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/RuleBranch.h"
-#include "ontologenius/core/ontoGraphs/Graphs/AnonymousClassGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/RuleGraph.h"
 #include "ontologenius/core/ontologyIO/Owl/OntologyOwlReader.h"
 #include "ontologenius/utils/String.h"

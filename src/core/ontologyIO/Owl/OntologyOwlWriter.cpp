@@ -5,7 +5,6 @@
 #include <string>
 
 #include "ontologenius/core/ontoGraphs/Graphs/OntologyGraphs.h"
-#include "ontologenius/core/ontoGraphs/Ontology.h"
 #include "ontologenius/core/ontologyIO/Owl/writers/AnnotationOwlWriter.h"
 #include "ontologenius/core/ontologyIO/Owl/writers/ClassOwlWriter.h"
 #include "ontologenius/core/ontologyIO/Owl/writers/DataPropertiesOwlWriter.h"

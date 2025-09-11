@@ -11,11 +11,9 @@
 #include "ontologenius/core/ontoGraphs/Branchs/AnonymousClassBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/ClassBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/DataPropertyBranch.h"
-#include "ontologenius/core/ontoGraphs/Branchs/IndividualBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/ObjectPropertyBranch.h"
-#include "ontologenius/core/ontoGraphs/Graphs/AnonymousClassGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
-#include "ontologenius/graphical/Display.h"
+#include "ontologenius/core/ontologyIO/Owl/writers/AnonymousClassOwlWriter.h"
 
 namespace ontologenius {
 
@@ -32,7 +30,7 @@ namespace ontologenius {
     std::vector<ClassBranch*> classes = class_graph_->get();
     std::sort(classes.begin(), classes.end(),
               [](const ClassBranch* a, const ClassBranch* b) {
-                  return a->value() < b->value();
+                return a->value() < b->value();
               });
 
     for(auto* classe : classes)
@@ -73,8 +71,7 @@ namespace ontologenius {
     {
       for(auto* tree : equiv->ano_trees_)
       {
-        std::string tmp, field;
-        field = "owl:equivalentClass";
+        std::string field = "owl:equivalentClass";
         const size_t level = 2;
 
         auto* tree_root_node = tree->root_node_;
@@ -203,7 +200,7 @@ namespace ontologenius {
     for(const ClassDataRelationElement& relation : branch->data_relations_)
       if(relation.inferred == false)
       {
-        const std::string tmp = "<" + relation.first->value() + getProba(relation) + " " + getRdfDatatype(relation.second->type_) + ">" + 
+        const std::string tmp = "<" + relation.first->value() + getProba(relation) + " " + getRdfDatatype(relation.second->type_) + ">" +
                                 relation.second->data() + "</" + relation.first->value() + ">\n";
         writeString(tmp, 2);
       }

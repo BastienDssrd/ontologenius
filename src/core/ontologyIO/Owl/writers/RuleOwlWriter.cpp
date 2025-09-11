@@ -10,7 +10,7 @@
 #include "ontologenius/core/ontoGraphs/Branchs/ClassBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/RuleBranch.h"
 #include "ontologenius/core/ontoGraphs/Graphs/RuleGraph.h"
-#include "ontologenius/graphical/Display.h"
+#include "ontologenius/core/ontologyIO/Owl/writers/AnonymousClassOwlWriter.h"
 
 namespace ontologenius {
 
@@ -184,14 +184,14 @@ namespace ontologenius {
   void RuleOwlWriter::writeRuleArguments(const std::vector<RuleArgument_t>& arguments, size_t level)
   {
     for(size_t i = 0; i < arguments.size(); i++)
-      writeString(getArgumentString(arguments.at(i), "swrl:argument" + std::to_string(i+1)), level);
+      writeString(getArgumentString(arguments.at(i), "swrl:argument" + std::to_string(i + 1)), level);
   }
 
   std::string RuleOwlWriter::getArgumentString(const RuleArgument_t& arg, const std::string& key)
   {
     if(arg.datatype_value != nullptr)
-      return "<" + key + " rdf:datatype=\"" + arg.datatype_value->type_->getNamespace() + "#" +arg.datatype_value->type_->value() + "\">" +
-            arg.datatype_value->data() + "</" + key + ">\n";
+      return "<" + key + " rdf:datatype=\"" + arg.datatype_value->type_->getNamespace() + "#" + arg.datatype_value->type_->value() + "\">" +
+             arg.datatype_value->data() + "</" + key + ">\n";
     else if(arg.indiv_value != nullptr)
       return "<" + key + " " + getRdfResource(arg.indiv_value->value()) + "/>\n";
     else

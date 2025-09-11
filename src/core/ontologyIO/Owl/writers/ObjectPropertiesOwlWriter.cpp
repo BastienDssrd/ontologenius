@@ -1,11 +1,13 @@
 #include "ontologenius/core/ontologyIO/Owl/writers/ObjectPropertiesOwlWriter.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <shared_mutex>
 #include <string>
 #include <vector>
 
 #include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
+#include "ontologenius/core/ontologyIO/Owl/writers/PropertiesOwlWriter.h"
 
 namespace ontologenius {
 
@@ -22,7 +24,7 @@ namespace ontologenius {
     std::vector<ObjectPropertyBranch*> properties = property_graph_->get();
     std::sort(properties.begin(), properties.end(),
               [](const ObjectPropertyBranch* a, const ObjectPropertyBranch* b) {
-                  return a->value() < b->value();
+                return a->value() < b->value();
               });
 
     for(auto* property : properties)

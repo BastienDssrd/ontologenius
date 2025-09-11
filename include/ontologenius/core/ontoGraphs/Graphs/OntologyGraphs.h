@@ -16,7 +16,7 @@ namespace ontologenius {
   public:
     OntologyGraphs();
     OntologyGraphs(const OntologyGraphs& other);
-    
+
     AnonymousClassGraph anonymous_classes_;
     ClassGraph classes_;
     DataPropertyGraph data_properties_;

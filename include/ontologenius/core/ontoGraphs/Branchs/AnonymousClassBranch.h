@@ -39,7 +39,7 @@ namespace ontologenius {
   {
   public:
     ClassExpression() : type_(class_expression_unknown),
-                        class_involved_(nullptr), object_property_involved_(nullptr), 
+                        class_involved_(nullptr), object_property_involved_(nullptr),
                         data_property_involved_(nullptr), individual_involved_(nullptr),
                         literal_involved_(nullptr), datatype_involved_(nullptr),
                         restriction_type_(restriction_unknown), cardinality_value_(0)

@@ -39,7 +39,6 @@ namespace ontologenius {
     // std::vector<LiteralType*> mothers_;
 
   private:
-
     index_t index_;
     std::string namespace_;
   };
@@ -47,7 +46,7 @@ namespace ontologenius {
   class LiteralNode
   {
   public:
-  static WordTable table;
+    static WordTable table;
 
     LiteralType* type_;
 
