@@ -391,7 +391,7 @@ namespace ontologenius {
 
   std::unordered_set<std::string> SparqlSolver::getOn(const strTriplet_t& triplet, const std::string& selector)
   {
-    auto res = onto_->individual_graph_.getOn(triplet.subject.name, triplet.predicat.name);
+    auto res = onto_->individuals_.getOn(triplet.subject.name, triplet.predicat.name);
     if(selector.empty())
       return res;
     else if(res.find(selector) != res.end())
@@ -403,11 +403,11 @@ namespace ontologenius {
   std::unordered_set<std::string> SparqlSolver::getFrom(const strTriplet_t& triplet, const std::string& selector)
   {
     if(selector.empty())
-      return onto_->individual_graph_.getFrom(triplet.object.name, triplet.predicat.name);
+      return onto_->individuals_.getFrom(triplet.object.name, triplet.predicat.name);
     else
     {
       // Here we revert the problem as we know what we are expecting for.
-      auto res = onto_->individual_graph_.getOn(selector, triplet.predicat.name);
+      auto res = onto_->individuals_.getOn(selector, triplet.predicat.name);
       if(res.find(triplet.object.name) != res.end())
         return std::unordered_set<std::string>({selector});
       else
@@ -418,10 +418,10 @@ namespace ontologenius {
   std::unordered_set<std::string> SparqlSolver::getUp(const strTriplet_t& triplet, const std::string& selector)
   {
     if(selector.empty())
-      return onto_->individual_graph_.getUp(triplet.subject.name);
+      return onto_->individuals_.getUp(triplet.subject.name);
     else
     {
-      auto is = onto_->individual_graph_.getUp(triplet.subject.name);
+      auto is = onto_->individuals_.getUp(triplet.subject.name);
       if(is.find(selector) != is.end())
         return std::unordered_set<std::string>({selector});
       else
@@ -432,10 +432,10 @@ namespace ontologenius {
   std::unordered_set<std::string> SparqlSolver::getType(const strTriplet_t& triplet, const std::string& selector)
   {
     if(selector.empty())
-      return onto_->individual_graph_.getType(triplet.object.name);
+      return onto_->individuals_.getType(triplet.object.name);
     else
     {
-      auto types = onto_->individual_graph_.getUp(selector);
+      auto types = onto_->individuals_.getUp(selector);
       if(types.find(triplet.object.name) != types.end())
         return std::unordered_set<std::string>({selector});
       else
@@ -445,7 +445,7 @@ namespace ontologenius {
 
   std::unordered_set<std::string> SparqlSolver::find(const strTriplet_t& triplet, const std::string& selector)
   {
-    auto res = onto_->individual_graph_.find<std::string>(triplet.object.name);
+    auto res = onto_->individuals_.find<std::string>(triplet.object.name);
     if(selector.empty())
       return res;
     else if(res.find(selector) != res.end())
@@ -456,7 +456,7 @@ namespace ontologenius {
 
   std::unordered_set<std::string> SparqlSolver::getName(const strTriplet_t& triplet, const std::string& selector)
   {
-    auto res = onto_->individual_graph_.getNames(triplet.subject.name);
+    auto res = onto_->individuals_.getNames(triplet.subject.name);
     if(selector.empty())
     {
       std::unordered_set<std::string> set_res;

@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <gtest/gtest.h>
-#include <ros/package.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <vector>
 
@@ -94,13 +93,15 @@ TEST(feature_multi, differences)
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "ontologenius_feature_multi_test");
+  testing::InitGoogleTest(&argc, argv);
+  rclcpp::init(argc, argv);
 
   onto::OntologiesManipulator onto;
   onto_ptr = &onto;
 
   onto.waitInit();
 
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+  int res = RUN_ALL_TESTS();
+  rclcpp::shutdown();
+  return res;
 }

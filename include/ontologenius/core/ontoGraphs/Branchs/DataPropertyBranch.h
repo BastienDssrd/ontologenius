@@ -23,7 +23,7 @@ namespace ontologenius {
   {
   public:
     std::vector<ClassElement> domains_;
-    std::vector<LiteralNode*> ranges_;
+    std::vector<LiteralType*> ranges_;
 
     DataPropertyBranch(const std::string& value = "", bool hidden = false) : Branch(value, hidden) {};
   };

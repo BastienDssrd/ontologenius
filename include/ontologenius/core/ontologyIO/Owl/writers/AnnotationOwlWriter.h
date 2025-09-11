@@ -6,16 +6,19 @@
 
 #include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
-#include "ontologenius/core/ontologyIO/Owl/writers/NodeOwlWriter.h"
+#include "ontologenius/core/ontologyIO/Owl/writers/GraphOwlWriter.h"
 
 namespace ontologenius {
 
-  class AnnotationOwlWriter : private NodeOwlWriter
+  class AnnotationOwlWriter : private GraphOwlWriter
   {
   public:
-    AnnotationOwlWriter(ObjectPropertyGraph* object_property_graph, DataPropertyGraph* data_property_graph, const std::string& ns);
+    AnnotationOwlWriter(ObjectPropertyGraph* object_property_graph,
+                        DataPropertyGraph* data_property_graph,
+                        FILE* file,
+                        const std::string& ns);
 
-    void write(FILE* file);
+    void write();
 
   private:
     ObjectPropertyGraph* object_property_graph_;
@@ -23,11 +26,7 @@ namespace ontologenius {
 
     void writeAnnotation(ObjectPropertyBranch* branch);
     void writeAnnotation(DataPropertyBranch* branch);
-    void writeSubPropertyOf(ObjectPropertyBranch* branch);
-    void writeSubPropertyOf(DataPropertyBranch* branch);
-    void writeRange(const std::vector<LiteralNode*>& ranges);
-    void writeRange(const std::vector<ClassElement>& ranges);
-    void writeDomain(const std::vector<ClassElement>& domains);
+    void writeRange(const std::vector<LiteralType*>& ranges);
   };
 
 } // namespace ontologenius

@@ -14,13 +14,13 @@ namespace ontologenius {
   {
     Comparator comp1, comp2;
 
-    IndividualBranch* indiv_onto1 = onto1->individual_graph_.findBranchSafe(concept);
-    IndividualBranch* indiv_onto2 = onto2->individual_graph_.findBranchSafe(concept);
+    IndividualBranch* indiv_onto1 = onto1->individuals_.findBranchSafe(concept);
+    IndividualBranch* indiv_onto2 = onto2->individuals_.findBranchSafe(concept);
 
     if((indiv_onto1 == nullptr) && (indiv_onto2 == nullptr))
     {
-      ClassBranch* class_onto1 = onto1->class_graph_.findBranchSafe(concept);
-      ClassBranch* class_onto2 = onto2->class_graph_.findBranchSafe(concept);
+      ClassBranch* class_onto1 = onto1->classes_.findBranchSafe(concept);
+      ClassBranch* class_onto2 = onto2->classes_.findBranchSafe(concept);
       if(class_onto2 != nullptr)
         comp2 = toComparator(class_onto2);
       if(class_onto1 != nullptr)
@@ -29,14 +29,14 @@ namespace ontologenius {
     else if(indiv_onto1 == nullptr)
     {
       comp2 = toComparator(indiv_onto2);
-      ClassBranch* class_onto1 = onto1->class_graph_.findBranchSafe(concept);
+      ClassBranch* class_onto1 = onto1->classes_.findBranchSafe(concept);
       if(class_onto1 != nullptr)
         comp1 = toComparator(class_onto1);
     }
     else if(indiv_onto2 == nullptr)
     {
       comp1 = toComparator(indiv_onto1);
-      ClassBranch* class_onto2 = onto2->class_graph_.findBranchSafe(concept);
+      ClassBranch* class_onto2 = onto2->classes_.findBranchSafe(concept);
       if(class_onto2 != nullptr)
         comp2 = toComparator(class_onto2);
     }

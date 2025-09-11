@@ -20,6 +20,7 @@ namespace ontologenius {
     bool run();
     void link(Ontology* onto) { onto_ = onto; }
     void setVersioning(bool do_versioning) { do_versioning_ = do_versioning; }
+    bool versioning() const { return do_versioning_; }
 
     std::vector<std::string> getNotifications()
     {
@@ -44,6 +45,21 @@ namespace ontologenius {
 
     void activateVersionning(bool activated) { versionor_.activate(activated); }
     void exportToXml(const std::string& path) { versionor_.exportToXml(path); }
+
+    std::string getCurrentCommit()
+    {
+       return versionor_.getCurrentCommit();
+    }
+
+    size_t getNbUncommitedData()
+    {
+      return versionor_.getNbData();
+    }
+
+    bool areSameStates(const std::string& commit_from, const std::string& commit_to)
+    {
+      return versionor_.areSameStates(commit_from, commit_to);
+    }
 
     size_t size() { return feed_storage_.size(); }
 

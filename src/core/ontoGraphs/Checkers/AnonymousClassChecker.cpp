@@ -1,15 +1,14 @@
 #include "ontologenius/core/ontoGraphs/Checkers/AnonymousClassChecker.h"
 
-#include <algorithm>
 #include <cstddef>
 #include <shared_mutex>
 #include <string>
 #include <unordered_set>
-#include <utility>
 #include <vector>
 
 #include "ontologenius/core/ontoGraphs/Branchs/AnonymousClassBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/ClassBranch.h"
+#include "ontologenius/core/ontoGraphs/Branchs/LiteralNode.h"
 #include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/IndividualGraph.h"
@@ -19,7 +18,7 @@ namespace ontologenius {
 
   size_t AnonymousClassChecker::check()
   {
-    const std::shared_lock<std::shared_timed_mutex> lock(ano_class_graph_->mutex_);
+    std::shared_lock<std::shared_timed_mutex> lock(graphs_->anonymous_classes_.mutex_);
 
     checkDisjoint();
 
@@ -33,101 +32,347 @@ namespace ontologenius {
   {
     for(AnonymousClassBranch* branch_vect : graph_vect_)
     {
+      std::unordered_set<ClassBranch*> disjoints;
+      std::unordered_set<ClassBranch*> uppers;
+
+      graphs_->classes_.getDisjoint(branch_vect->class_equiv_, disjoints);
+      graphs_->classes_.getUpPtr(branch_vect->class_equiv_, uppers);
+
       current_ano_ = branch_vect->class_equiv_->value();
-      for(auto* branch : branch_vect->ano_elems_)
+      for(auto* tree : branch_vect->ano_trees_)
       {
-        auto errs = resolveTree(branch, {ClassElement(branch_vect->class_equiv_)});
+        auto errs = resolveTreeDisjoint(tree->root_node_, disjoints, uppers, false);
+
         for(auto& err : errs)
-          printError("In equivalence of class " + current_ano_ + ": error between class " + current_ano_ + " " + err);
+          printError("In equivalence of class " + current_ano_ + ": error " + err);
       }
     }
   }
 
-  std::string AnonymousClassChecker::checkClassesDisjointness(ClassBranch* class_left, ClassBranch* class_right)
-  {
-    std::string err;
-    std::unordered_set<ClassBranch*> disjoints;
-
-    ano_class_graph_->class_graph_->getDisjoint(class_left, disjoints);
-
-    ClassBranch* first_crash = nullptr;
-    if(disjoints.empty() == false)
-    {
-      std::unordered_set<ClassBranch*> ups;
-      ano_class_graph_->class_graph_->getUpPtr(class_right, ups);
-      first_crash = ano_class_graph_->class_graph_->firstIntersection(ups, disjoints);
-    }
-
-    if(first_crash != nullptr)
-    {
-      std::unordered_set<ClassBranch*> intersection_ups;
-      ano_class_graph_->class_graph_->getUpPtr(first_crash, intersection_ups);
-      std::unordered_set<ClassBranch*> left_ups;
-      ano_class_graph_->class_graph_->getUpPtr(class_left, left_ups);
-
-      ClassBranch* explanation_1 = nullptr;
-      ClassBranch* explanation_2 = nullptr;
-      for(auto* up : intersection_ups)
-      {
-        explanation_2 = up;
-        explanation_1 = ano_class_graph_->class_graph_->firstIntersection(left_ups, up->disjoints_);
-        if(explanation_1 != nullptr)
-          break;
-      }
-
-      std::string exp_str;
-      if(class_right != explanation_2)
-        exp_str = class_right->value() + " is a " + explanation_2->value();
-      if(class_left != explanation_1)
-      {
-        if(exp_str.empty() == false)
-          exp_str += " and ";
-        exp_str += class_left->value() + " is a " + explanation_1->value();
-      }
-
-      if(explanation_1 == nullptr)
-        err = "disjointness between " + class_left->value() + " and " + class_right->value() +
-              " over " + first_crash->value();
-      else if(exp_str.empty() == false)
-        err = "disjointness between " + class_left->value() + " and " + class_right->value() +
-              " because " + explanation_1->value() + " and " + explanation_2->value() + " are disjoint" +
-              " and " + exp_str;
-      else
-        err = "disjointness between " + class_left->value() + " and " + class_right->value() +
-              " because " + explanation_1->value() + " and " + explanation_2->value() + " are disjoint";
-    }
-
-    return err;
-  }
-
-  std::vector<std::string> AnonymousClassChecker::checkClassesVectorDisjointness(const std::vector<ClassElement>& classes_left, const std::vector<ClassElement>& class_right)
+  std::vector<std::string> AnonymousClassChecker::resolveTreeDisjoint(ClassExpression* ano_elem, std::unordered_set<ClassBranch*>& disjoints, std::unordered_set<ClassBranch*>& uppers, bool complement_mode)
   {
     std::vector<std::string> errs;
-    for(const auto& elem_right : class_right)
-      for(const auto& elem_left : classes_left)
+    std::string err_inter = "in intersection expression";
+    std::string err_union = "in union expression";
+    std::string err_compl = "in complement";
+
+    if(ano_elem->type_ == class_expression_identifier)
+      return checkIdentifier(ano_elem, disjoints, uppers, complement_mode);
+    else if(ano_elem->type_ == class_expression_one_of)
+      return checkOneOf(ano_elem, disjoints, uppers, complement_mode);
+    else if(ano_elem->type_ == class_expression_restriction)
+      return checkRestriction(ano_elem, disjoints, uppers, complement_mode);
+    else if(ano_elem->type_ == class_expression_union_of)
+    {
+      for(auto* sub_elem : ano_elem->sub_elements_)
       {
-        const std::string err = checkClassesDisjointness(elem_left.elem, elem_right.elem);
-        if(err.empty() == false)
-          errs.push_back(err);
+        std::unordered_set<ClassBranch*> copy_all_disjoint = disjoints;
+        auto tmp = resolveTreeDisjoint(sub_elem, copy_all_disjoint, uppers, complement_mode);
+        for(auto& err : tmp)
+          errs.emplace_back(err_union + ", " + err);
       }
+    }
+    else if(ano_elem->type_ == class_expression_intersection_of)
+    {
+      // copy to ensure same parent context
+      std::unordered_set<ClassBranch*> new_uppers = uppers;
+      for(auto* sub_elem : ano_elem->sub_elements_)
+      {
+        auto tmp = resolveTreeDisjoint(sub_elem, disjoints, new_uppers, complement_mode);
+        for(auto& err : tmp)
+          errs.emplace_back(err_inter + ", " + err);
+      }
+    }
+    else if(ano_elem->type_ == class_expression_complement_of)
+    {
+      // if we were already in complement mode, we switch back to false, otherwise we switch to true
+      bool new_mode = !complement_mode;
+
+      std::unordered_set<ClassBranch*> empty_disjoints;
+      auto tmp = resolveTreeDisjoint(ano_elem->sub_elements_.front(), empty_disjoints, uppers, new_mode);
+      for(auto& err : tmp)
+        errs.emplace_back(err_compl + ", " + err);
+    }
     return errs;
   }
 
-  std::vector<std::string> AnonymousClassChecker::resolveTreeDataTypes(AnonymousClassElement* ano_elem)
+  std::vector<std::string> AnonymousClassChecker::resolveTreeDisjoint(ClassExpression* ano_elem, std::unordered_set<LiteralType*>& data_ranges)
+  {
+    std::vector<std::string> errs;
+    std::string err_inter = "in intersection expression";
+    std::string err_union = "in union expression";
+    std::string err_compl = "in complement";
+
+    if(ano_elem->type_ == class_expression_identifier)
+      return checkIdentifier(ano_elem, data_ranges);
+    else if(ano_elem->type_ == class_expression_one_of)
+      return checkOneOf(ano_elem, data_ranges);
+    else if(ano_elem->type_ == class_expression_union_of)
+    {
+      for(auto* sub_elem : ano_elem->sub_elements_)
+      {
+        std::unordered_set<LiteralType*> copy_all_data_ranges = data_ranges;
+        auto tmp = resolveTreeDisjoint(sub_elem, copy_all_data_ranges);
+        for(auto& err : tmp)
+          errs.emplace_back(err_union + ", " + err);
+      }
+    }
+    else if(ano_elem->type_ == class_expression_intersection_of)
+    {
+      for(auto* sub_elem : ano_elem->sub_elements_)
+      {
+        auto tmp = resolveTreeDisjoint(sub_elem, data_ranges);
+        for(auto& err : tmp)
+          errs.emplace_back(err_inter + ", " + err);
+      }
+    }
+    else if(ano_elem->type_ == class_expression_complement_of)
+    {
+      std::unordered_set<LiteralType*> empty_data_range;
+      // todo: boolean and not(boolean) case with the uppers and complement mode
+      auto tmp = resolveTreeDisjoint(ano_elem->sub_elements_.front(), empty_data_range);
+      for(auto& err : tmp)
+        errs.emplace_back(err_compl + ", " + err);
+    }
+
+    return errs;
+  }
+
+  std::vector<std::string> AnonymousClassChecker::checkIdentifier(ClassExpression* ano_elem, std::unordered_set<ClassBranch*>& disjoints, std::unordered_set<ClassBranch*>& uppers, bool complement_mode)
+  {
+    std::vector<std::string> errors;
+
+    if(ano_elem->individual_involved_ != nullptr)
+    {
+      if(disjoints.empty() == false)
+      {
+        if(ano_elem->individual_involved_->same_as_.empty() == true)
+        {
+          ClassBranch* conflict = graphs_->classes_.firstIntersection(disjoints, ano_elem->individual_involved_->is_a_.relations);
+          if(conflict != nullptr)
+            errors.emplace_back("individual " + ano_elem->individual_involved_->value() + " has type " + conflict->value() + " which is disjoint to a previous element");
+        }
+        else
+        {
+          for(auto& same : ano_elem->individual_involved_->same_as_)
+          {
+            ClassBranch* conflict = graphs_->classes_.firstIntersection(disjoints, same.elem->is_a_.relations);
+
+            if(conflict != nullptr)
+            {
+              if(same.elem != ano_elem->individual_involved_)
+                errors.emplace_back("individual " + ano_elem->individual_involved_->value() + " is same as " + same.elem->value() + ", which has type " + conflict->value() + ", which is disjoint to a previous element");
+              else
+                errors.emplace_back("individual " + ano_elem->individual_involved_->value() + " has type " + conflict->value() + ", which is disjoint to a previous element");
+            }
+          }
+        }
+      }
+
+      // check that the class of the individual is not a part of the uppers (only in the complement mode)
+      if(complement_mode == true && uppers.empty() == false)
+      {
+        ClassBranch* conflict = graphs_->classes_.firstIntersection(uppers, ano_elem->individual_involved_->is_a_.relations);
+        if(conflict != nullptr)
+          errors.emplace_back("unsatisfiable expression with individual " + ano_elem->individual_involved_->value() + " which has type " + conflict->value() + ", which is in the upper classes");
+      }
+
+      for(auto& class_elem : ano_elem->individual_involved_->is_a_)
+        graphs_->classes_.getDisjoint(class_elem.elem, disjoints);
+
+      for(auto& class_elem : ano_elem->individual_involved_->is_a_)
+        graphs_->classes_.getUpPtr(class_elem.elem, uppers);
+    }
+    else if(ano_elem->class_involved_ != nullptr)
+    {
+      if(disjoints.empty() == false && disjoints.find(ano_elem->class_involved_) != disjoints.end())
+        errors.emplace_back("class " + ano_elem->class_involved_->value() + " is disjoint to a previous element ");
+
+      // check that the class is not a part of the uppers (only in the complement mode)
+      if(complement_mode == true && uppers.empty() == false && uppers.find(ano_elem->class_involved_) != uppers.end())
+        errors.emplace_back("unsatisfiable expression with class " + ano_elem->class_involved_->value() + " which is in the upper classes");
+
+      graphs_->classes_.getDisjoint(ano_elem->class_involved_, disjoints);
+      graphs_->classes_.getUpPtr(ano_elem->class_involved_, uppers);
+    }
+    else
+      printError("In equivalence of class " + current_ano_ + ": Identifier involves non-individual or class element.");
+
+    return errors;
+  }
+
+  std::vector<std::string> AnonymousClassChecker::checkIdentifier(ClassExpression* ano_elem, std::unordered_set<LiteralType*>& data_ranges)
+  {
+    std::vector<std::string> errors;
+    if(data_ranges.empty())
+      return errors;
+
+    // required to check whether the ranges types of a data property are compatible (ex : string and boolean -> false)
+    if(ano_elem->literal_involved_ != nullptr) // integer#12
+    {
+      if(data_ranges.find(ano_elem->literal_involved_->type_) == data_ranges.end())
+        errors.emplace_back("literal " + ano_elem->literal_involved_->value() + " has type " + ano_elem->literal_involved_->type_->value() + "  is different to an upper type");
+    }
+    else if(ano_elem->datatype_involved_ != nullptr) // boolean
+    {
+      if(data_ranges.find(ano_elem->datatype_involved_) == data_ranges.end())
+        errors.emplace_back("datatype " + ano_elem->datatype_involved_->value() + " is different to an upper type");
+    }
+    else
+      printError("In equivalence of class " + current_ano_ + ": Identifier involves non-literal or datatype element.");
+
+    return errors;
+  }
+
+  std::vector<std::string> AnonymousClassChecker::checkOneOf(ClassExpression* ano_elem, std::unordered_set<ClassBranch*>& disjoints, std::unordered_set<ClassBranch*>& uppers, bool complement_mode)
+  {
+    std::vector<std::string> errors;
+
+    for(auto* elem : ano_elem->sub_elements_)
+    {
+      if(elem->individual_involved_ == nullptr)
+        printError("In equivalence of class " + current_ano_ + ": oneOf involves non-individual element.");
+      else
+      {
+        std::unordered_set<ClassBranch*> copy_disjoints = disjoints;
+        auto tmp = checkIdentifier(elem, copy_disjoints, uppers, complement_mode);
+        for(auto& err : tmp)
+          errors.emplace_back("in oneOf, " + err);
+      }
+    }
+
+    return errors;
+  }
+
+  std::vector<std::string> AnonymousClassChecker::checkOneOf(ClassExpression* ano_elem, std::unordered_set<LiteralType*>& data_ranges)
+  {
+    std::vector<std::string> errors;
+    if(data_ranges.empty())
+      return errors;
+
+    for(auto* elem : ano_elem->sub_elements_)
+    {
+      if(elem->literal_involved_ == nullptr)
+        printError("In equivalence of class " + current_ano_ + ": oneOf involves non-literal element.");
+      else
+      {
+        if(data_ranges.find(ano_elem->literal_involved_->type_) == data_ranges.end())
+          errors.emplace_back("in oneOf: literal " + elem->literal_involved_->value() + " has type " + elem->literal_involved_->type_->value() + " which is different to an upper type");
+        data_ranges.insert(ano_elem->literal_involved_->type_);
+      }
+    }
+
+    return errors;
+  }
+
+  std::vector<std::string> AnonymousClassChecker::checkRestriction(ClassExpression* ano_elem, std::unordered_set<ClassBranch*>& disjoints, std::unordered_set<ClassBranch*>& uppers, bool complement_mode)
+  {
+    std::vector<std::string> errors;
+    std::string err_restriction = "in restriction,";
+    // Domain check
+
+    if(ano_elem->object_property_involved_ != nullptr)
+    {
+      ClassBranch* conflict = graphs_->classes_.firstIntersection(disjoints, ano_elem->object_property_involved_->domains_);
+      if(conflict != nullptr)
+        errors.emplace_back(err_restriction + " property " + ano_elem->object_property_involved_->value() + " has domain " + conflict->value() + " which is disjoint to a previous element");
+
+      for(auto& class_elem : ano_elem->object_property_involved_->domains_)
+        graphs_->classes_.getDisjoint(class_elem.elem, disjoints);
+    }
+    else if(ano_elem->data_property_involved_ != nullptr)
+    {
+      ClassBranch* conflict = graphs_->classes_.firstIntersection(disjoints, ano_elem->data_property_involved_->domains_);
+      if(conflict != nullptr)
+        errors.emplace_back(err_restriction + " property " + ano_elem->data_property_involved_->value() + " has domain " + conflict->value() + " which is disjoint to a previous element");
+
+      for(auto& class_elem : ano_elem->data_property_involved_->domains_)
+        graphs_->classes_.getDisjoint(class_elem.elem, disjoints);
+    }
+
+    // Complement check
+    if(complement_mode == true)
+    {
+      if(ano_elem->object_property_involved_ != nullptr)
+      {
+        if(uppers.empty() == false)
+        {
+          ClassBranch* conflict = graphs_->classes_.firstIntersection(uppers, ano_elem->object_property_involved_->domains_);
+          if(conflict != nullptr)
+            errors.emplace_back(err_restriction + "unsatisfiable expression with property " + ano_elem->object_property_involved_->value() + " that has domain " + conflict->value() + ", which is in the negative classes");
+        }
+
+        for(auto& class_elem : ano_elem->object_property_involved_->domains_)
+          graphs_->classes_.getUpPtr(class_elem.elem, uppers);
+      }
+      else if(ano_elem->data_property_involved_ != nullptr)
+      {
+        if(uppers.empty() == false)
+        {
+          ClassBranch* conflict = graphs_->classes_.firstIntersection(uppers, ano_elem->data_property_involved_->domains_);
+          if(conflict != nullptr)
+            errors.emplace_back(err_restriction + "unsatisfiable expression with property " + ano_elem->data_property_involved_->value() + " that has domain " + conflict->value() + ", which is in the negative classes");
+        }
+
+        for(auto& class_elem : ano_elem->data_property_involved_->domains_)
+          graphs_->classes_.getUpPtr(class_elem.elem, uppers);
+      }
+    }
+
+    // Range check
+    if(ano_elem->object_property_involved_ != nullptr)
+    {
+      std::unordered_set<ClassBranch*> disjoints_ranges;
+      std::unordered_set<ClassBranch*> new_uppers;
+
+      // updates the sets of disjointness and uppers with current values
+      for(auto& range : ano_elem->object_property_involved_->ranges_)
+      {
+        graphs_->classes_.getDisjoint(range.elem, disjoints_ranges);
+        graphs_->classes_.getUpPtr(range.elem, new_uppers);
+      }
+
+      for(auto* elem : ano_elem->sub_elements_)
+      {
+        auto tmp = resolveTreeDisjoint(elem, disjoints_ranges, new_uppers, false);
+        for(auto& err : tmp)
+          errors.emplace_back(err_restriction + " range of property " + ano_elem->object_property_involved_->value() + ", " + err);
+      }
+    }
+    else if(ano_elem->data_property_involved_ != nullptr)
+    {
+      std::unordered_set<LiteralType*> data_ranges;
+      for(auto* range : ano_elem->data_property_involved_->ranges_)
+        data_ranges.insert(range);
+
+      for(auto* elem : ano_elem->sub_elements_)
+      {
+        auto tmp = resolveTreeDisjoint(elem, data_ranges);
+        for(auto& err : tmp)
+          errors.emplace_back(err_restriction + " range of property " + ano_elem->data_property_involved_->value() + ", " + err);
+      }
+    }
+    else
+      printError("In equivalence of class " + current_ano_ + ": restriction does not involve property.");
+
+    return errors;
+  }
+
+  std::vector<std::string> AnonymousClassChecker::resolveTreeDataTypes(ClassExpression* ano_elem, std::unordered_set<LiteralType*>& data_ranges)
   {
     std::vector<std::string> errs;
     std::unordered_set<std::string> types;
 
-    if(ano_elem->logical_type_ == logical_and)
+    if(ano_elem->type_ == class_expression_intersection_of)
     {
       // check that there is at each level only the same type of literal type :  (boolean and string) -> error / (boolean and not(string)) -> ok
       for(auto* sub_elem : ano_elem->sub_elements_)
       {
-        if(sub_elem->logical_type_ == logical_none)
-          types.insert(sub_elem->card_.card_range_->type_);
+        if(sub_elem->type_ == class_expression_identifier)
+          types.insert(sub_elem->datatype_involved_->value());
         else
         {
-          auto tmp = resolveTreeDataTypes(sub_elem);
+          auto tmp = resolveTreeDataTypes(sub_elem, data_ranges);
           if(tmp.empty() == false)
             errs.insert(errs.end(), tmp.begin(), tmp.end());
         }
@@ -142,190 +387,36 @@ namespace ontologenius {
             exp += ", ";
           exp += type;
         }
-        errs.push_back("Data property cannot be of different data types, used types are: " + exp);
+        printError("Data property cannot be of different data types, used types are: " + exp);
       }
     }
-
-    return errs;
-  }
-
-  std::vector<std::string> AnonymousClassChecker::resolveTree(AnonymousClassElement* ano_elem, const std::vector<ClassElement>& ranges)
-  {
-    std::vector<std::string> errs;
-    if(ano_elem->logical_type_ == logical_none && ano_elem->oneof == false)
+    else if(ano_elem->type_ == class_expression_union_of)
     {
-      auto tmp = checkExpressionDisjointess(ano_elem, ranges);
-      if(tmp.empty() == false)
-        errs.insert(errs.end(), tmp.begin(), tmp.end());
-    }
-    else if(ano_elem->oneof == true)
-    { // check for the OneOf node if the classes of each individuals have no disjunction with the equivalence class
-      for(auto* elem : ano_elem->sub_elements_)
-      {
-        auto local_errs = checkClassesVectorDisjointness(ranges, elem->individual_involved_->is_a_.relations);
-        if(local_errs.empty() == false)
-        {
-          for(auto& err : local_errs)
-            printError("In equivalence of class " + current_ano_ + ": individual " + elem->individual_involved_->value() +
-                       " can not be equivalent to " + current_ano_ + " since it exists a " + err);
-        }
-      }
-    }
-    else
-    {
-      if(ano_elem->logical_type_ == logical_and)
-        checkIntersectionDomainsDisjointess(ano_elem);
-
       for(auto* sub_elem : ano_elem->sub_elements_)
       {
-        auto tmp = resolveTree(sub_elem, ranges);
-        if(tmp.empty() == false)
-          errs.insert(errs.end(), tmp.begin(), tmp.end());
-      }
-    }
-    return errs;
-  }
-
-  std::vector<std::string> AnonymousClassChecker::checkExpressionDisjointess(AnonymousClassElement* ano_elem, const std::vector<ClassElement>& ranges)
-  {
-    std::vector<std::string> errs;
-    // object or data property restriction
-    if(ano_elem->object_property_involved_ != nullptr || ano_elem->data_property_involved_ != nullptr)
-      errs = checkPropertyDisjointness(ano_elem, ranges);
-    // class only restriction
-    else if(ano_elem->class_involved_ != nullptr)
-    {
-      for(const auto& elem : ranges)
-      {
-        const std::string err = checkClassesDisjointness(ano_elem->class_involved_, elem.elem);
-        if(err.empty() == false)
-          errs.emplace_back("and class " + ano_elem->class_involved_->value() + " because of " + err);
-      }
-    }
-    return errs;
-  }
-
-  std::vector<std::string> AnonymousClassChecker::checkPropertyDisjointness(AnonymousClassElement* ano_elem, const std::vector<ClassElement>& ranges)
-  {
-    std::vector<std::string> errs;
-    if(ano_elem->object_property_involved_ != nullptr)
-    {
-      errs = checkPropertyDomainDisjointness(ano_elem->object_property_involved_, ranges);
-      std::transform(errs.cbegin(), errs.cend(), errs.begin(), [prop = ano_elem->object_property_involved_->value()](const auto& err) { return "and domain of property " + prop + " because of " + err; });
-      checkObjectPropertyRangeDisjointness(ano_elem);
-    }
-    else
-    {
-      errs = checkPropertyDomainDisjointness(ano_elem->data_property_involved_, ranges);
-      std::transform(errs.cbegin(), errs.cend(), errs.begin(), [prop = ano_elem->data_property_involved_->value()](const auto& err) { return "and domain of property " + prop + " because of " + err; });
-      checkDataPropertyRangeDisjointness(ano_elem);
-    }
-    return errs;
-  }
-
-  std::pair<std::string, bool> getDomainOrigin(AnonymousClassElement* ano_elem, size_t index)
-  {
-    size_t cpt = 0;
-    for(auto* sub_elem : ano_elem->sub_elements_)
-    {
-      std::string origin;
-      bool property = true;
-      if(sub_elem->logical_type_ == logical_none)
-      {
-        if(sub_elem->object_property_involved_ != nullptr)
-          origin = sub_elem->object_property_involved_->value();
-        else if(sub_elem->data_property_involved_ != nullptr)
-          origin = sub_elem->data_property_involved_->value();
-        else if(sub_elem->class_involved_ != nullptr)
+        if(sub_elem->type_ == class_expression_identifier)
+          types.insert(sub_elem->datatype_involved_->value());
+        else
         {
-          origin = sub_elem->class_involved_->value();
-          property = false;
+          auto tmp = resolveTreeDataTypes(sub_elem, data_ranges);
+          if(tmp.empty() == false)
+            errs.insert(errs.end(), tmp.begin(), tmp.end());
         }
       }
-
-      if(origin.empty() == false)
-      {
-        if(cpt == index)
-          return {origin, property};
-        cpt++;
-      }
     }
-    return {"", false};
-  }
-
-  // check for dijsunctions between elements in a AND node (Property -> domains_ , Class -> isA, ) ((obj->domains_) and (B->isA))
-  void AnonymousClassChecker::checkIntersectionDomainsDisjointess(AnonymousClassElement* ano_elem)
-  {
-    std::vector<std::vector<ClassElement>> all_domains;
-
-    for(auto* sub_elem : ano_elem->sub_elements_)
+    else if(ano_elem->type_ == class_expression_identifier)
     {
-      if(sub_elem->logical_type_ == logical_none)
-      {
-        if(sub_elem->object_property_involved_ != nullptr)
-          all_domains.push_back(sub_elem->object_property_involved_->domains_);
-        else if(sub_elem->data_property_involved_ != nullptr)
-          all_domains.push_back(sub_elem->data_property_involved_->domains_);
-        else if(sub_elem->class_involved_ != nullptr)
-          all_domains.push_back({ClassElement(sub_elem->class_involved_)});
-      }
+      auto tmp = checkIdentifier(ano_elem, data_ranges);
+      errs.insert(errs.end(), tmp.begin(), tmp.end());
+    }
+    else if(ano_elem->type_ == class_expression_complement_of)
+    {
+      std::unordered_set<LiteralType*> new_data_ranges;
+      auto tmp = resolveTreeDataTypes(ano_elem->sub_elements_.front(), new_data_ranges);
+      errs.insert(errs.end(), tmp.begin(), tmp.end());
     }
 
-    for(size_t i = 0; i < all_domains.size(); i++)
-      for(size_t j = i + 1; j < all_domains.size(); j++)
-      {
-        auto errs = checkClassesVectorDisjointness(all_domains[i], all_domains[j]);
-        if(errs.empty() == false)
-        {
-          auto origin_left = getDomainOrigin(ano_elem, i);
-          auto origin_right = getDomainOrigin(ano_elem, j);
-          const std::string err_left = (origin_left.second ? "domain of property " : "class ") + origin_left.first;
-          const std::string err_right = (origin_right.second ? "domain of property " : "class ") + origin_right.first;
-          const std::string err_base = "In equivalence of class " + current_ano_ + ": error between " +
-                                       err_left + " and " + err_right + " because of ";
-          for(const auto& err : errs)
-            printError(err_base + err);
-        }
-      }
-  }
-
-  void AnonymousClassChecker::checkObjectPropertyRangeDisjointness(AnonymousClassElement* ano_elem)
-  {
-    if(ano_elem->is_complex == true)
-    {
-      auto errs = resolveTree(ano_elem->sub_elements_.front(), ano_elem->object_property_involved_->ranges_);
-      for(const auto& err : errs)
-        printError("In equivalence of class " + current_ano_ + ": error between range of property " +
-                   ano_elem->object_property_involved_->value() + " " + err);
-    }
-    else if(ano_elem->card_.card_type_ == cardinality_value)
-    {
-      auto errs = checkClassesVectorDisjointness(ano_elem->object_property_involved_->ranges_, ano_elem->individual_involved_->is_a_.relations);
-      for(const auto& err : errs)
-        printError("In equivalence of class " + current_ano_ + ": error between range of property " + ano_elem->object_property_involved_->value() +
-                   " and inheritence of individual " + ano_elem->individual_involved_->value() + " because of " + err);
-    }
-    else
-    {
-      for(auto& range_elem : ano_elem->object_property_involved_->ranges_)
-      {
-        const std::string err = checkClassesDisjointness(range_elem.elem, ano_elem->class_involved_);
-        if(err.empty() == false)
-          printError("In equivalence of class " + current_ano_ + ": error between range of property " + ano_elem->object_property_involved_->value() +
-                     " and class " + ano_elem->class_involved_->value() + " because of " + err);
-      }
-    }
-  }
-
-  void AnonymousClassChecker::checkDataPropertyRangeDisjointness(AnonymousClassElement* ano_elem)
-  {
-    if(ano_elem->is_complex == true)
-    {
-      auto errs = resolveTreeDataTypes(ano_elem->sub_elements_.front());
-      for(auto& err : errs)
-        printError("In equivalence of class " + current_ano_ + ": in ranges of data property " +
-                   ano_elem->data_property_involved_->value() + ". " + err);
-    }
+    return errs;
   }
 
 } // namespace ontologenius

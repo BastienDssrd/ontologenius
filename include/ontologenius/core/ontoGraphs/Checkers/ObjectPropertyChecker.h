@@ -9,7 +9,8 @@ namespace ontologenius {
   class ObjectPropertyChecker : public ValidityChecker<ObjectPropertyBranch>
   {
   public:
-    explicit ObjectPropertyChecker(ObjectPropertyGraph* graph) : ValidityChecker(graph), property_graph_(graph) {}
+    explicit ObjectPropertyChecker(ObjectPropertyGraph* graph,
+                                   OntologyGraphs* all_graphs) : ValidityChecker(graph, all_graphs) {}
     ~ObjectPropertyChecker() override = default;
 
     size_t check() override;
@@ -22,8 +23,6 @@ namespace ontologenius {
     void checkDisjoint();
     void checkCharacteristics();
     void removeLoops();
-
-    ObjectPropertyGraph* property_graph_;
   };
 
 } // namespace ontologenius

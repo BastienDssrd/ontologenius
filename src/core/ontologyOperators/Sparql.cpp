@@ -298,7 +298,7 @@ namespace ontologenius {
   template<typename T>
   std::unordered_set<T> Sparql::getOn(const SparqlTriplet_t<T>& triplet, const T& selector)
   {
-    auto res = onto_->individual_graph_.getOn(triplet.subject.value, triplet.predicat.value, single_same_);
+    auto res = onto_->individuals_.getOn(triplet.subject.value, triplet.predicat.value, single_same_);
     if(isSelectorDefined(selector) == false)
       return res;
     else if(std::find(res.begin(), res.end(), selector) != res.end())
@@ -311,11 +311,11 @@ namespace ontologenius {
   std::unordered_set<T> Sparql::getFrom(const SparqlTriplet_t<T>& triplet, const T& selector)
   {
     if(isSelectorDefined(selector) == false)
-      return onto_->individual_graph_.getFrom(triplet.object.value, triplet.predicat.value, single_same_);
+      return onto_->individuals_.getFrom(triplet.object.value, triplet.predicat.value, single_same_);
     else
     {
       // Here we revert the problem as we know what we are expecting for.
-      auto res = onto_->individual_graph_.getOn(selector, triplet.predicat.value, single_same_);
+      auto res = onto_->individuals_.getOn(selector, triplet.predicat.value, single_same_);
       if(std::find(res.begin(), res.end(), triplet.object.value) != res.end())
         return std::unordered_set<T>({selector});
       else
@@ -327,12 +327,12 @@ namespace ontologenius {
   std::unordered_set<T> Sparql::getUp(const SparqlTriplet_t<T>& triplet, const T& selector)
   {
     if(isSelectorDefined(selector) == false)
-      return onto_->individual_graph_.getUp(triplet.subject.value);
+      return onto_->individuals_.getUp(triplet.subject.value);
     else
     {
-      // auto is = onto_->individual_graph_.getUp(triplet.subject.value);
+      // auto is = onto_->individuals_.getUp(triplet.subject.value);
       // if(std::find(is.begin(), is.end(), selector) != is.end())
-      if(onto_->individual_graph_.isA(triplet.subject.value, selector))
+      if(onto_->individuals_.isA(triplet.subject.value, selector))
         return std::unordered_set<T>({selector});
       else
         return std::unordered_set<T>();
@@ -343,12 +343,12 @@ namespace ontologenius {
   std::unordered_set<T> Sparql::getType(const SparqlTriplet_t<T>& triplet, const T& selector)
   {
     if(isSelectorDefined(selector) == false)
-      return onto_->individual_graph_.getType(triplet.object.value, single_same_);
+      return onto_->individuals_.getType(triplet.object.value, single_same_);
     else
     {
-      // auto types = onto_->individual_graph_.getUp(selector);
+      // auto types = onto_->individuals_.getUp(selector);
       // if(std::find(types.begin(), types.end(), triplet.object.value) != types.end())
-      if(onto_->individual_graph_.isA(selector, triplet.object.value))
+      if(onto_->individuals_.isA(selector, triplet.object.value))
         return {selector};
       else
         return std::unordered_set<T>();
@@ -358,7 +358,7 @@ namespace ontologenius {
   template<typename T>
   std::unordered_set<T> Sparql::find(const SparqlTriplet_t<T>& triplet, const T& selector)
   {
-    auto res = onto_->individual_graph_.find<T>(triplet.object.name);
+    auto res = onto_->individuals_.find<T>(triplet.object.name);
     if(isSelectorDefined(selector) == false)
       return res;
     else if(std::find(res.begin(), res.end(), selector) != res.end())
@@ -370,7 +370,7 @@ namespace ontologenius {
   template<typename T>
   std::unordered_set<std::string> Sparql::getName(const SparqlTriplet_t<T>& triplet, const std::string& selector)
   {
-    auto res = onto_->individual_graph_.getNames(triplet.subject.value);
+    auto res = onto_->individuals_.getNames(triplet.subject.value);
     if(isSelectorDefined(selector) == false)
     {
       std::unordered_set<std::string> set_res;

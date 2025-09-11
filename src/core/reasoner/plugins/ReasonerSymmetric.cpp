@@ -14,9 +14,9 @@ namespace ontologenius {
 
   void ReasonerSymmetric::postReason()
   {
-    const std::lock_guard<std::shared_timed_mutex> lock(ontology_->individual_graph_.mutex_);
+    const std::lock_guard<std::shared_timed_mutex> lock(ontology_->individuals_.mutex_);
     // not impacted by same as
-    for(const auto& indiv : ontology_->individual_graph_.get())
+    for(const auto& indiv : ontology_->individuals_.get())
     {
       if(first_run_ ||
          (indiv->isUpdated() && (indiv->same_as_.isUpdated() || indiv->object_relations_.isUpdated())) ||
@@ -31,7 +31,7 @@ namespace ontologenius {
             {
               try
               {
-                int index = ontology_->individual_graph_.addRelation(sym_indiv, sym_prop, indiv, 1.0, true, false);
+                int index = ontology_->individuals_.addRelation(sym_indiv, sym_prop, indiv, 1.0, true, false);
                 sym_indiv->object_relations_[index].explanation = {indiv->value() + "|" + sym_prop->value() + "|" + sym_indiv->value()};
                 sym_indiv->nb_updates_++;
 

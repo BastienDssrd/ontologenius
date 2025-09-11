@@ -31,6 +31,7 @@ namespace ontologenius {
 
   public:
     explicit OntoGraph(IndividualGraph* individual_graph) : individual_graph_(individual_graph) {}
+    OntoGraph(const OntoGraph<B>& other, IndividualGraph* individual_graph) : Graph<B>(other), individual_graph_(individual_graph) {}
     ~OntoGraph() override = default;
 
     template<typename T>

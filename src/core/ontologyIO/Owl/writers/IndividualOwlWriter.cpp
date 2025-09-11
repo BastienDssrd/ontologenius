@@ -8,46 +8,40 @@
 
 #include "ontologenius/core/ontoGraphs/Branchs/IndividualBranch.h"
 #include "ontologenius/core/ontoGraphs/Graphs/IndividualGraph.h"
+#include "ontologenius/core/ontologyIO/Owl/writers/GraphOwlWriter.h"
 
 namespace ontologenius {
 
   IndividualOwlWriter::IndividualOwlWriter(IndividualGraph* individual_graph,
-                                           const std::string& ns) : individual_graph_(individual_graph)
-  {
-    ns_ = ns;
-  }
+                                           FILE* file,
+                                           const std::string& ns) : GraphOwlWriter(file, ns, "owl:NamedIndividual"),
+                                                                    individual_graph_(individual_graph)
+  {}
 
-  void IndividualOwlWriter::write(FILE* file)
+  void IndividualOwlWriter::write()
   {
-    file_ = file;
-
     const std::shared_lock<std::shared_timed_mutex> lock(individual_graph_->mutex_);
 
-    const std::vector<IndividualBranch*> individuals = individual_graph_->get();
+    std::vector<IndividualBranch*> individuals = individual_graph_->get();
+    std::sort(individuals.begin(), individuals.end(),
+              [](const IndividualBranch* a, const IndividualBranch* b) {
+                return a->value() < b->value();
+              });
     for(auto* individual : individuals)
       writeIndividual(individual);
-
-    file_ = nullptr;
   }
 
-  void IndividualOwlWriter::writeGeneralAxioms(FILE* file)
+  void IndividualOwlWriter::writeGeneralAxioms()
   {
-    file_ = file;
-
     const std::shared_lock<std::shared_timed_mutex> lock(individual_graph_->mutex_);
 
     std::vector<IndividualBranch*> individuals = individual_graph_->get();
     writeDistincts(individuals);
-
-    file_ = nullptr;
   }
 
   void IndividualOwlWriter::writeIndividual(IndividualBranch* branch)
   {
-    std::string tmp = "    <!-- " + ns_ + "#" + branch->value() + " -->\n\n\
-    <owl:NamedIndividual rdf:about=\"" +
-                      ns_ + "#" + branch->value() + "\">\n";
-    writeString(tmp);
+    writeBranchStart(branch->value());
 
     writeType(branch);
     writeObjectProperties(branch);
@@ -57,38 +51,21 @@ namespace ontologenius {
     writeDictionary(branch);
     writeMutedDictionary(branch);
 
-    tmp = "    </owl:NamedIndividual>\n\n\n\n";
-    writeString(tmp);
+    writeBranchEnd();
   }
 
   void IndividualOwlWriter::writeType(IndividualBranch* branch)
   {
     for(auto& mother : branch->is_a_)
       if(mother.inferred == false)
-      {
-        const std::string proba = (mother < 1.0) ? " onto:probability=\"" + std::to_string(mother.probability) + "\"" : "";
-        const std::string tmp = "        <rdf:type" +
-                                proba +
-                                " rdf:resource=\"" + ns_ + "#" +
-                                mother.elem->value() + "\"/>\n";
-        writeString(tmp);
-      }
+        writeString("<rdf:type" + getProba(mother) + " rdf:resource=\"" + ns_ + "#" + mother.elem->value() + "\"/>\n", 2);
   }
 
   void IndividualOwlWriter::writeObjectProperties(IndividualBranch* branch)
   {
     for(const IndivObjectRelationElement& relation : branch->object_relations_)
       if(relation.inferred == false)
-      {
-        const std::string proba = (relation < 1.0) ? " onto:probability=\"" + std::to_string(relation.probability) + "\"" : "";
-        const std::string tmp = "        <onto:" +
-                                relation.first->value() +
-                                proba +
-                                " rdf:resource=\"" + ns_ + "#" +
-                                relation.second->value() +
-                                "\"/>\n";
-        writeString(tmp);
-      }
+        writeString("<onto:" + relation.first->value() + getProba(relation) + " rdf:resource=\"" + ns_ + "#" + relation.second->value() + "\"/>\n", 2);
   }
 
   void IndividualOwlWriter::writeDataProperties(IndividualBranch* branch)
@@ -96,41 +73,28 @@ namespace ontologenius {
     for(const IndivDataRelationElement& relation : branch->data_relations_)
       if(relation.inferred == false)
       {
-        const std::string proba = (relation < 1.0) ? " onto:probability=\"" + std::to_string(relation.probability) + "\"" : "";
-        const std::string tmp = "        <onto:" +
-                                relation.first->value() +
-                                proba +
-                                " rdf:datatype=\"" +
-                                relation.second->getNs() +
-                                "#" +
-                                relation.second->type_ +
-                                "\">" +
-                                relation.second->value_ +
-                                "</onto:" +
-                                relation.first->value() +
-                                ">\n";
-        writeString(tmp);
+        const std::string tmp = "<onto:" + relation.first->value() +
+                                getProba(relation) + " " + getRdfDatatype(relation.second->type_) + ">" +
+                                relation.second->data() +
+                                "</onto:" + relation.first->value() + ">\n";
+        writeString(tmp, 2);
       }
   }
   void IndividualOwlWriter::writeSameAs(IndividualBranch* branch)
   {
     for(auto& same_as : branch->same_as_)
       if(same_as.inferred == false)
-      {
-        const std::string tmp = "        <owl:sameAs rdf:resource=\"" + ns_ + "#" +
-                                same_as.elem->value() + "\"/>\n";
-        writeString(tmp);
-      }
+        writeSingleResource("owl:sameAs", same_as);
   }
 
   void IndividualOwlWriter::writeDistincts(std::vector<IndividualBranch*>& individuals)
   {
     std::vector<std::string> distincts_done;
 
-    const std::string start = "    <rdf:Description>\n\
+    const std::string start = "<rdf:Description>\n\
         <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#AllDifferent\"/>\n";
 
-    const std::string end = "    </rdf:Description>\n";
+    const std::string end = "</rdf:Description>\n";
 
     for(auto& individual : individuals)
     {
@@ -153,8 +117,8 @@ namespace ontologenius {
           }
 
           tmp += "        </owl:distinctMembers>\n";
-          writeString(start);
-          writeString(tmp);
+          writeString(start, 1);
+          writeString(tmp, 1);
           writeString(end);
         }
       }

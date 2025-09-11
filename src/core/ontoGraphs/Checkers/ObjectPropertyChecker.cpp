@@ -11,7 +11,7 @@ namespace ontologenius {
 
   size_t ObjectPropertyChecker::check()
   {
-    const std::shared_lock<std::shared_timed_mutex> lock(property_graph_->mutex_);
+    const std::shared_lock<std::shared_timed_mutex> lock(graphs_->object_properties_.mutex_);
 
     checkDisjoint();
     checkCharacteristics();
@@ -28,12 +28,12 @@ namespace ontologenius {
     for(auto* property : graph_vect_)
     {
       std::unordered_set<ObjectPropertyBranch*> up;
-      property_graph_->getUpPtr(property, up);
+      graphs_->object_properties_.getUpPtr(property, up);
 
-      auto* intersection = property_graph_->isDisjoint(up, up);
+      auto* intersection = graphs_->object_properties_.isDisjoint(up, up);
       if(intersection != nullptr)
       {
-        ObjectPropertyBranch* disjoint_with = property_graph_->firstIntersection(up, intersection->disjoints_);
+        ObjectPropertyBranch* disjoint_with = graphs_->object_properties_.firstIntersection(up, intersection->disjoints_);
 
         if(disjoint_with != nullptr)
           printError("'" + property->value() + "' can't be a '" + intersection->value() + "' and a '" + disjoint_with->value() + "' because of disjonction between properties '" + intersection->value() + "' and '" + disjoint_with->value() + "'");

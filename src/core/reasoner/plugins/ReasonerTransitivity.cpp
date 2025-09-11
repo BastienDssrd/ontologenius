@@ -19,10 +19,10 @@ namespace ontologenius {
 
   void ReasonerTransitivity::postReason()
   {
-    const std::lock_guard<std::shared_timed_mutex> lock(ontology_->individual_graph_.mutex_);
-    const std::shared_lock<std::shared_timed_mutex> lock_prop(ontology_->object_property_graph_.mutex_);
+    const std::lock_guard<std::shared_timed_mutex> lock(ontology_->individuals_.mutex_);
+    const std::shared_lock<std::shared_timed_mutex> lock_prop(ontology_->object_properties_.mutex_);
 
-    for(auto* indiv : ontology_->individual_graph_.get())
+    for(auto* indiv : ontology_->individuals_.get())
       if(first_run_ ||
          (indiv->isUpdated() && (indiv->same_as_.isUpdated() || indiv->object_relations_.isUpdated())) ||
          (indiv->flags_.find("transi") != indiv->flags_.end()) ||
@@ -39,7 +39,8 @@ namespace ontologenius {
           for(ObjectPropertyBranch* property : properties)
           {
             has_active_transitivity = true;
-            auto end_indivs = resolveChain(indiv->object_relations_[rel_i].second, property, 1);
+            std::unordered_set<IndividualBranch*> already_explored({indiv});
+            auto end_indivs = resolveChain(indiv->object_relations_[rel_i].second, property, 1, already_explored);
 
             if(end_indivs.empty() == false)
             {
@@ -49,12 +50,12 @@ namespace ontologenius {
               local_used.emplace_back(indiv->value() + "|" + base_property->value() + "|" + indiv->object_relations_[rel_i].second->value(), indiv->object_relations_.has_induced_object_relations[rel_i]);
               for(auto& used : end_indivs)
               {
-                if(ontology_->individual_graph_.relationExists(indiv, property, used.first) == false)
+                if(ontology_->individuals_.relationExists(indiv, property, used.first) == false)
                 {
                   int index = -1;
                   try
                   {
-                    index = ontology_->individual_graph_.addRelation(indiv, property, used.first, 1.0, true, false);
+                    index = ontology_->individuals_.addRelation(indiv, property, used.first, 1.0, true, false);
                     indiv->nb_updates_++;
                   }
                   catch(GraphException& e)
@@ -105,18 +106,18 @@ namespace ontologenius {
       getUpPtrTransitive(mother.elem, res);
   }
 
-  std::vector<std::pair<IndividualBranch*, UsedVector>> ReasonerTransitivity::resolveChain(IndividualBranch* indiv, ObjectPropertyBranch* property, size_t current_length)
+  std::vector<std::pair<IndividualBranch*, UsedVector>> ReasonerTransitivity::resolveChain(IndividualBranch* indiv, ObjectPropertyBranch* property, size_t current_length, std::unordered_set<IndividualBranch*>& already_explored)
   {
     std::vector<std::pair<IndividualBranch*, UsedVector>> res;
 
     if(indiv->same_as_.empty())
     {
-      resolveChain(indiv, -1, property, current_length, res);
+      resolveChain(indiv, -1, property, current_length, res, already_explored);
     }
     else
     {
       for(size_t i = 0; i < indiv->same_as_.size(); i++)
-        resolveChain(indiv, (int)i, property, current_length, res);
+        resolveChain(indiv, (int)i, property, current_length, res, already_explored);
     }
 
     if(current_length >= 2)
@@ -125,11 +126,14 @@ namespace ontologenius {
     return res;
   }
 
-  void ReasonerTransitivity::resolveChain(IndividualBranch* indiv, int same_index, ObjectPropertyBranch* property, size_t current_length, std::vector<std::pair<IndividualBranch*, UsedVector>>& res)
+  void ReasonerTransitivity::resolveChain(IndividualBranch* indiv, int same_index, ObjectPropertyBranch* property, size_t current_length, std::vector<std::pair<IndividualBranch*, UsedVector>>& res, std::unordered_set<IndividualBranch*>& already_explored)
   {
     IndividualBranch* individual = indiv;
     if(same_index != -1)
       individual = indiv->same_as_[same_index].elem;
+
+    if(already_explored.insert(individual).second == false)
+      return;
 
     for(size_t i = 0; i < individual->object_relations_.size(); i++)
     {
@@ -137,7 +141,10 @@ namespace ontologenius {
       UsedVector local_used;
       if(existInInheritance(base_property, property->get(), local_used))
       {
-        auto down_used = resolveChain(individual->object_relations_[i].second, property, current_length + 1);
+        if(individual->object_relations_[i].second == indiv)
+          continue;
+
+        auto down_used = resolveChain(individual->object_relations_[i].second, property, current_length + 1, already_explored);
         if(down_used.empty() == false)
         {
           local_used.emplace_back(individual->value() + "|" + base_property->value() + "|" + individual->object_relations_[i].second->value(), individual->object_relations_.has_induced_object_relations[i]);

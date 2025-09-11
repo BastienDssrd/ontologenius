@@ -65,6 +65,7 @@ namespace ontologenius {
       this->probability = other.probability;
       this->inferred = other.inferred;
       this->induced_traces = other.induced_traces;
+      this->used_rule = other.used_rule;
       this->explanation = other.explanation;
     }
 
@@ -76,6 +77,7 @@ namespace ontologenius {
       this->probability = other.probability;
       this->inferred = other.inferred;
       this->induced_traces = other.induced_traces;
+      this->used_rule = other.used_rule;
       this->explanation = other.explanation;
     }
 
@@ -85,6 +87,7 @@ namespace ontologenius {
       this->probability = other.probability;
       this->inferred = other.inferred;
       this->induced_traces = other.induced_traces;
+      this->used_rule = other.used_rule;
       this->explanation = other.explanation;
       return *this;
     }
@@ -122,6 +125,7 @@ namespace ontologenius {
       this->probability = other.probability;
       this->inferred = other.inferred;
       this->induced_traces = other.induced_traces;
+      this->used_rule = other.used_rule;
       this->explanation = other.explanation;
     }
 
@@ -134,6 +138,7 @@ namespace ontologenius {
       this->probability = other.probability;
       this->inferred = other.inferred;
       this->induced_traces = other.induced_traces;
+      this->used_rule = other.used_rule;
       this->explanation = other.explanation;
     }
 
@@ -146,6 +151,7 @@ namespace ontologenius {
       this->probability = other.probability;
       this->inferred = other.inferred;
       this->induced_traces = other.induced_traces;
+      this->used_rule = other.used_rule;
       this->explanation = other.explanation;
 
       return *this;

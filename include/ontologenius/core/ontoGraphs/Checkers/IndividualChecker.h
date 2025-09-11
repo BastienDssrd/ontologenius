@@ -2,22 +2,24 @@
 #define ONTOLOGENIUS_INDIVIDUALCHECKER_H
 
 #include "ontologenius/core/ontoGraphs/Checkers/ValidityChecker.h"
+#include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/IndividualGraph.h"
+#include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
 
 namespace ontologenius {
 
   class IndividualChecker : public ValidityChecker<IndividualBranch>
   {
   public:
-    explicit IndividualChecker(IndividualGraph* graph) : ValidityChecker(graph), individual_graph_(graph) {}
+    explicit IndividualChecker(IndividualGraph* graph,
+                               OntologyGraphs* all_graphs) : ValidityChecker(graph, all_graphs) {}
     ~IndividualChecker() override = default;
 
     size_t check() override;
     void printStatus() override { ValidityChecker<IndividualBranch>::printStatus("individual", "individuals", graph_vect_.size()); }
 
   private:
-    IndividualGraph* individual_graph_;
-
     void checkDisjointInheritance(IndividualBranch* indiv, const std::unordered_set<ClassBranch*>& ups);
 
     void checkDisjoint(IndividualBranch* indiv);

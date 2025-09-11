@@ -83,7 +83,7 @@ namespace ontologenius {
     InferenceRuleNode(const std::string& rule) : rule_(rule)
     {}
 
-    std::string getRule() const { return rule_; }
+    const std::string& getRule() const { return rule_; }
 
   private:
     std::string rule_;

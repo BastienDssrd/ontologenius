@@ -7,6 +7,7 @@
 
 #include "ontologenius/core/ontoGraphs/Branchs/ClassBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/IndividualBranch.h"
+#include "ontologenius/core/ontoGraphs/Branchs/LiteralNode.h"
 #include "ontologenius/core/ontoGraphs/Graphs/ClassGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/DataPropertyGraph.h"
 #include "ontologenius/core/ontoGraphs/Graphs/ObjectPropertyGraph.h"
@@ -15,12 +16,12 @@ namespace ontologenius {
 
   size_t IndividualChecker::check()
   {
-    const std::shared_lock<std::shared_timed_mutex> lock(individual_graph_->mutex_);
+    const std::shared_lock<std::shared_timed_mutex> lock(graphs_->individuals_.mutex_);
     std::unordered_set<ClassBranch*> ups;
 
     for(IndividualBranch* indiv : graph_vect_)
     {
-      individual_graph_->getUpPtr(indiv, ups);
+      graphs_->individuals_.getUpPtr(indiv, ups);
 
       checkDisjointInheritance(indiv, ups);
       checkDisjoint(indiv);
@@ -44,11 +45,11 @@ namespace ontologenius {
     ClassBranch* disjoint_with = nullptr;
     for(ClassBranch* it : ups)
     {
-      ClassBranch* tmp_intersection = individual_graph_->class_graph_->firstIntersection(ups, it->disjoints_);
+      ClassBranch* tmp_intersection = graphs_->classes_.firstIntersection(ups, it->disjoints_);
       if(tmp_intersection != nullptr)
       {
         intersection = tmp_intersection;
-        disjoint_with = individual_graph_->class_graph_->firstIntersection(ups, intersection->disjoints_);
+        disjoint_with = graphs_->classes_.firstIntersection(ups, intersection->disjoints_);
         if(disjoint_with != nullptr)
           break;
       }
@@ -68,10 +69,10 @@ namespace ontologenius {
     if(indiv->same_as_.empty() == false)
     {
       std::unordered_set<IndividualBranch*> sames;
-      individual_graph_->getSame(indiv, sames);
+      graphs_->individuals_.getSame(indiv, sames);
       for(auto& same : indiv->same_as_)
       {
-        IndividualBranch* intersection = individual_graph_->firstIntersection(sames, same.elem->distinct_);
+        IndividualBranch* intersection = graphs_->individuals_.firstIntersection(sames, same.elem->distinct_);
         if(intersection != nullptr)
         {
           if((same.elem == intersection) || (indiv == intersection))
@@ -108,11 +109,11 @@ namespace ontologenius {
     {
       std::unordered_set<ClassBranch*> domain;
       std::unordered_set<ClassBranch*> range;
-      individual_graph_->object_property_graph_->getDomainAndRangePtr(object_relation.first, domain, range, 0);
+      graphs_->object_properties_.getDomainAndRangePtr(object_relation.first, domain, range, 0);
 
       if(domain.empty() == false)
       {
-        auto intersection = individual_graph_->class_graph_->checkDomainOrRange(domain, up_from);
+        auto intersection = graphs_->classes_.checkDomainOrRange(domain, up_from);
         if(intersection.first == false)
         {
           if(intersection.second == nullptr)
@@ -128,9 +129,9 @@ namespace ontologenius {
       if(range.empty() == false)
       {
         std::unordered_set<ClassBranch*> up_on;
-        individual_graph_->getUpPtr(object_relation.second, up_on);
+        graphs_->individuals_.getUpPtr(object_relation.second, up_on);
 
-        auto intersection = individual_graph_->class_graph_->checkDomainOrRange(range, up_on);
+        auto intersection = graphs_->classes_.checkDomainOrRange(range, up_on);
         if(intersection.first == false)
         {
           if(intersection.second == nullptr)
@@ -150,11 +151,11 @@ namespace ontologenius {
     for(const IndivDataRelationElement& relation : indiv->data_relations_)
     {
       std::unordered_set<ClassBranch*> domain;
-      individual_graph_->data_property_graph_->getDomainPtr(relation.first, domain, 0);
+      graphs_->data_properties_.getDomainPtr(relation.first, domain, 0);
 
       if(domain.empty() == false)
       {
-        auto intersection = individual_graph_->class_graph_->checkDomainOrRange(domain, up_from);
+        auto intersection = graphs_->classes_.checkDomainOrRange(domain, up_from);
         if(intersection.first == false)
         {
           if(intersection.second == nullptr)
@@ -167,12 +168,13 @@ namespace ontologenius {
         }
       }
 
-      std::unordered_set<std::string> range = individual_graph_->data_property_graph_->getRange(relation.first->value());
+      std::unordered_set<LiteralType*> range;
+      graphs_->data_properties_.getRangePtr(relation.first, range);
       if(range.empty() == false)
       {
         auto intersection = range.find(relation.second->type_);
         if(intersection == range.end())
-          printError("Individual '" + relation.second->type_ + "' is not in range of '" + relation.first->value() + "'");
+          printError("Individual '" + relation.second->type_->value() + "' is not in range of '" + relation.first->value() + "'");
       }
     }
   }

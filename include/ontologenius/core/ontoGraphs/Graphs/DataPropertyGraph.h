@@ -17,7 +17,7 @@
 
 namespace ontologenius {
 
-  struct DataPropertyVectors_t
+  struct DataPropertyDescriptor_t
   {
     std::vector<SingleElement<std::string>> mothers_;
     std::vector<SingleElement<std::string>> disjoints_;
@@ -28,51 +28,33 @@ namespace ontologenius {
     std::map<std::string, std::vector<std::string>> muted_dictionary_;
     bool annotation_usage_;
 
-    DataPropertyVectors_t() : annotation_usage_(false) {}
+    DataPropertyDescriptor_t() : annotation_usage_(false) {}
   };
 
-  // for friend
-  class DataPropertyDrawer;
-  class IndividualGraph;
-  class AnonymousClassGraph;
-
-  // for graphs usage
-  class ClassGraph;
+  class OntologyGraphs;
 
   class DataPropertyGraph : public OntoGraph<DataPropertyBranch>
   {
-    friend DataPropertyDrawer;
-    friend IndividualGraph;
-    friend ClassGraph;
-    friend AnonymousClassGraph;
-
   public:
-    explicit DataPropertyGraph(IndividualGraph* individual_graph, ClassGraph* class_graph);
-    DataPropertyGraph(const DataPropertyGraph& other, IndividualGraph* individual_graph, ClassGraph* class_graph);
+    explicit DataPropertyGraph(OntologyGraphs* graphs);
+    DataPropertyGraph(const DataPropertyGraph& other, OntologyGraphs* graphs);
     ~DataPropertyGraph() override = default;
 
     void deepCopy(const DataPropertyGraph& other);
 
-    DataPropertyBranch* add(const std::string& value, DataPropertyVectors_t& property_vectors);
+    DataPropertyBranch* add(const std::string& value, DataPropertyDescriptor_t& property_descriptor);
     void add(std::vector<std::string>& disjoints);
-    bool addAnnotation(const std::string& value, DataPropertyVectors_t& property_vectors);
-    LiteralNode* createLiteral(const std::string& value);
-    LiteralNode* createLiteralUnsafe(const std::string& value);
+    bool addAnnotation(const std::string& value, DataPropertyDescriptor_t& property_descriptor);
 
     std::unordered_set<std::string> getDomain(const std::string& value, size_t depth = -1);
     std::unordered_set<index_t> getDomain(index_t value, size_t depth = -1);
     void getDomainPtr(DataPropertyBranch* branch, std::unordered_set<ClassBranch*>& res, size_t depth = -1);
     std::unordered_set<std::string> getRange(const std::string& value);
     std::unordered_set<index_t> getRange(index_t value);
-
-    index_t getLiteralIndex(const std::string& name);
-    std::vector<index_t> getLiteralIndexes(const std::vector<std::string>& names);
-    std::string getLiteralIdentifier(index_t index);
-    std::vector<std::string> getLiteralIdentifiers(const std::vector<index_t>& indexes);
+    void getRangePtr(DataPropertyBranch* branch, std::unordered_set<LiteralType*>& res);
 
   private:
-    ClassGraph* class_graph_;
-    BranchContainerSet<LiteralNode> literal_container_;
+    OntologyGraphs* graphs_;
 
     template<typename T>
     void getDomain(DataPropertyBranch* branch, size_t depth, std::unordered_set<T>& res, std::unordered_set<DataPropertyBranch*>& up_trace);

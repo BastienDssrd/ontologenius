@@ -42,6 +42,16 @@ namespace ontologenius {
 
   public:
     Graph() : language_("en") {}
+    explicit Graph(const Graph<B>& other) : language_(other.language_)
+    {
+      all_branchs_.reserve(other.all_branchs_.size());
+
+      for(auto* branch : other.all_branchs_)
+        all_branchs_.push_back(new B(branch->value(), branch->isHidden()));
+
+      container_.load(all_branchs_);
+    }
+
     virtual ~Graph()
     {
       for(auto& branch : all_branchs_)
@@ -259,7 +269,7 @@ namespace ontologenius {
       if(set.empty())
         return res;
 
-      for(auto& v : c)
+      for(const auto& v : c)
       {
         if(set.find(v.elem) != set.end())
           std::inserter(res, res.end()) = v.elem;
@@ -273,7 +283,7 @@ namespace ontologenius {
       if(set.empty())
         return nullptr;
 
-      for(auto& v : c)
+      for(const auto& v : c)
       {
         if(set.find(v.elem) != set.end())
           return v.elem;

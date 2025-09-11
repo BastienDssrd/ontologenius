@@ -5,21 +5,21 @@
 #include <string>
 #include <vector>
 
-#include "ontologenius/core/ontologyIO/Owl/writers/NodeOwlWriter.h"
+#include "ontologenius/core/ontologyIO/Owl/writers/GraphOwlWriter.h"
 
 namespace ontologenius {
 
   class IndividualGraph;
   class IndividualBranch;
 
-  class IndividualOwlWriter : public NodeOwlWriter
+  class IndividualOwlWriter : public GraphOwlWriter
   {
   public:
-    IndividualOwlWriter(IndividualGraph* individual_graph, const std::string& ns);
+    IndividualOwlWriter(IndividualGraph* individual_graph, FILE* file, const std::string& ns);
     ~IndividualOwlWriter() = default;
 
-    void write(FILE* file);
-    void writeGeneralAxioms(FILE* file);
+    void write();
+    void writeGeneralAxioms();
 
   private:
     IndividualGraph* individual_graph_;

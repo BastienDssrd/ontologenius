@@ -31,7 +31,7 @@ class ClientBase:
         """Reset Call Counter for all instances of ClientBase."""
         ClientBase._cpt = 0
 
-    def setVerbose(self, verbose):
+    def setVerbose(verbose):
         """If verbose(bool) is set to True, the clients will post messages about
            the failure to call the services and about their restoration.
         """

@@ -3,6 +3,10 @@
 
 #include "ontologenius/core/reasoner/plugins/ReasonerInterface.h"
 
+#include <unordered_set>
+#include <vector>
+#include <string>
+
 namespace ontologenius {
 
   using UsedVector = std::vector<std::pair<std::string, ObjectRelationTriplets*>>;
@@ -25,8 +29,8 @@ namespace ontologenius {
 
   private:
     void getUpPtrTransitive(ObjectPropertyBranch* branch, std::unordered_set<ObjectPropertyBranch*>& res);
-    std::vector<std::pair<IndividualBranch*, UsedVector>> resolveChain(IndividualBranch* indiv, ObjectPropertyBranch* property, size_t current_length);
-    void resolveChain(IndividualBranch* indiv, int same_index, ObjectPropertyBranch* property, size_t current_length, std::vector<std::pair<IndividualBranch*, UsedVector>>& res);
+    std::vector<std::pair<IndividualBranch*, UsedVector>> resolveChain(IndividualBranch* indiv, ObjectPropertyBranch* property, size_t current_length, std::unordered_set<IndividualBranch*>& already_explored);
+    void resolveChain(IndividualBranch* indiv, int same_index, ObjectPropertyBranch* property, size_t current_length, std::vector<std::pair<IndividualBranch*, UsedVector>>& res, std::unordered_set<IndividualBranch*>& already_explored);
 
     template<typename T>
     bool existInInheritance(T* branch, index_t selector, UsedVector& used)

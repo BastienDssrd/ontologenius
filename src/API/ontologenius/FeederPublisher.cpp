@@ -194,6 +194,35 @@ namespace onto {
       return false;
   }
 
+  bool FeederPublisher::exportToXml(const std::string& path)
+  {
+    return callNR("export", path);
+  }
+
+  std::string FeederPublisher::getCurrentCommit()
+  {
+    return callStr("currentCommit", "");
+  }
+
+  size_t FeederPublisher::getNbUncommitedData()
+  {
+    return strtoul(callStr("nbUncommitData", "").c_str(), nullptr, 0);
+  }
+
+  bool FeederPublisher::doVersioning()
+  {
+    return callStr("versioning", "") == "true";
+  }
+
+  bool FeederPublisher::compareCommits(const std::string& commit_from, const std::string& commit_to)
+  {
+    std::string param = commit_from;
+    if(commit_to.empty() == false)
+      param += " -s " + commit_to;
+
+    return callStr("compare", param) == "true";
+  }
+
   void FeederPublisher::sendNop()
   {
     publishStamped("[nop]nop|", ontologenius::compat::onto_ros::Node::get().currentTime());

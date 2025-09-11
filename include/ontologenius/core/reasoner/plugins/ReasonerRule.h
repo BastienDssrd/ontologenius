@@ -16,17 +16,17 @@ namespace ontologenius {
     }
     std::tuple<InheritedRelationTriplets*, ObjectRelationTriplets*, DataRelationTriplets*> used_triplet_;
 
-    InheritedRelationTriplets* getInheritance()
+    InheritedRelationTriplets* getInheritance() const
     {
       return std::get<0>(used_triplet_);
     }
 
-    ObjectRelationTriplets* getObject()
+    ObjectRelationTriplets* getObject() const
     {
       return std::get<1>(used_triplet_);
     }
 
-    DataRelationTriplets* getData()
+    DataRelationTriplets* getData() const
     {
       return std::get<2>(used_triplet_);
     }
@@ -57,12 +57,15 @@ namespace ontologenius {
     RuleResult_t(const std::size_t& nb_var) : assigned_result(nb_var, 0)
     {}
 
-    void insertResult(const IndivResult_t& result, const size_t& var_index)
+    void insertResult(const IndivResult_t& result, const index_t& var_index)
     {
-      if(result.indiv != nullptr)
-        assigned_result[var_index] = result.indiv->get();
-      else if(result.literal != nullptr)
-        assigned_result[var_index] = result.literal->get();
+      if(var_index != -1)
+      {
+        if(result.indiv != nullptr)
+          assigned_result[var_index] = result.indiv->get();
+        else if(result.literal != nullptr)
+          assigned_result[var_index] = result.literal->get();
+      }
 
       explanations.insert(explanations.end(), result.explanations.begin(), result.explanations.end());
 
@@ -93,10 +96,10 @@ namespace ontologenius {
 
     bool checkClassesDisjointess(IndividualBranch* indiv, ClassBranch* class_equiv);
 
-    void resolveHead(const std::vector<RuleTriplet_t>& atoms, RuleResult_t& solution, RuleBranch* rule);
-    void addInferredClassAtom(const RuleTriplet_t& triplet, RuleResult_t& solution, RuleBranch* rule);
-    void addInferredObjectAtom(const RuleTriplet_t& triplet, RuleResult_t& solution, RuleBranch* rule);
-    void addInferredDataAtom(const RuleTriplet_t& triplet, RuleResult_t& solution, RuleBranch* rule);
+    void resolveHead(const std::vector<RuleTriplet_t>& atoms, const RuleResult_t& solution, RuleBranch* rule);
+    void addInferredClassAtom(const RuleTriplet_t& triplet, const RuleResult_t& solution, RuleBranch* rule);
+    void addInferredObjectAtom(const RuleTriplet_t& triplet, const RuleResult_t& solution, RuleBranch* rule);
+    void addInferredDataAtom(const RuleTriplet_t& triplet, const RuleResult_t& solution, RuleBranch* rule);
 
     std::vector<RuleResult_t> resolveBody(RuleBranch* rule_branch, std::vector<RuleTriplet_t>& atoms, std::vector<index_t>& accu);
     void resolveAtom(RuleTriplet_t& triplet, std::vector<index_t>& accu, int64_t& var_index, std::vector<IndivResult_t>& values);
@@ -104,8 +107,8 @@ namespace ontologenius {
     void resolveObjectAtom(RuleTriplet_t& triplet, std::vector<index_t>& accu, int64_t& var_index, std::vector<IndivResult_t>& values);
     void resolveDataAtom(RuleTriplet_t& triplet, std::vector<index_t>& accu, int64_t& var_index, std::vector<IndivResult_t>& values);
     void resolveBuiltinAtom(RuleTriplet_t& triplet, std::vector<index_t>& accu, int64_t& var_index, std::vector<IndivResult_t>& values);
-    bool resolveNumericalBuiltinAtom(BuiltinType_e builtin_type, LiteralNode* subject, LiteralNode* object);
-    bool resolveStringBuiltinAtom(BuiltinType_e builtin_type, LiteralNode* subject, LiteralNode* object);
+    bool resolveNumericalBuiltinAtom(RuleBuiltinType_e builtin_type, LiteralNode* subject, LiteralNode* object);
+    bool resolveStringBuiltinAtom(RuleBuiltinType_e builtin_type, LiteralNode* subject, LiteralNode* object);
 
     void getType(ClassBranch* class_selector, std::vector<IndivResult_t>& res, const IndivResult_t& prev = IndivResult_t(), ClassBranch* main_class_predicate = nullptr);
     IndivResult_t isA(IndividualBranch* indiv, ClassBranch* class_selector);

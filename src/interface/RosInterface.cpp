@@ -13,6 +13,7 @@
 #include "ontologenius/core/subscription/SubscriptionManager.h"
 #include "ontologenius/core/utility/error_code.h"
 #include "ontologenius/graphical/Display.h"
+#include "ontologenius/interface/InterfaceParams.h"
 
 #define PUB_QUEU_SIZE 1000
 #define SUB_QUEU_SIZE 10000
@@ -129,6 +130,7 @@ namespace ontologenius {
     std::vector<compat::onto_ros::Service<compat::OntologeniusService>> str_services;
     str_services.emplace_back(getTopicName("actions"), &RosInterface::actionsHandle, this);
     str_services.emplace_back(getTopicName("reasoner"), &RosInterface::reasonerHandle, this);
+    str_services.emplace_back(getTopicName("feeder"), &RosInterface::feederHandle, this);
 
     str_services.emplace_back(getTopicName("class"), &RosInterface::classHandle, this);
     str_services.emplace_back(getTopicName("object_property"), &RosInterface::objectPropertyHandle, this);
@@ -312,6 +314,38 @@ namespace ontologenius {
     }(compat::onto_ros::getServicePointer(req), compat::onto_ros::getServicePointer(res));
   }
 
+  bool RosInterface::feederHandle(compat::onto_ros::ServiceWrapper<compat::OntologeniusService::Request>& req,
+                                  compat::onto_ros::ServiceWrapper<compat::OntologeniusService::Response>& res)
+  {
+    return [this](auto&& req, auto&& res) {
+      res->code = 0;
+
+      removeUselessSpace(req->action);
+      InterfaceParams params;
+      params.extractStringParams(req->param);
+
+      if(req->action == "export")
+        feeder_.exportToXml(params());
+      else if(req->action == "compare")
+      {
+        if(feeder_.areSameStates(params(), params.selector))
+          res->values.push_back("true");
+        else
+          res->values.push_back("false");
+      }
+      else if(req->action == "currentCommit")
+        res->values.push_back(feeder_.getCurrentCommit());
+      else if(req->action == "nbUncommitData")
+        res->values.push_back(std::to_string(feeder_.getNbUncommitedData()));
+      else if(req->action == "versioning")
+        res->values.push_back(feeder_.versioning() ? "true" : "false");
+      else
+        res->code = UNKNOW_ACTION;
+
+      return true;
+    }(compat::onto_ros::getServicePointer(req), compat::onto_ros::getServicePointer(res));
+  }
+
   bool RosInterface::conversionHandle(compat::onto_ros::ServiceWrapper<compat::OntologeniusConversion::Request>& req,
                                       compat::onto_ros::ServiceWrapper<compat::OntologeniusConversion::Response>& res)
   {
@@ -319,15 +353,15 @@ namespace ontologenius {
       if(req->values_int.empty() == false)
       {
         if(req->source == req->INDIVIDUALS)
-          res->values_str = onto_->individual_graph_.getIdentifiers(req->values_int);
+          res->values_str = onto_->individuals_.getIdentifiers(req->values_int);
         else if(req->source == req->CLASSES)
-          res->values_str = onto_->class_graph_.getIdentifiers(req->values_int);
+          res->values_str = onto_->classes_.getIdentifiers(req->values_int);
         else if(req->source == req->DATA_PROPERTIES)
-          res->values_str = onto_->data_property_graph_.getIdentifiers(req->values_int);
+          res->values_str = onto_->data_properties_.getIdentifiers(req->values_int);
         else if(req->source == req->OBJECT_PROPERTIES)
-          res->values_str = onto_->object_property_graph_.getIdentifiers(req->values_int);
+          res->values_str = onto_->object_properties_.getIdentifiers(req->values_int);
         else if(req->source == req->LITERAL)
-          res->values_str = onto_->data_property_graph_.getLiteralIdentifiers(req->values_int);
+          res->values_str = onto_->literals_.getIdentifiers(req->values_int);
         else
           return false;
       }
@@ -335,15 +369,15 @@ namespace ontologenius {
       if(req->values_str.empty() == false)
       {
         if(req->source == req->INDIVIDUALS)
-          res->values_int = onto_->individual_graph_.getIndexes(req->values_str);
+          res->values_int = onto_->individuals_.getIndexes(req->values_str);
         else if(req->source == req->CLASSES)
-          res->values_int = onto_->class_graph_.getIndexes(req->values_str);
+          res->values_int = onto_->classes_.getIndexes(req->values_str);
         else if(req->source == req->DATA_PROPERTIES)
-          res->values_int = onto_->data_property_graph_.getIndexes(req->values_str);
+          res->values_int = onto_->data_properties_.getIndexes(req->values_str);
         else if(req->source == req->OBJECT_PROPERTIES)
-          res->values_int = onto_->object_property_graph_.getIndexes(req->values_str);
+          res->values_int = onto_->object_properties_.getIndexes(req->values_str);
         else if(req->source == req->LITERAL)
-          res->values_int = onto_->data_property_graph_.getLiteralIndexes(req->values_str);
+          res->values_int = onto_->literals_.getIndexes(req->values_str);
         else
           return false;
       }

@@ -2,6 +2,7 @@ from .clients import *
 from .clientsIndex import *
 from .OntologyManipulator import OntologyManipulator
 from .OntologyManipulatorIndex import OntologyManipulatorIndex
+from .ConversionClient import ConversionClient
 
 class OntologiesManipulator(ManagerClient, object):
     """The OntologiesManipulator class allows to create and delete ontologies instances dynamically.
@@ -86,3 +87,4 @@ class OntologiesManipulator(ManagerClient, object):
         """If verbose is set to True, the clients will post messages about the failure to call the services and about their restoration."""
         ClientBase.setVerbose(verbose)
         ClientBaseIndex.setVerbose(verbose)
+        ConversionClient.setVerbose(verbose)

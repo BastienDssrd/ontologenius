@@ -9,21 +9,20 @@
 #include "ontologenius/core/ontoGraphs/Branchs/ClassBranch.h"
 #include "ontologenius/core/ontoGraphs/Branchs/RuleBranch.h"
 #include "ontologenius/core/ontoGraphs/Graphs/RuleGraph.h"
-#include "ontologenius/core/ontologyIO/Owl/writers/NodeOwlWriter.h"
+#include "ontologenius/core/ontologyIO/Owl/writers/AnonymousClassOwlWriter.h"
 
 namespace ontologenius {
 
   class RuleGraph;
   class RuleBranch;
-  class AnonymousClassElement;
 
-  class RuleOwlWriter : private NodeOwlWriter
+  class RuleOwlWriter : private AnonymousClassOwlWriter
   {
   public:
-    RuleOwlWriter(RuleGraph* rule_graph, const std::string& ns);
+    RuleOwlWriter(RuleGraph* rule_graph, FILE* file, const std::string& ns);
     ~RuleOwlWriter() = default;
 
-    void write(FILE* file);
+    void write();
 
   private:
     RuleGraph* rule_graph_;
@@ -36,23 +35,9 @@ namespace ontologenius {
     void writeObjectAtom(const RuleTriplet_t& object_atom, size_t level);
     void writeDataAtom(const RuleTriplet_t& data_atom, size_t level);
     void writeBuiltinAtom(const RuleTriplet_t& builtin_atom, size_t level);
-
-    // Anonymous classes method duplicates
-    void writeEquivalentClass(ClassBranch* branch);
-    void writeRestriction(AnonymousClassElement* ano_elem, size_t level);
-    void writeClassExpression(AnonymousClassElement* ano_elem, size_t level);
-    void writeDatatypeExpression(AnonymousClassElement* ano_elem, size_t level);
-    void writeIntersection(AnonymousClassElement* ano_elem, size_t level, bool is_data_prop = false);
-    void writeUnion(AnonymousClassElement* ano_elem, size_t level, bool is_data_prop = false);
-    void writeOneOf(AnonymousClassElement* ano_elem, size_t level);
-    void writeComplement(AnonymousClassElement* ano_elem, size_t level);
-    void writeDataComplement(AnonymousClassElement* ano_elem, size_t level);
-    void writeComplexDescription(AnonymousClassElement* ano_elem, size_t level, bool is_data_prop = false);
-    void writeCardinalityValue(AnonymousClassElement* ano_elem, size_t level);
-    void writeCardinalityRange(AnonymousClassElement* ano_elem, size_t level, bool is_data_prop);
-    void writeCardinality(AnonymousClassElement* ano_element, size_t level);
-
-    std::string getResource(AnonymousClassElement* ano_elem, const std::string& attribute_name = "rdf:resource", bool used_property = false);
+    void writeRuleBuiltinArguments(const std::vector<RuleArgument_t>& arguments, size_t index, size_t level);
+    void writeRuleArguments(const std::vector<RuleArgument_t>& arguments, size_t level);
+    std::string getArgumentString(const RuleArgument_t& arg, const std::string& key);
   };
 } // namespace ontologenius
 

@@ -16,29 +16,31 @@
 
 namespace ontologenius {
 
-  struct RuleResource_t
+  struct RuleArgument_t
   {
-    // empty constructor
-    RuleResource_t() : variable_id(-1),
+    RuleArgument_t() : variable_id(-1),
                        is_variable(false),
                        indiv_value(nullptr),
                        datatype_value(nullptr)
     {}
     // variable constructor
-    RuleResource_t(const std::string& name_value) : name(name_value),
+    RuleArgument_t(const std::string& name_value) : name(name_value),
+                                                    variable_id(-1),
                                                     is_variable(true),
                                                     indiv_value(nullptr),
                                                     datatype_value(nullptr)
     {}
     // instantiated individual variable constructor
-    RuleResource_t(IndividualBranch* indiv) : name(indiv->value()),
+    RuleArgument_t(IndividualBranch* indiv) : name(indiv->value()),
+                                              variable_id(-1),
                                               is_variable(false),
                                               indiv_value(indiv),
                                               datatype_value(nullptr)
     {}
 
     // instantiated literal variable constructor
-    RuleResource_t(LiteralNode* literal) : name(literal->toString()),
+    RuleArgument_t(LiteralNode* literal) : name(literal->value()),
+                                           variable_id(-1),
                                            is_variable(false),
                                            indiv_value(nullptr),
                                            datatype_value(literal)
@@ -49,90 +51,60 @@ namespace ontologenius {
     bool is_variable;
     IndividualBranch* indiv_value;
     LiteralNode* datatype_value;
+
+    std::string toString() const
+    {
+      return (is_variable ? "?" : "") + name;
+    }
   };
 
-  enum AtomType_e
+  enum RuleAtomType_e
   {
-    default_atom,
-    class_atom,
-    object_atom,
-    data_atom,
-    builtin_atom
+    rule_atom_class,
+    rule_atom_object,
+    rule_atom_data,
+    rule_atom_builtin,
+    rule_atom_unknown
+  };
+
+  enum RuleBuiltinType_e
+  {
+    builtin_greater_than,
+    builtin_greater_than_or_equal,
+    builtin_less_than,
+    builtin_less_than_or_equal,
+    builtin_equal,
+    builtin_not_equal,
+    builtin_unknon
   };
 
   struct RuleTriplet_t
   {
-    // empty constructor
-    RuleTriplet_t() : atom_type_(default_atom), class_predicate(nullptr), class_element(nullptr), object_predicate(nullptr), data_predicate(nullptr)
+    RuleTriplet_t() : atom_type_(rule_atom_unknown), class_predicate(nullptr), anonymous_element(nullptr), object_predicate(nullptr), data_predicate(nullptr)
     {}
 
-    // simple class triplet
-    RuleTriplet_t(ClassBranch* class_branch,
-                  RuleResource_t& resource) : atom_type_(class_atom),
-                                              subject(resource),
-                                              class_predicate(class_branch),
-                                              class_element(nullptr),
-                                              object_predicate(nullptr),
-                                              data_predicate(nullptr)
-    {}
+    RuleAtomType_e atom_type_;
 
-    // complex class triplet
-    RuleTriplet_t(ClassBranch* class_branch,
-                  AnonymousClassElement* ano_expression,
-                  RuleResource_t& resource) : atom_type_(class_atom),
-                                              subject(resource),
-                                              class_predicate(class_branch),
-                                              class_element(ano_expression),
-                                              object_predicate(nullptr),
-                                              data_predicate(nullptr)
-    {}
+    ClassBranch* class_predicate;            // set only if class atom
+    AnonymousClassBranch* anonymous_element; // used to store the anonymous class if the class expression is complex
+    ObjectPropertyBranch* object_predicate;  // set only if object atom
+    DataPropertyBranch* data_predicate;      // set only if data atom
+    RuleBuiltinType_e builtin;               // used only for builtin atoms
+    std::vector<RuleArgument_t> arguments;   // can be variables or not (?c is, pr2 isn't)
 
-    // object triplet
-    RuleTriplet_t(RuleResource_t& resource_from,
-                  ObjectPropertyBranch* property,
-                  RuleResource_t& resource_on) : atom_type_(object_atom),
-                                                 subject(resource_from),
-                                                 class_predicate(nullptr),
-                                                 class_element(nullptr),
-                                                 object_predicate(property),
-                                                 data_predicate(nullptr),
-                                                 object(resource_on)
-    {}
-
-    // data triplet
-    RuleTriplet_t(RuleResource_t& resource_from,
-                  DataPropertyBranch* property,
-                  RuleResource_t& resource_on) : atom_type_(data_atom),
-                                                 subject(resource_from),
-                                                 class_predicate(nullptr),
-                                                 class_element(nullptr),
-                                                 object_predicate(nullptr),
-                                                 data_predicate(property),
-                                                 object(resource_on)
-    {}
-
-    // builtin triplet
-    RuleTriplet_t(RuleResource_t& resource_from,
-                  Builtin_t& builtin,
-                  RuleResource_t& resource_on) : atom_type_(builtin_atom),
-                                                 subject(resource_from),
-                                                 class_predicate(nullptr),
-                                                 class_element(nullptr),
-                                                 object_predicate(nullptr),
-                                                 data_predicate(nullptr),
-                                                 builtin(builtin),
-                                                 object(resource_on)
-    {}
-
-    AtomType_e atom_type_;
-
-    RuleResource_t subject;                 // can be variable or not (?c is, pr2 isn't)
-    ClassBranch* class_predicate;           // set only if class atom
-    AnonymousClassElement* class_element;   // used to store the anonymous class if the class expression is complex
-    ObjectPropertyBranch* object_predicate; // set only if object atom
-    DataPropertyBranch* data_predicate;     // set only if data atom
-    Builtin_t builtin;                      // used only for builtin atoms
-    RuleResource_t object;                  // can be variable or not (realsense i not), uninstantiated if class atom since it doesnt have another variable
+    std::string builtinToString() const
+    {
+      switch(builtin)
+      {
+      case builtin_greater_than: return "greaterThan";
+      case builtin_greater_than_or_equal: return "greaterThanOrEqual";
+      case builtin_less_than: return "lessThan";
+      case builtin_less_than_or_equal: return "lessThanOrEqual";
+      case builtin_equal: return "equal";
+      case builtin_not_equal: return "notEqual";
+      default: return "unsupported builtin";
+      }
+    }
 
     std::string toString() const
     {
@@ -140,60 +112,23 @@ namespace ontologenius {
 
       switch(atom_type_)
       {
-      case class_atom:
-        res = class_predicate->value();
-        if(subject.is_variable == true)
-          res += "(?" + subject.name + ")";
-        else
-          res += "(" + subject.name + ")";
+      case rule_atom_class:
+        res = class_predicate->value() + "(" + arguments.at(0).toString() + ")";
         break;
-      case object_atom:
-        res = object_predicate->value();
-        if(subject.is_variable == true)
-          res += "(?" + subject.name;
-        else
-          res += "(" + subject.name;
-
-        if(object.is_variable == true)
-          res += ", ?" + object.name + ")";
-        else
-          res += ", " + object.name + ")";
+      case rule_atom_object:
+        res = object_predicate->value() + "(" + arguments.at(0).toString() + ", " + arguments.at(1).toString() + ")";
         break;
-      case data_atom:
-        res = data_predicate->value();
-
-        if(subject.is_variable == true)
-          res += "(?" + subject.name;
-        else
-          res += "(" + subject.name;
-
-        if(object.is_variable == true)
-          res += ", ?" + object.name + ")";
-        else
-          res += ", " + object.name + ")";
+      case rule_atom_data:
+        res = data_predicate->value() + "(" + arguments.at(0).toString() + ", " + arguments.at(1).toString() + ")";
         break;
-      case builtin_atom:
-        /* code */
+      case rule_atom_builtin:
+        res = builtinToString() + "(" + arguments.at(0).toString() + ", " + arguments.at(1).toString() + ")"; // should be made more generic
         break;
-
       default:
         break;
       }
       return res;
     }
-  };
-
-  struct Variable_t
-  {
-    Variable_t() : is_instantiated(false), is_datavalue(false), is_builtin_value(false), var_index(-1) {}
-
-    std::string var_name;
-    bool is_instantiated;  // for indiv
-    bool is_datavalue;     // for literal
-    bool is_builtin_value; // for builtin data
-    int64_t var_index;
-
-    std::string toString() const { return var_name; }
   };
 
   class RuleBranch : public ValuedNode,
@@ -216,9 +151,8 @@ namespace ontologenius {
     std::vector<RuleTriplet_t> rule_body_;
     std::vector<RuleTriplet_t> rule_head_;
 
-    // mapping between variables and creation of the RuleResource_t elements
+    // mapping between variables and creation of the RuleArgument_t elements
     std::unordered_map<std::string, int64_t> variables_; // mapping between var names and index
-    std::vector<std::string> to_variables_;              // mapping between index and var name
 
     std::vector<size_t> atom_initial_order_;
   };
