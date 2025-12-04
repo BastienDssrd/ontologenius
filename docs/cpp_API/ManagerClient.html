@@ -178,7 +178,7 @@
               </tr>
               <tr>
                 <td class="memItemLeft rightAlign topAlign"> std::vector&lt;std::string&gt; </td>
-                <td class="memItemRight bottomAlign"><b><a href="ManagerClient.html#getDifference">getDifference</a></b>(const std::string&amp; <i>onto_1</i>, const std::string&amp; <i>onto_2</i>, const std::string&amp; <i>concept</i>)</td>
+                <td class="memItemRight bottomAlign"><b><a href="ManagerClient.html#getDifference">getDifference</a></b>(const std::string&amp; <i>onto_1</i>, const std::string&amp; <i>onto_2</i>, const std::string&amp; <i>concept_name</i>)</td>
               </tr>
               <tr>
                 <td class="memItemLeft rightAlign topAlign"> bool </td>
@@ -228,8 +228,8 @@
           <p>Deletes the instance of the ontology named <i>name</i></p>
           <p>Returns false if the service call fails.</p>
 
-          <h3 class="fn" id="getDifference"><a name="getDifference"></a><span class="type">std::vector&lt;std::string&gt;</span> ManagerClient::<span class="name">getDifference</span>(const <span class="type">std::string</span>&amp; <i>onto_1</i>, const <span class="type">std::string</span>&amp; <i>onto_2</i>, const <span class="type">std::string</span>&amp; <i>concept</i>)</h3>
-          <p>Returns the difference of knowledge between <i>onto_1</i> and <i>onto_2</i> regarding the concept (class or individual) <i>concept</i>.</p>
+          <h3 class="fn" id="getDifference"><a name="getDifference"></a><span class="type">std::vector&lt;std::string&gt;</span> ManagerClient::<span class="name">getDifference</span>(const <span class="type">std::string</span>&amp; <i>onto_1</i>, const <span class="type">std::string</span>&amp; <i>onto_2</i>, const <span class="type">std::string</span>&amp; <i>concept_name</i>)</h3>
+          <p>Returns the difference of knowledge between <i>onto_1</i> and <i>onto_2</i> regarding the concept (class or individual) <i>concept_name</i>.</p>
           <p>The elements of the returned vector are formated as : <b>[+]concept_from|property|concept_on</b> OR <b>[-]concept_from|property|concept_on</b>. An element is positive if it is present in <i>onto_1</i> and not in <i>onto_2</i> and negative in reverse.</p>
           <p>The difference in inheritance knowledge between concepts is returned with the property <b>isA</b>.</p>
 
