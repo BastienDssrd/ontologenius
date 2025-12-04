@@ -26,7 +26,7 @@ namespace ontologenius {
   public:
     DifferenceFinder() = default;
 
-    std::vector<std::string> getDiff(Ontology* onto1, Ontology* onto2, const std::string& concept);
+    std::vector<std::string> getDiff(Ontology* onto1, Ontology* onto2, const std::string& concept_name);
 
   private:
     Comparator toComparator(IndividualBranch* indiv);

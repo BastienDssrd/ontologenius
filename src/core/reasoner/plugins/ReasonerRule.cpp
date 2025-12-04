@@ -399,11 +399,11 @@ namespace ontologenius {
     }
   }
 
-  void ReasonerRule::constructResult(const std::string& concept,
+  void ReasonerRule::constructResult(const std::string& concept_name,
                                      const RelationsWithInductions<IndividualElement>& relation,
                                      size_t index, IndivResult_t& res)
   {
-    std::string explanation = concept + "|sameAs|" + relation.at(index).elem->value();
+    std::string explanation = concept_name + "|sameAs|" + relation.at(index).elem->value();
     res.explanations.emplace_back(explanation);
 
     res.used_triplets.emplace_back(relation.has_induced_inheritance_relations[index],

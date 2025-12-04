@@ -818,9 +818,9 @@ void OntoloGUI::differenceOntologySlot()
 {
   const std::string param1 = ui_->OntologyDiffName1->text().toStdString();
   const std::string param2 = ui_->OntologyDiffName2->text().toStdString();
-  const std::string concept = ui_->OntologyDiffConcept->text().toStdString();
+  const std::string concept_name = ui_->OntologyDiffConcept->text().toStdString();
 
-  auto diff = ontos_.getDifference(param1, param2, concept);
+  auto diff = ontos_.getDifference(param1, param2, concept_name);
   const int err = ontos_.getErrorCode();
 
   if(err == -1)
@@ -925,7 +925,7 @@ void OntoloGUI::feederGetNbUncommitSlot()
     ui_->ResultArea->setText(QString::fromStdString(std::to_string(nb)));
   }
   else
-    displayErrorInfo("This instance has no versionning activated."); 
+    displayErrorInfo("This instance has no versionning activated.");
 }
 
 bool OntoloGUI::updateOntoPtr()
