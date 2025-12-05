@@ -186,7 +186,7 @@
               </tr>
               <tr>
                 <td class="memItemLeft rightAlign topAlign"> std::vector&lt;int64_t&gt; </td>
-                <td class="memItemRight bottomAlign"><b><a href="IndividualIndexClient.html#getRelatedWith">getRelatedWith</a></b>(int64_t <i>index</i>)</td>
+                <td class="memItemRight bottomAlign"><b><a href="IndividualIndexClient.html#getRelatedWith">getRelatedWith</a></b>(int64_t <i>index</i>, int64_t <i>selector</i> = 0)</td>
               </tr>
               <tr>
                 <td class="memItemLeft rightAlign topAlign"> std::vector&lt;int64_t&gt; </td>
@@ -198,7 +198,7 @@
               </tr>
               <tr>
                 <td class="memItemLeft rightAlign topAlign"> std::vector&lt;int64_t&gt; </td>
-                <td class="memItemRight bottomAlign"><b><a href="IndividualIndexClient.html#getRelationWith">getRelationWith</a></b>(int64_t <i>index</i>)</td>
+                <td class="memItemRight bottomAlign"><b><a href="IndividualIndexClient.html#getRelationWith">getRelationWith</a></b>(int64_t <i>index</i>, int64_t <i>selector</i> = 0)</td>
               </tr>
               <tr>
                 <td class="memItemLeft rightAlign topAlign"> std::vector&lt;int64_t&gt; </td>
@@ -267,15 +267,15 @@
 
           <h3 class="fn" id="getOn"><a name="getOn"></a><span class="type">std::vector&lt;int64_t&gt;</span> IndividualIndexClient::<span class="name">getOn</span>(<span class="type">int64_t</span> <i>index</i>, <span class="type">int64_t</span> <span class="type"></span> <i>property</i>, <span class="type">int64_t</span> <i>selector</i> = 0)</h3>
           <p>Gives all the individuals pointed by the property <i>property</i> and applied to the individual <i>index</i>.</p>
-          <p>The optional <i>selector</i> parameter can be set to only get results inheriting from the <i>selector</i> class. The default value &quot;&quot; represents no restriction on the result.</p>
+          <p>The optional <i>selector</i> parameter can be set to only get results inheriting from the <i>selector</i> class. The default value 0 represents no restriction on the result.</p>
 
           <h3 class="fn" id="getFrom"><a name="getFrom"></a><span class="type">std::vector&lt;int64_t&gt;</span> IndividualIndexClient::<span class="name">getFrom</span>(<span class="type">int64_t</span> <i>property</i>, <span class="type">int64_t</span> <i>index</i>, <span class="type">int64_t</span> <i>selector</i> = 0)</h3>
           <p>Gives all the individuals having the given property <i>property</i> and pointing to the individual <i>index</i>.</p>
-          <p>The optional <i>selector</i> parameter can be set to only get results inheriting from the <i>selector</i> class. The default value &quot;&quot; represents no restriction on the result.</p>
+          <p>The optional <i>selector</i> parameter can be set to only get results inheriting from the <i>selector</i> class. The default value 0 represents no restriction on the result.</p>
 
           <h3 class="fn" id="getWith"><a name="getWith"></a><span class="type">std::vector&lt;int64_t&gt;</span> IndividualIndexClient::<span class="name">getWith</span>(<span class="type">int64_t</span> <i>index_from</i>, <span class="type">int64_t</span> <i>index_to</i>, <span class="type">int64_t</span> <i>selector</i> = 0, <span class="type">int</span> <i>depth</i> = -1)</h3>
           <p>Gives all the properties linking the individual <i>index_from</i> to the individual <i>index_to</i>.</p>
-          <p>The optional <i>selector</i> parameter can be set to only get results inheriting from the <i>selector</i> property. The default value &quot;&quot; represents no restriction on the result.</p>
+          <p>The optional <i>selector</i> parameter can be set to only get results inheriting from the <i>selector</i> property. The default value 0 represents no restriction on the result.</p>
           <p>The optional <i>depth</i> parameter can be set to limit tree propagation to a specific value. The default value -1 represents no propagation limitation.</p>
 
           <h3 class="fn" id="getRelatedFrom"><a name="getRelatedFrom"></a><span class="type">std::vector&lt;int64_t&gt;</span> IndividualIndexClient::<span class="name">getRelatedFrom</span>(<span class="type">int64_t</span> <i>property</i>)</h3>
@@ -284,8 +284,9 @@
           <h3 class="fn" id="getRelatedOn"><a name="getRelatedOn"></a><span class="type">std::vector&lt;int64_t&gt;</span> IndividualIndexClient::<span class="name">getRelatedOn</span>(<span class="type">int64_t</span> <i>property</i>)</h3>
           <p>Gives all the individuals pointed to by the property <i>property</i>.</p>
 
-          <h3 class="fn" id="getRelatedWith"><a name="getRelatedWith"></a><span class="type">std::vector&lt;int64_t&gt;</span> IndividualIndexClient::<span class="name">getRelatedWith</span>(<span class="type">int64_t</span> <i>index</i>)</h3>
+          <h3 class="fn" id="getRelatedWith"><a name="getRelatedWith"></a><span class="type">std::vector&lt;int64_t&gt;</span> IndividualIndexClient::<span class="name">getRelatedWith</span>(<span class="type">int64_t</span> <i>index</i>, <span class="type">int64_t</span> <i>selector</i> = 0)</h3>
           <p>Gives all the individuals having a property pointing to the individual <i>index</i>.</p>
+          <p>The optional <i>selector</i> parameter can be set to only get results inheriting from the <i>selector</i> class. The default value 0 represents no restriction on the result.</p>
 
           <h3 class="fn" id="getRelationFrom"><a name="getRelationFrom"></a><span class="type">std::vector&lt;int64_t&gt;</span> IndividualIndexClient::<span class="name">getRelationFrom</span>(<span class="type">int64_t</span> <i>index</i>, <span class="type">int</span> <i>depth</i> = -1)</h3>
           <p>Gives all the properties applied to the individual <i>index</i>.</p>
@@ -295,17 +296,18 @@
           <p>Gives all the properties going to the individual <i>index</i>.</p>
           <p>The optional <i>depth</i> parameter can be set to limit tree propagation to a specific value. The default value -1 represents no propagation limitation.</p>
 
-          <h3 class="fn" id="getRelationWith"><a name="getRelationWith"></a><span class="type">std::vector&lt;int64_t&gt;</span> IndividualIndexClient::<span class="name">getRelationWith</span>(<span class="type">int64_t</span> <i>index</i>)</h3>
+          <h3 class="fn" id="getRelationWith"><a name="getRelationWith"></a><span class="type">std::vector&lt;int64_t&gt;</span> IndividualIndexClient::<span class="name">getRelationWith</span>(<span class="type">int64_t</span> <i>index</i>, <span class="type">int64_t</span> <i>selector</i> = 0)</h3>
           <p>Gives all the individuals pointed by a property applied to the individual <i>name</i>.</p>
+          <p>The optional <i>selector</i> parameter can be set to only get results inheriting from the <i>selector</i> class. The default value 0 represents no restriction on the result.</p>
 
           <h3 class="fn" id="getDomainOf"><a name="getDomainOf"></a><span class="type">std::vector&lt;int64_t&gt;</span> IndividualIndexClient::<span class="name">getDomainOf</span>(<span class="type">int64_t</span> <i>index</i>, <span class="type">int64_t</span> <i>selector</i> = 0, <span class="type">int</span> <i>depth</i> = -1)</h3>
           <p>Gives all the properties for which the individual <i>index</i> is part of the domain.</p>
-          <p>The optional <i>selector</i> parameter can be set to only get results inheriting from the <i>selector</i> property. The default value &quot;&quot; represents no restriction on the result.</p>
+          <p>The optional <i>selector</i> parameter can be set to only get results inheriting from the <i>selector</i> property. The default value 0 represents no restriction on the result.</p>
           <p>The optional <i>depth</i> parameter can be set to limit tree propagation of the individual to a specific value. The default value -1 represents no propagation limitation.</p>
 
           <h3 class="fn" id="getRangeOf"><a name="getRangeOf"></a><span class="type">std::vector&lt;int64_t&gt;</span> IndividualIndexClient::<span class="name">getRangeOf</span>(<span class="type">int64_t</span> <i>index</i>, <span class="type">int64_t</span> <i>selector</i> = 0, <span class="type">int</span> <i>depth</i> = -1)</h3>
           <p>Gives all the properties for which the individual <i>index</i> is part of the range.</p>
-          <p>The optional <i>selector</i> parameter can be set to only get results inheriting from the <i>selector</i> property. The default value &quot;&quot; represents no restriction on the result.</p>
+          <p>The optional <i>selector</i> parameter can be set to only get results inheriting from the <i>selector</i> property. The default value 0 represents no restriction on the result.</p>
           <p>The optional <i>depth</i> parameter can be set to limit tree propagation of the individual to a specific value. The default value -1 represents no propagation limitation.</p>
 
           <h3 class="fn" id="isInferred"><a name="isInferred"></a><span class="type">bool</span> IndividualIndexClient::<span class="name">isInferred</span>(<span class="type">int64_t</span> <i>subject</i>, <span class="type">int64_t</span> <i>property</i>, <span class="type">int64_t</span> <i>object</i>)</h3>

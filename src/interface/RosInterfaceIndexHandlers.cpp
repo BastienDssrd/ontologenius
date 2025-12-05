@@ -373,8 +373,9 @@ namespace ontologenius {
           else if((req->action == "getRelationFrom") || (req->action == "getRelationOn") || (req->action == "getWith") ||
                   (req->action == "getDomainOf") || (req->action == "getRangeOf"))
             set_res_index = onto_->object_properties_.select(set_res_index, params.selector_index);
-          else if((req->action != "find") || (req->action != "findRegex") || (req->action != "findSub") ||
-                  (req->action != "getFrom") || (req->action != "getOn"))
+          else if((req->action != "find") || (req->action != "findRegex") || (req->action != "findSub") || (req->action != "findFuzzy") ||
+                  (req->action != "getFrom") || (req->action != "getOn") ||
+                  (req->action != "getRelationWith") || (req->action != "getRelatedWith"))
             set_res_index = onto_->individuals_.select(set_res_index, params.selector_index);
         }
 
