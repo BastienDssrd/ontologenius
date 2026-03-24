@@ -97,6 +97,7 @@ namespace ontologenius {
     inline void push(std::vector<bool>& vect, bool elem, const std::string& symbole = "");
     void push(Properties_t& properties, tinyxml2::XMLElement* sub_elem, const std::string& symbole = "", const std::string& attribute = "rdf:resource");
     void pushLang(std::map<std::string, std::vector<std::string>>& dictionary, tinyxml2::XMLElement* sub_elem);
+    void pushComment(std::map<std::string, std::vector<std::string>>& dictionary, tinyxml2::XMLElement* sub_elem);
     inline std::string getName(const std::string& uri);
     inline float getProbability(tinyxml2::XMLElement* elem);
     inline std::string getAttribute(tinyxml2::XMLElement* elem, const std::string& attribute);

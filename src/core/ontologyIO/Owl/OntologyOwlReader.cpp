@@ -225,6 +225,8 @@ namespace ontologenius {
           pushLang(class_descriptor.dictionary_, sub_elem);
         else if(sub_elem_name == "onto:label")
           pushLang(class_descriptor.muted_dictionary_, sub_elem);
+        else if(sub_elem_name == "rdfs:comment")
+          pushComment(class_descriptor.comments_, sub_elem);
         else if(sub_elem_name == "owl:equivalentClass")
           anonymous_descriptor.expression_members.emplace_back(readEquivalentClass(sub_elem));
         else
@@ -281,6 +283,8 @@ namespace ontologenius {
           pushLang(individual_descriptor.dictionary_, sub_elem);
         else if(sub_elem_name == "onto:label")
           pushLang(individual_descriptor.muted_dictionary_, sub_elem);
+        else if(sub_elem_name == "rdfs:comment")
+          pushComment(individual_descriptor.comments_, sub_elem);
         else
         {
           const std::string ns = sub_elem_name.substr(0, sub_elem_name.find(':'));
@@ -413,6 +417,8 @@ namespace ontologenius {
           pushLang(property_vector.dictionary_, sub_elem);
         else if(sub_elem_name == "onto:label")
           pushLang(property_vector.muted_dictionary_, sub_elem);
+        else if(sub_elem_name == "rdfs:comment")
+          pushComment(property_vector.comments_, sub_elem);
         else if(sub_elem_name == "owl:propertyChainAxiom")
         {
           std::vector<std::string> tmp;
@@ -454,6 +460,8 @@ namespace ontologenius {
           pushLang(property_vector.dictionary_, sub_elem);
         else if(sub_elem_name == "onto:label")
           pushLang(property_vector.muted_dictionary_, sub_elem);
+        else if(sub_elem_name == "rdfs:comment")
+          pushComment(property_vector.comments_, sub_elem);
       }
     }
 
@@ -598,6 +606,23 @@ namespace ontologenius {
 
         if((lang.empty() == false) && (std::string(value).empty() == false) && display_)
           std::cout << "│   │   ├── " << "@" << lang << " : " << dictionary[lang][dictionary[lang].size() - 1] << std::endl;
+      }
+    }
+  }
+
+  void OntologyOwlReader::pushComment(std::map<std::string, std::vector<std::string>>& dict_comment, tinyxml2::XMLElement* sub_elem)
+  {
+    const char* sub_attr = sub_elem->Attribute("xml:lang");
+    if(sub_attr != nullptr)
+    {
+      const std::string lang = std::string(sub_attr);
+
+      const char* value = sub_elem->GetText();
+      if(value != nullptr)
+      {
+        dict_comment[lang].emplace_back(value);
+        if((lang.empty() == false) && (std::string(value).empty() == false) && display_)
+          std::cout << "│   │   ├── " << "#" << lang << " : " << dict_comment[lang][dict_comment[lang].size() - 1] << std::endl;
       }
     }
   }
