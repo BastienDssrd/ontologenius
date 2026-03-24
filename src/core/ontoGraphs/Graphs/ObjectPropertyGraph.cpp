@@ -127,6 +127,11 @@ namespace ontologenius {
       me->str_chains_.push_back(chain_i);
     }
 
+    /**********************
+    ** Comment
+    **********************/
+    me->setCommentDictionary(property_descriptor.comments_);
+
     mitigate(me);
     return me;
   }
@@ -426,6 +431,7 @@ namespace ontologenius {
 
     new_branch->dictionary_ = old_branch->dictionary_;
     new_branch->steady_dictionary_ = old_branch->steady_dictionary_;
+    new_branch->comment_dictionary_= old_branch->comment_dictionary_;
 
     for(const auto& child : old_branch->childs_)
       new_branch->childs_.emplace_back(child, container_.find(child.elem->value()));

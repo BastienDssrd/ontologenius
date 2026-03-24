@@ -44,6 +44,9 @@ namespace ontologenius {
     RuleBranch* rule_branch = new RuleBranch(rule_name, rule.rule_str);
     all_branchs_.push_back(rule_branch);
 
+    // add comment
+    rule_branch->setCommentDictionary(rule.comments_);
+
     size_t elem_id = 0;
 
     for(const auto& atom : rule.antecedents)
@@ -157,6 +160,8 @@ namespace ontologenius {
     new_branch->nb_updates_ = old_branch->nb_updates_;
     new_branch->setUpdated(old_branch->isUpdated());
     new_branch->flags_ = old_branch->flags_;
+
+    new_branch->comment_dictionary_= old_branch->comment_dictionary_;
 
     // addon
     new_branch->involves_class = old_branch->involves_class;

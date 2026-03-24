@@ -97,6 +97,11 @@ namespace ontologenius {
     me->setSteadyDictionary(individual_descriptor.dictionary_);
     me->setSteadyMutedDictionary(individual_descriptor.muted_dictionary_);
 
+    /**********************
+    ** Comment
+    **********************/
+    me->setCommentDictionary(individual_descriptor.comments_);
+
     return me;
   }
 
@@ -2633,6 +2638,7 @@ namespace ontologenius {
 
     new_branch->dictionary_ = old_branch->dictionary_;
     new_branch->steady_dictionary_ = old_branch->steady_dictionary_;
+    new_branch->comment_dictionary_= old_branch->comment_dictionary_;
 
     for(const auto& is_a : old_branch->is_a_)
     {
