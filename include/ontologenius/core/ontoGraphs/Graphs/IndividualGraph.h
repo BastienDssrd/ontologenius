@@ -30,6 +30,7 @@ namespace ontologenius {
     // TODO : add vector distinct
     std::map<std::string, std::vector<std::string>> dictionary_;
     std::map<std::string, std::vector<std::string>> muted_dictionary_;
+    std::map<std::string, std::vector<std::string>> comments_;
   };
 
   class OntologyGraphs;

@@ -23,6 +23,7 @@ namespace ontologenius {
     std::vector<PairElement<std::string, std::string>> object_relations_;
     std::vector<PairElement<std::string, std::string>> data_relations_;
     std::vector<std::string> equivalences_;
+    std::map<std::string, std::vector<std::string>> comments_;
   };
 
   class OntologyGraphs;
