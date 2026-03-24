@@ -610,7 +610,7 @@ namespace ontologenius {
     }
   }
 
-  void OntologyOwlReader::pushComment(std::map<std::string, std::vector<std::string>>& dict_comment, tinyxml2::XMLElement* sub_elem)
+  void OntologyOwlReader::pushComment(std::map<std::string, std::vector<std::string>>& dictionary, tinyxml2::XMLElement* sub_elem)
   {
     const char* sub_attr = sub_elem->Attribute("xml:lang");
     if(sub_attr != nullptr)
@@ -620,9 +620,9 @@ namespace ontologenius {
       const char* value = sub_elem->GetText();
       if(value != nullptr)
       {
-        dict_comment[lang].emplace_back(value);
+        dictionary[lang].emplace_back(value);
         if((lang.empty() == false) && (std::string(value).empty() == false) && display_)
-          std::cout << "│   │   ├── " << "#" << lang << " : " << dict_comment[lang][dict_comment[lang].size() - 1] << std::endl;
+          std::cout << "│   │   ├── " << "#" << lang << " : " << dictionary[lang][dictionary[lang].size() - 1] << std::endl;
       }
     }
   }
