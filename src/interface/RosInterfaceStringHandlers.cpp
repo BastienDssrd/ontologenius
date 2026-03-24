@@ -88,6 +88,8 @@ namespace ontologenius {
         }
         else if(req->action == "getAll")
           res->values = onto_->classes_.getAll();
+        else if(req->action == "getComments")
+          res->values = onto_->classes_.getComments(params(), params.take_id);
         else
           res->code = UNKNOW_ACTION;
 
@@ -172,6 +174,8 @@ namespace ontologenius {
         }
         else if(req->action == "getAll")
           res->values = onto_->object_properties_.getAll();
+        else if(req->action == "getComments")
+          res->values = onto_->object_properties_.getComments(params(), params.take_id);
         else
           res->code = UNKNOW_ACTION;
 
@@ -252,6 +256,8 @@ namespace ontologenius {
         }
         else if(req->action == "getAll")
           res->values = onto_->data_properties_.getAll();
+        else if(req->action == "getComments")
+          res->values = onto_->data_properties_.getComments(params(), params.take_id);
         else
           res->code = UNKNOW_ACTION;
 
@@ -362,6 +368,8 @@ namespace ontologenius {
           res->values = onto_->individuals_.getInferenceExplanation(params());
         else if(req->action == "getInferenceRule")
           res->values = {onto_->individuals_.getInferenceRule(params())};
+        else if(req->action == "getComments")
+          res->values = onto_->individuals_.getComments(params(), params.take_id);
         else
           res->code = UNKNOW_ACTION;
 

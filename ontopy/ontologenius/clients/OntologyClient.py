@@ -139,3 +139,11 @@ class OntologyClient(ClientBase):
            managed by the client (i.e. class, individuals, object properties, data properties).
         """
         return self.callStr("exist", name) != ''
+    
+    def getComments(self, name, take_id = True):
+        """Gives the comments associated to the concept name(str).
+        """
+        param = name
+        if take_id == False:
+            param += " -i false"
+        return self.call("getComments", param)

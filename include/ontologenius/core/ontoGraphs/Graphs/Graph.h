@@ -106,6 +106,8 @@ namespace ontologenius {
     template<typename T>
     std::unordered_set<T> findRegex(const std::string& regex, bool use_default = true);
     std::unordered_set<std::string> findFuzzy(const std::string& value, bool use_default = true, double threshold = 0.5);
+    template<typename T>
+    std::vector<std::string> getComments(const T& value, bool use_default = true);
 
     BranchContainerSet<B> container_;
     std::vector<B*> all_branchs_;
@@ -730,6 +732,24 @@ namespace ontologenius {
     return res;
   }
 
+  template<typename B>
+  template<typename T>
+  std::vector<std::string> Graph<B>::getComments(const T& value, bool use_default)
+  {
+    std::shared_lock<std::shared_timed_mutex> lock(mutex_);
+    B* branch = findBranch(value);
+
+    std::vector<std::string> res;
+    if(branch != nullptr)
+    {
+      if(branch->comment_dictionary_.spoken_.find(language_) != branch->comment_dictionary_.spoken_.end())
+        res = branch->comment_dictionary_.spoken_[language_];
+      else if(use_default)
+        res.push_back(branch->value());
+    }
+
+    return res;
+  }
 } // namespace ontologenius
 
 #endif // ONTOLOGENIUS_GRAPH_H
