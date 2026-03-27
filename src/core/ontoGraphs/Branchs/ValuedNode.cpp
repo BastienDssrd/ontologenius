@@ -72,7 +72,7 @@ namespace ontologenius {
     {
       auto lang = lang_comment.first;
       for(const auto& comment : lang_comment.second)
-        conditionalPushBack(comment_dictionary_.spoken_[lang], comment);
+        conditionalPushBack(comments_[lang], comment);
     }
   }
 

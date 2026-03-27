@@ -605,7 +605,7 @@ namespace ontologenius {
         dictionary[lang].emplace_back(value);
 
         if((lang.empty() == false) && (std::string(value).empty() == false) && display_)
-          std::cout << "│   │   ├── " << "@" << lang << " : " << dictionary[lang][dictionary[lang].size() - 1] << std::endl;
+          std::cout << "│   │   ├── " << "@" << lang << " : " << dictionary[lang].back() << std::endl;
       }
     }
   }
@@ -622,7 +622,7 @@ namespace ontologenius {
       {
         dictionary[lang].emplace_back(value);
         if((lang.empty() == false) && (std::string(value).empty() == false) && display_)
-          std::cout << "│   │   ├── " << "#" << lang << " : " << dictionary[lang][dictionary[lang].size() - 1] << std::endl;
+          std::cout << "│   │   ├── " << "#" << lang << " : " << dictionary[lang].back() << std::endl;
       }
     }
   }

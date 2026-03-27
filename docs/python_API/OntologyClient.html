@@ -192,6 +192,10 @@
                 <td class="memItemRight bottomAlign"><b><a href="OntologyClient.html#findFuzzy">findFuzzy</a></b>(self, name, threshold = 0.5, take_id = True, selector = '')</td>
               </tr>
               <tr>
+                <td class="memItemLeft rightAlign topAlign"> str[] </td>
+                <td class="memItemRight bottomAlign"><b><a href="OntologyClient.html#getComments">getComments</a></b>(self, name)</td>
+              </tr>
+              <tr>
                 <td class="memItemLeft rightAlign topAlign"> bool </td>
                 <td class="memItemRight bottomAlign"><b><a href="OntologyClient.html#exist">exist</a></b>(self, name)</td>
               </tr>
@@ -257,17 +261,21 @@
           <p>The result of this function depends on the setting of the working language.</p>
 
           <h3 class="fn" id="findRegex"><a name="findRegex"></a><span class="name">findRegex</span>(self, name, take_id = True, selector = '')</h3>
-          <p>Give all concepts (str[]) with a label matching the regular expression <i>regex</i>(str).</p>
+          <p>Gives all concepts (str[]) with a label matching the regular expression <i>regex</i>(str).</p>
           <p>The default <i>take_id</i>(bool) argument can be set to false if you do not want to consider the concept identifier as a possible default name.</p>
           <p>The optional <i>selector</i>(str) parameter can be set to only get results inheriting from the <i>selector</i>(str) concept. The default value '' represents no restriction on the result.</p>
           <p>The result of this function depends on the setting of the working language.</p>
 
           <h3 class="fn" id="findFuzzy"><a name="findFuzzy"></a><span class="name">findFuzzy</span>(self, name, threshold = 0.5, take_id = True, selector = '')</h3>
-          <p>Give all the names of concepts (str[]) with the lowest edit distance with parameter <i>name</i>(str).</p>
+          <p>Gives all the names of concepts (str[]) with the lowest edit distance with parameter <i>name</i>(str).</p>
           <p>The default <i>take_id</i>(bool) argument can be set to false if you do not want to consider the concept identifier as a possible default name.</p>
           <p>The optional <i>selector</i>(str) parameter can be set to only get results inheriting from the <i>selector</i>(str) concept. The default value '' represents no restriction on the result.</p>
           <p>The result of this function depends on the setting of the working language and does not correspond to the concept identifiers but to other labels known by ontologenius.</p>
           <p>The minimum editing distance can be set with the <i>threshold</i>(double) parameter. This value corresponds to the number of changes to be made to pass from one word to another divided by the length of the comparison word.</p>
+
+          <h3 class="fn" id="getComments"><a name="getComments"></a><span class="name">getComments</span>(self, name)</h3>
+          <p>Gives the comments (str[]) associated to the concept referenced by the provided parameter <i>name</i>(str) (i.e. class, individual, object property, data property).</p>
+          <p>The result of this function depends on the setting of the working language.</p>
 
           <h3 class="fn" id="exist"><a name="exist"></a><span class="name">exist</span>(self, name)</h3>
           <p>Returns True if the concept <i>name</i>(str) exists in the subpart of the ontology managed by the client (i.e. class, individuals, object properties, data properties).</p>

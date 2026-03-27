@@ -18,7 +18,8 @@ namespace ontologenius {
 
     // read comment
     auto* rule_comment = elem->FirstChildElement("rdfs:comment");
-    pushComment(rule.comments_, rule_comment);
+    if(rule_comment != nullptr)
+      pushComment(rule.comments_, rule_comment);
 
     // read body
     auto* rule_body = elem->FirstChildElement("swrl:body");

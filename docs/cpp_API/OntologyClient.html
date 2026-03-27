@@ -195,6 +195,10 @@
                 <td class="memItemRight bottomAlign"><b><a href="OntologyClient.html#findFuzzy">findFuzzy</a></b>(const std::string&amp; <i>name</i>, double <i>threshold</i> = 0.5, bool <i>take_id</i> = true, const std::string&amp; <i>selector</i> = &quot;&quot;)</td>
               </tr>
               <tr>
+                <td class="memItemLeft rightAlign topAlign"> std::vector&lt;std::string&gt; </td>
+                <td class="memItemRight bottomAlign"><b><a href="OntologyClient.html#getComments">getComments</a></b>(const std::string&amp; <i>name</i>)</td>
+              </tr>
+              <tr>
                 <td class="memItemLeft rightAlign topAlign"> bool </td>
                 <td class="memItemRight bottomAlign"><b><a href="OntologyClient.html#exist">exist</a></b>(const std::string&amp; <i>name</i>)</td>
               </tr>
@@ -271,6 +275,10 @@
           <p>The optional <i>selector</i> parameter can be set to only get results inheriting from the <i>selector</i> concept. The default value &quot;&quot; represents no restriction on the result.</p>
           <p>The result of this function depends on the setting of the working language and does not correspond to the concept identifiers but to other labels known by ontologenius.</p>
           <p>The minimum editing distance can be set with the <i>threshold</i> parameter. This value corresponds to the number of changes to be made to pass from one word to another divided by the length of the comparison word.</p>
+
+          <h3 class="fn" id="getComments"><a name="getComments"></a><span class="type">std::vector&lt;std::string&gt;</span> OntologyClient::<span class="name">getComments</span>(const <span class="type">std::string</span>&amp; <i>name</i>)</h3>
+          <p>Gives the comments associated to the concept referenced by the provided parameter <i>name</i> (i.e. class, individual, object property, data property).</p>
+          <p>The result of this function depends on the setting of the working language.</p>
 
           <h3 class="fn" id="exist"><a name="exist"></a><span class="type">bool</span> OntologyClient::<span class="name">exist</span>(const <span class="type">std::string</span>&amp; <i>name</i>)</h3>
           <p>Returns true if the concept <i>name</i> exists in the subpart of the ontology managed by the client (i.e. class, individuals, object properties, data properties).</p>

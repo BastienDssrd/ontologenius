@@ -57,7 +57,7 @@ elseif($ENV{ROS_VERSION} STREQUAL "2")
   find_package(rosidl_default_generators REQUIRED)
   find_package(rclcpp REQUIRED)
   find_package(ament_cmake_python REQUIRED)
-  find_package(launch_testing_ament_cmake REQUIRED) 
+  find_package(launch_testing_ament_cmake REQUIRED)
   find_package(std_msgs REQUIRED)
 
   # install(PROGRAMS
@@ -203,6 +203,7 @@ target_link_libraries(ontologenius_OntologyIO_lib
   ontologenius_Graphs_lib
   PRIVATE
   ${TINYXML2_LIBRARIES}
+  PkgConfig::CURL
 )
 
 add_onto_library(ontologenius_ontoGraphs_lib
@@ -213,8 +214,6 @@ target_link_libraries(ontologenius_ontoGraphs_lib
   ontologenius_Graphs_lib
   ontologenius_Checkers_lib
   ontologenius_OntologyIO_lib
-  PRIVATE
-  PkgConfig::CURL
 )
 
 add_onto_library(ontologenius_feeder_lib

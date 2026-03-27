@@ -161,7 +161,7 @@ namespace ontologenius {
     new_branch->setUpdated(old_branch->isUpdated());
     new_branch->flags_ = old_branch->flags_;
 
-    new_branch->comment_dictionary_= old_branch->comment_dictionary_;
+    new_branch->comments_ = old_branch->comments_;
 
     // addon
     new_branch->involves_class = old_branch->involves_class;

@@ -74,7 +74,7 @@ namespace ontologenius {
 
   void GraphOwlWriter::writeCommentDictionary(ValuedNode* node) const
   {
-    for(const auto& it : node->comment_dictionary_.spoken_)
+    for(const auto& it : node->comments_)
     {
       for(const auto& label : it.second)
       {

@@ -272,7 +272,7 @@ namespace ontologenius {
 
     new_branch->dictionary_ = old_branch->dictionary_;
     new_branch->steady_dictionary_ = old_branch->steady_dictionary_;
-    new_branch->comment_dictionary_= old_branch->comment_dictionary_;
+    new_branch->comments_ = old_branch->comments_;
 
     for(const auto& child : old_branch->childs_)
       new_branch->childs_.emplace_back(child, container_.find(child.elem->value()));

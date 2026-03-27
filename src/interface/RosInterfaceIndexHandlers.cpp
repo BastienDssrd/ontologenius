@@ -82,6 +82,8 @@ namespace ontologenius {
           else
             set2vector(onto_->classes_.findFuzzy(params(), params.take_id), res->string_values);
         }
+        else if(req->action == "getComments")
+          res->string_values = onto_->classes_.getComments(params.main_index);
         else if(req->action == "exist")
         {
           if(onto_->classes_.touch(params.main_index))
@@ -166,6 +168,8 @@ namespace ontologenius {
           else
             set2vector(onto_->object_properties_.findFuzzy(params(), params.take_id), res->string_values);
         }
+        else if(req->action == "getComments")
+          res->string_values = onto_->object_properties_.getComments(params.main_index);
         else if(req->action == "exist")
         {
           if(onto_->object_properties_.touch(params.main_index))
@@ -246,6 +250,8 @@ namespace ontologenius {
           else
             set2vector(onto_->data_properties_.findFuzzy(params(), params.take_id), res->string_values);
         }
+        else if(req->action == "getComments")
+          res->string_values = onto_->data_properties_.getComments(params.main_index);
         else if(req->action == "exist")
         {
           if(onto_->data_properties_.touch(params.main_index))
@@ -343,6 +349,8 @@ namespace ontologenius {
           else
             set2vector(onto_->individuals_.findFuzzy(params(), params.take_id), res->string_values);
         }
+        else if(req->action == "getComments")
+          res->string_values = onto_->individuals_.getComments(params.main_index);
         else if(req->action == "getType")
           set_res_index = onto_->individuals_.getType(params.main_index);
         else if(req->action == "exist")

@@ -2638,7 +2638,7 @@ namespace ontologenius {
 
     new_branch->dictionary_ = old_branch->dictionary_;
     new_branch->steady_dictionary_ = old_branch->steady_dictionary_;
-    new_branch->comment_dictionary_= old_branch->comment_dictionary_;
+    new_branch->comments_ = old_branch->comments_;
 
     for(const auto& is_a : old_branch->is_a_)
     {

@@ -33,17 +33,17 @@ namespace onto {
     /// @return Returns true if the concept is or inherits of the concept.
     bool isA(const std::string& name, const std::string& base_class);
     /// @brief Gives one of the label of a concept, that is not muted.
-    /// @param name is the concept indentifier for which you serach a label.
+    /// @param name is the concept indentifier for which you search a label.
     /// @param take_id can be set to false if you do not want to consider the concept identifier as a possible default name.
     /// @return The result of this function depends on the setting of the working language.
     std::string getName(const std::string& name, bool take_id = true);
     /// @brief Gives all the labels of a concept excepted the muted ones.
-    /// @param name is the concept indentifier for which you serach its labels.
+    /// @param name is the concept indentifier for which you search its labels.
     /// @param take_id can be set to false if you do not want to consider the concept identifier as a possible default name.
     /// @return The result of this function depends on the setting of the working language.
     std::vector<std::string> getNames(const std::string& name, bool take_id = true);
     /// @brief Gives all the labels of a concept even the muted ones.
-    /// @param name is the concept indentifier for which you serach its labels.
+    /// @param name is the concept indentifier for which you search its labels.
     /// @param take_id can be set to false if you do not want to consider the concept identifier as a possible default name.
     /// @return The result of this function depends on the setting of the working language.
     std::vector<std::string> getEveryNames(const std::string& name, bool take_id = true);
@@ -79,8 +79,8 @@ namespace onto {
     /// @param name is a concept indentifier.
     /// @return Returns true if the concept exists.
     bool exist(const std::string& name);
-    std::vector<std::string> getComments(const std::string& name, bool take_id = true);
-    /// @brief get the comments associated with the provided name, if it exists
+    std::vector<std::string> getComments(const std::string& name);
+    /// @brief Gives the comments associated to the concept referenced by the provided name, if it exists
     /// (i.e. class, individual, object property, data property).
     /// @param name is a concept/individual/object property/data property indentifier.
     /// @return Returns the comments if the concept exists.

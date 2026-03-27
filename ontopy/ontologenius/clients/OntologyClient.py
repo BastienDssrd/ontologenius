@@ -100,7 +100,7 @@ class OntologyClient(ClientBase):
         return self.call("findSub", param)
 
     def findRegex(self, name, take_id = True, selector = ''):
-        """Give all concepts (str[]) with a label matching the regular expression regex(str).
+        """Gives all concepts (str[]) with a label matching the regular expression regex(str).
            The default take_id(bool) argument can be set to false if you do not want to consider
            the concept identifier as a possible default name.
            The optional selector(str) parameter can be set to only get results inheriting from the selector(str) concept.
@@ -115,7 +115,7 @@ class OntologyClient(ClientBase):
         return self.call("findRegex", param)
 
     def findFuzzy(self, name, threshold = 0.5, take_id = True, selector = ''):
-        """Give all the names of concepts (str[]) with the lowest
+        """Gives all the names of concepts (str[]) with the lowest
            edit distance with parameter name(str).
            The default take_id(bool) argument can be set to false if you do not want to
            consider the concept identifier as a possible default name.
@@ -143,7 +143,4 @@ class OntologyClient(ClientBase):
     def getComments(self, name, take_id = True):
         """Gives the comments associated to the concept name(str).
         """
-        param = name
-        if take_id == False:
-            param += " -i false"
-        return self.call("getComments", param)
+        return self.call("getComments", name)

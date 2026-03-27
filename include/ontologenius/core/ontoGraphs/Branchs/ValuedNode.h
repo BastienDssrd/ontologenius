@@ -50,7 +50,7 @@ namespace ontologenius {
 
     Dictionary dictionary_;
     Dictionary steady_dictionary_;
-    Dictionary comment_dictionary_;
+    std::map<std::string, std::vector<std::string>> comments_;
 
     template<typename C>
     void conditionalPushBack(std::vector<C>& vect, const C& data)
