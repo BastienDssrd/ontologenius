@@ -235,11 +235,13 @@ add_onto_library(ontologenius_drawer_lib
 target_include_directories(ontologenius_drawer_lib
   PUBLIC
   ${OpenCV_INCLUDE_DIRS}
+  ${TINYXML2_INCLUDE_DIRS}
 )
 target_link_libraries(ontologenius_drawer_lib
   PUBLIC
   ontologenius_ontoGraphs_lib
   ${OpenCV_LIBS}
+  ${TINYXML2_LIBRARIES}
 )
 
 # # OPERATORS
